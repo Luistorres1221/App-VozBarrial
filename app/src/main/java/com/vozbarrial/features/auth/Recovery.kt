@@ -27,6 +27,9 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 private val RecoveryNavy = Color(0xFF06213A)
 private val RecoveryBlue = Color(0xFFEEF3FF)
@@ -176,7 +179,9 @@ fun PasswordRecovery(onBack: () -> Unit, onAccountExists: (String) -> Boolean, o
                             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                 Column(Modifier.weight(1f).background(RecoveryBlue, RoundedCornerShape(8.dp)).padding(9.dp)) {
                                     Text("◷  Fecha y hora", color = RecoveryNavy, fontSize = 10.sp, fontWeight = FontWeight.SemiBold)
-                                    Text("Hoy, " + java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault()).format(java.util.Date()) + " hrs", color = RecoveryNavy, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                                    Text("Hoy, " + SimpleDateFormat("HH:mm", Locale.getDefault()).format(
+                                        Date()
+                                    ) + " hrs", color = RecoveryNavy, fontSize = 14.sp, fontWeight = FontWeight.Bold)
                                 }
                                 Column(Modifier.weight(1f).background(RecoveryBlue, RoundedCornerShape(8.dp)).padding(9.dp)) {
                                     Text("▯  Dispositivo", color = RecoveryNavy, fontSize = 10.sp, fontWeight = FontWeight.SemiBold)

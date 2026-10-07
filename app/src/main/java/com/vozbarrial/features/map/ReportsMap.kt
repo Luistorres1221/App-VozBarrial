@@ -56,18 +56,21 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import java.util.Locale
 
 private val MapNavy = Color(0xFF102B45)
 private val MapGreen = Color(0xFF0B9B72)
@@ -108,7 +111,7 @@ fun ReportsMap(name: String, onSignOut: () -> Unit, onNavigate: (String) -> Unit
             val lon = submittedLongitude ?: -74.08175
             val mapX = ((lon + 74.20) / .22).toFloat().coerceIn(.06f, .94f)
             val mapY = ((4.82 - lat) / .38).toFloat().coerceIn(.08f, .92f)
-            val place = "Lat: " + "%.5f".format(java.util.Locale.US, lat) + ", Lon: " + "%.5f".format(java.util.Locale.US, lon)
+            val place = "Lat: " + "%.5f".format(Locale.US, lat) + ", Lon: " + "%.5f".format(Locale.US, lon)
             reports.add(CommunityReport(id, submittedTitle, submittedDescription.orEmpty(), place, kind, mapX, mapY))
             onReportConsumed()
         }
@@ -357,7 +360,7 @@ private fun InteractiveMap(
 }
 
 @Composable
-private fun MapPlace(label: String, x: Float, y: Float, width: androidx.compose.ui.unit.Dp, height: androidx.compose.ui.unit.Dp, color: Color = Color(0xFF8A959F)) {
+private fun MapPlace(label: String, x: Float, y: Float, width: Dp, height: Dp, color: Color = Color(0xFF8A959F)) {
     Text(
         label,
         modifier = Modifier.offset(x = width * x, y = height * y),
@@ -381,12 +384,12 @@ private fun CityArtwork(modifier: Modifier = Modifier) {
                 val blockWidth = w / 6.5f
                 val blockHeight = h / 12f
                 val color = if ((row + column) % 3 == 0) Color(0xFFE1E9E8) else Color(0xFFE6ECEB)
-                drawRect(color, topLeft = Offset(left, top), size = androidx.compose.ui.geometry.Size(blockWidth, blockHeight))
+                drawRect(color, topLeft = Offset(left, top), size = Size(blockWidth, blockHeight))
             }
         }
-        drawRect(Color(0xFFD2F0DA), topLeft = Offset(w * .04f, h * .37f), size = androidx.compose.ui.geometry.Size(w * .27f, h * .10f))
-        drawRect(Color(0xFFD2F0DA), topLeft = Offset(w * .56f, h * .58f), size = androidx.compose.ui.geometry.Size(w * .24f, h * .11f))
-        drawRect(Color(0xFFD7EFDE), topLeft = Offset(w * .17f, h * .72f), size = androidx.compose.ui.geometry.Size(w * .17f, h * .08f))
+        drawRect(Color(0xFFD2F0DA), topLeft = Offset(w * .04f, h * .37f), size = Size(w * .27f, h * .10f))
+        drawRect(Color(0xFFD2F0DA), topLeft = Offset(w * .56f, h * .58f), size = Size(w * .24f, h * .11f))
+        drawRect(Color(0xFFD7EFDE), topLeft = Offset(w * .17f, h * .72f), size = Size(w * .17f, h * .08f))
         val roadPaths = listOf(
             Path().apply { moveTo(-w * .1f, h * .12f); cubicTo(w * .20f, h * .22f, w * .26f, h * .40f, w * .55f, h * .47f); cubicTo(w * .78f, h * .53f, w * .82f, h * .71f, w * 1.1f, h * .78f) },
             Path().apply { moveTo(w * .53f, -h * .05f); cubicTo(w * .46f, h * .22f, w * .69f, h * .39f, w * .53f, h * .59f); cubicTo(w * .43f, h * .77f, w * .62f, h * .88f, w * .56f, h * 1.05f) },
@@ -435,7 +438,7 @@ private fun ReportPin(report: CommunityReport, selected: Boolean, modifier: Modi
 }
 
 @Composable
-private fun MapControl(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, onClick: () -> Unit) {
+private fun MapControl(icon: ImageVector, label: String, onClick: () -> Unit) {
     Surface(
         modifier = Modifier.size(38.dp).clickable(onClick = onClick),
         shape = RoundedCornerShape(10.dp),

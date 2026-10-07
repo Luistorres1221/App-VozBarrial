@@ -12,7 +12,8 @@ import android.os.Bundle
 import android.os.Looper
 import android.webkit.WebView
 import android.webkit.WebViewClient
-import android.net.Uri
+import android.os.Handler
+import android.webkit.WebResourceRequest
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -26,7 +27,6 @@ import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Send
-import androidx.compose.material.icons.filled.Security
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -42,6 +42,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.compose.ui.window.Dialog
+import java.util.Locale
 
 private val RN=Color(0xFF06213A); private val RG=Color(0xFF07845D); private val RB=Color(0xFFEEF3FF); private val RM=Color(0xFF68758A)
 private data class ReportCategory(val name:String,val description:String,val icon:String)
@@ -124,7 +125,8 @@ private val reportCategories = listOf(
      }
      Row(Modifier.fillMaxWidth().background(RB,RoundedCornerShape(8.dp)).padding(8.dp),verticalAlignment=Alignment.CenterVertically){
       Icon(Icons.Default.LocationOn,null,tint=RN,modifier=Modifier.size(18.dp));Spacer(Modifier.width(6.dp))
-      Column(Modifier.weight(1f)){Text(if(gpsActive)"Ubicación GPS actual" else if(locationSelected)"Punto elegido en el mapa" else "Selecciona la ubicación del incidente",color=RN,fontSize=11.sp,fontWeight=FontWeight.Bold);Text("Lat: ${String.format(java.util.Locale.US,"%.5f",latitude)}, Lon: ${String.format(java.util.Locale.US,"%.5f",longitude)}",color=RM,fontSize=9.sp)}
+      Column(Modifier.weight(1f)){Text(if(gpsActive)"Ubicación GPS actual" else if(locationSelected)"Punto elegido en el mapa" else "Selecciona la ubicación del incidente",color=RN,fontSize=11.sp,fontWeight=FontWeight.Bold);Text("Lat: ${String.format(
+          Locale.US,"%.5f",latitude)}, Lon: ${String.format(Locale.US,"%.5f",longitude)}",color=RM,fontSize=9.sp)}
       if(gpsActive)Icon(Icons.Default.CheckCircle,null,tint=RG,modifier=Modifier.size(17.dp))
      }
      if(locationMessage.isNotBlank()) Text(locationMessage,color=if(gpsActive)RG else Color(0xFFB42318),fontSize=9.sp)
@@ -168,8 +170,8 @@ private fun ReportMapPicker(initialLat: Double, initialLon: Double, onConfirm: (
                 Text("Toca el mapa o arrastra el pin hasta el lugar del incidente.",color=RM,fontSize=11.sp)
                 AndroidView(factory={ctx->WebView(ctx).apply {
                     settings.javaScriptEnabled=true
-                    webViewClient=object:WebViewClient(){
-                        override fun shouldOverrideUrlLoading(view:WebView,request:android.webkit.WebResourceRequest):Boolean {
+                    webViewClient=object: WebViewClient(){
+                        override fun shouldOverrideUrlLoading(view:WebView,request: WebResourceRequest):Boolean {
                             if(request.isForMainFrame && request.url.scheme=="voz") {
                                 val lat=request.url.getQueryParameter("lat")?.toDoubleOrNull()
                                 val lon=request.url.getQueryParameter("lon")?.toDoubleOrNull()
@@ -181,7 +183,8 @@ private fun ReportMapPicker(initialLat: Double, initialLon: Double, onConfirm: (
                     }
                     loadDataWithBaseURL("https://picker.local/",html,"text/html","UTF-8",null)
                 }},modifier=Modifier.fillMaxWidth().height(390.dp).clip(RoundedCornerShape(12.dp)))
-                Text("Lat: ${String.format(java.util.Locale.US,"%.5f",selectedLat)} · Lon: ${String.format(java.util.Locale.US,"%.5f",selectedLon)}",color=RM,fontSize=10.sp)
+                Text("Lat: ${String.format(Locale.US,"%.5f",selectedLat)} · Lon: ${String.format(
+                    Locale.US,"%.5f",selectedLon)}",color=RM,fontSize=10.sp)
                 Row(horizontalArrangement=Arrangement.spacedBy(8.dp)) {
                     OutlinedButton(onClick=onDismiss,modifier=Modifier.weight(1f)){Text("Cancelar")}
                     Button(onClick={onConfirm(selectedLat,selectedLon)},modifier=Modifier.weight(1f),colors=ButtonDefaults.buttonColors(containerColor=RN)){Text(if(hasMoved)"Usar este punto" else "Confirmar punto")}
@@ -208,7 +211,7 @@ private fun requestReportLocation(context: Context, onLocation: (Location)->Unit
         override fun onProviderDisabled(provider:String){}
     }
     providers.forEach { provider -> try { manager.requestLocationUpdates(provider,1000L,0f,listener,Looper.getMainLooper()) } catch (_:SecurityException) {} }
-    android.os.Handler(Looper.getMainLooper()).postDelayed({if(!delivered)try{manager.removeUpdates(listener)}catch(_:SecurityException){}},12_000L)
+    Handler(Looper.getMainLooper()).postDelayed({if(!delivered)try{manager.removeUpdates(listener)}catch(_:SecurityException){}},12_000L)
 }
 
 @Composable private fun Section(number:String,title:String,badge:String?,content:@Composable ColumnScope.()->Unit){

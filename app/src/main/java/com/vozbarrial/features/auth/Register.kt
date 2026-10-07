@@ -34,7 +34,9 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -270,8 +272,8 @@ private fun RegisterField(
         visualTransformation = if (password && !visible) PasswordVisualTransformation() else VisualTransformation.None,
         keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
         shape = RoundedCornerShape(8.dp),
-        textStyle = androidx.compose.material3.MaterialTheme.typography.bodySmall.copy(fontSize = 10.sp, color = RegisterNavy),
-        colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
+        textStyle = MaterialTheme.typography.bodySmall.copy(fontSize = 10.sp, color = RegisterNavy),
+        colors = OutlinedTextFieldDefaults.colors(
             focusedContainerColor = Color.White,
             unfocusedContainerColor = Color.White,
             focusedBorderColor = Color(0xFFB9C7DE),

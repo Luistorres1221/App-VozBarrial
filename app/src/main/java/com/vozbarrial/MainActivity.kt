@@ -2,7 +2,6 @@ package com.vozbarrial
 
 import android.os.Bundle
 import android.util.Base64
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.CompositionLocalProvider
@@ -12,6 +11,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
+import androidx.fragment.app.FragmentActivity
 import com.vozbarrial.features.auth.Auth
 import com.vozbarrial.features.dashboard.CommunityPage
 import com.vozbarrial.features.dashboard.EditProfile
@@ -23,7 +23,7 @@ import com.vozbarrial.features.welcome.Welcome
 import java.security.MessageDigest
 import java.security.SecureRandom
 
-class MainActivity : ComponentActivity() {
+class MainActivity : FragmentActivity() {
     private val accounts by lazy { getSharedPreferences("voz_barrial_accounts", MODE_PRIVATE) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -32,7 +32,7 @@ class MainActivity : ComponentActivity() {
             val baseDensity = LocalDensity.current
             CompositionLocalProvider(LocalDensity provides Density(baseDensity.density, baseDensity.fontScale * 1.10f)) {
             MaterialTheme {
-                var screen by rememberSaveable { mutableStateOf("welcome") }
+                var screen by rememberSaveable { mutableStateOf("com/vozbarrial/features/welcome") }
                 var signedInName by rememberSaveable { mutableStateOf("") }
                 var signedInEmail by rememberSaveable { mutableStateOf("") }
                 var signedInPhone by rememberSaveable { mutableStateOf("") }
@@ -48,22 +48,22 @@ class MainActivity : ComponentActivity() {
                 var reportLongitude by rememberSaveable { mutableStateOf<Double?>(null) }
 
                 when (screen) {
-                    "auth" -> Auth(
-                        onBack = { screen = "welcome" },
+                    "com/vozbarrial/features/auth" -> Auth(
+                        onBack = { screen = "com/vozbarrial/features/welcome" },
                         onLogin = ::verifyAccount,
                         onRegister = ::createAccount,
                         onAccountExists = { email -> accounts.contains(accountKey(email) + "_hash") },
                         onResetPassword = ::resetPassword,
                         onResolveName = ::displayName,
-                        onAuthenticated = { email -> signedInEmail = email; signedInName = displayName(email); signedInPhone = accounts.getString(accountKey(email) + "_phone", "").orEmpty(); signedInPhoto = accounts.getString(accountKey(email) + "_photo", null); equippedFrame = accounts.getString(accountKey(email) + "_frame", "Clásico Cívico") ?: "Clásico Cívico"; signedInPoints = accounts.getInt(accountKey(email) + "_points", 1450); ownedFramesText = accounts.getString(accountKey(email) + "_owned_frames", "Clásico Cívico|Guardián Dorado|Eco Barrio Verde|Escudo Ciudadano") ?: "Clásico Cívico|Guardián Dorado|Eco Barrio Verde|Escudo Ciudadano"; screen = "map" },
+                        onAuthenticated = { email -> signedInEmail = email; signedInName = displayName(email); signedInPhone = accounts.getString(accountKey(email) + "_phone", "").orEmpty(); signedInPhoto = accounts.getString(accountKey(email) + "_photo", null); equippedFrame = accounts.getString(accountKey(email) + "_frame", "Clásico Cívico") ?: "Clásico Cívico"; signedInPoints = accounts.getInt(accountKey(email) + "_points", 1450); ownedFramesText = accounts.getString(accountKey(email) + "_owned_frames", "Clásico Cívico|Guardián Dorado|Eco Barrio Verde|Escudo Ciudadano") ?: "Clásico Cívico|Guardián Dorado|Eco Barrio Verde|Escudo Ciudadano"; screen = "com/vozbarrial/features/map" },
                     )
-                    "map" -> ReportsMap(signedInName, onSignOut = { screen = "welcome" }, onNavigate = { page -> if (page == "createReport") screen = "createReport" else { dashboardPage = page; screen = "dashboard" } }, points = signedInPoints, submittedTitle = reportTitle, submittedDescription = reportDescription, submittedCategory = reportCategory, submittedLatitude = reportLatitude, submittedLongitude = reportLongitude, onReportConsumed = { reportTitle = null; reportDescription = null; reportCategory = null; reportLatitude = null; reportLongitude = null })
-                    "dashboard" -> CommunityPage(dashboardPage, signedInName, onBack = { screen = "map" }, onNavigate = { page -> if (page == "editProfile") screen = "editProfile" else if (page == "frames") screen = "frames" else if (page == "store") screen = "store" else dashboardPage = page }, onSignOut = { screen = "welcome" }, onSaveName = { newName -> signedInName = newName; accounts.edit().putString(accountKey(signedInEmail) + "_name", newName).apply() }, onDeleteAccount = { val key = accountKey(signedInEmail); accounts.edit().remove(key + "_name").remove(key + "_salt").remove(key + "_hash").remove(key + "_phone").remove(key + "_photo").remove(key + "_frame").apply(); signedInName = ""; signedInEmail = ""; signedInPhone = ""; signedInPhoto = null; equippedFrame = "Clásico Cívico"; screen = "welcome" }, profilePhoto = signedInPhoto, points = signedInPoints)
-                    "frames" -> FramesPage(signedInName, equippedFrame, points = signedInPoints, onBack = { screen = "dashboard"; dashboardPage = "profile" }, onEquip = { frame -> equippedFrame = frame; accounts.edit().putString(accountKey(signedInEmail) + "_frame", frame).apply() })
-                    "store" -> StorePage(signedInName, signedInPoints, ownedFramesText.split("|").filter { it.isNotBlank() }.toSet(), equippedFrame, onBack = { screen = "dashboard"; dashboardPage = "profile" }, onPurchase = { frame, cost, owned -> signedInPoints -= cost; ownedFramesText = owned.joinToString("|"); val key = accountKey(signedInEmail); accounts.edit().putInt(key + "_points", signedInPoints).putString(key + "_owned_frames", ownedFramesText).apply() }, onEquip = { frame -> equippedFrame = frame; accounts.edit().putString(accountKey(signedInEmail) + "_frame", frame).apply() })
-                    "createReport" -> ReportCreate(signedInName, onBack = { screen = "map" }, onPublish = { title, description, category, latitude, longitude -> reportTitle = title; reportDescription = description; reportCategory = category; reportLatitude = latitude; reportLongitude = longitude; screen = "map" })
-                    "editProfile" -> EditProfile(signedInName, signedInPhone, signedInPhoto, onCancel = { screen = "dashboard"; dashboardPage = "profile" }, onSave = { newName, newPhone, newPhoto -> signedInName = newName; signedInPhone = newPhone; signedInPhoto = newPhoto; val key = accountKey(signedInEmail); accounts.edit().putString(key + "_name", newName).putString(key + "_phone", newPhone).putString(key + "_photo", newPhoto ?: "").apply(); screen = "dashboard"; dashboardPage = "profile" })
-                    else -> Welcome(onLoginClick = { screen = "auth" })
+                    "com/vozbarrial/features/map" -> ReportsMap(signedInName, onSignOut = { screen = "com/vozbarrial/features/welcome" }, onNavigate = { page -> if (page == "createReport") screen = "createReport" else { dashboardPage = page; screen = "com/vozbarrial/features/dashboard" } }, points = signedInPoints, submittedTitle = reportTitle, submittedDescription = reportDescription, submittedCategory = reportCategory, submittedLatitude = reportLatitude, submittedLongitude = reportLongitude, onReportConsumed = { reportTitle = null; reportDescription = null; reportCategory = null; reportLatitude = null; reportLongitude = null })
+                    "com/vozbarrial/features/dashboard" -> CommunityPage(dashboardPage, signedInName, onBack = { screen = "com/vozbarrial/features/map" }, onNavigate = { page -> if (page == "editProfile") screen = "editProfile" else if (page == "frames") screen = "frames" else if (page == "store") screen = "store" else dashboardPage = page }, onSignOut = { screen = "com/vozbarrial/features/welcome" }, onSaveName = { newName -> signedInName = newName; accounts.edit().putString(accountKey(signedInEmail) + "_name", newName).apply() }, onDeleteAccount = { val key = accountKey(signedInEmail); accounts.edit().remove(key + "_name").remove(key + "_salt").remove(key + "_hash").remove(key + "_phone").remove(key + "_photo").remove(key + "_frame").apply(); signedInName = ""; signedInEmail = ""; signedInPhone = ""; signedInPhoto = null; equippedFrame = "Clásico Cívico"; screen = "com/vozbarrial/features/welcome" }, profilePhoto = signedInPhoto, points = signedInPoints)
+                    "frames" -> FramesPage(signedInName, equippedFrame, points = signedInPoints, onBack = { screen = "com/vozbarrial/features/dashboard"; dashboardPage = "profile" }, onEquip = { frame -> equippedFrame = frame; accounts.edit().putString(accountKey(signedInEmail) + "_frame", frame).apply() })
+                    "store" -> StorePage(signedInName, signedInPoints, ownedFramesText.split("|").filter { it.isNotBlank() }.toSet(), equippedFrame, onBack = { screen = "com/vozbarrial/features/dashboard"; dashboardPage = "profile" }, onPurchase = { frame, cost, owned -> signedInPoints -= cost; ownedFramesText = owned.joinToString("|"); val key = accountKey(signedInEmail); accounts.edit().putInt(key + "_points", signedInPoints).putString(key + "_owned_frames", ownedFramesText).apply() }, onEquip = { frame -> equippedFrame = frame; accounts.edit().putString(accountKey(signedInEmail) + "_frame", frame).apply() })
+                    "createReport" -> ReportCreate(signedInName, onBack = { screen = "com/vozbarrial/features/map" }, onPublish = { title, description, category, latitude, longitude -> reportTitle = title; reportDescription = description; reportCategory = category; reportLatitude = latitude; reportLongitude = longitude; screen = "com/vozbarrial/features/map" })
+                    "editProfile" -> EditProfile(signedInName, signedInPhone, signedInPhoto, onCancel = { screen = "com/vozbarrial/features/dashboard"; dashboardPage = "profile" }, onSave = { newName, newPhone, newPhoto -> signedInName = newName; signedInPhone = newPhone; signedInPhoto = newPhoto; val key = accountKey(signedInEmail); accounts.edit().putString(key + "_name", newName).putString(key + "_phone", newPhone).putString(key + "_photo", newPhoto ?: "").apply(); screen = "com/vozbarrial/features/dashboard"; dashboardPage = "profile" })
+                    else -> Welcome(onLoginClick = { screen = "com/vozbarrial/features/auth" })
                 }
             }
             }
