@@ -30,11 +30,38 @@ fun AppNavGraph() {
     var signedInPoints by rememberSaveable { mutableIntStateOf(1450) }
     var ownedFramesText by rememberSaveable { mutableStateOf("Clásico Cívico|Guardián Dorado|Eco Barrio Verde|Escudo Ciudadano") }
     var dashboardPage by rememberSaveable { mutableStateOf("profile") }
-    var reportTitle by rememberSaveable { mutableStateOf<String?>(null) }
-    var reportDescription by rememberSaveable { mutableStateOf<String?>(null) }
-    var reportCategory by rememberSaveable { mutableStateOf<String?>(null) }
-    var reportLatitude by rememberSaveable { mutableStateOf<Double?>(null) }
-    var reportLongitude by rememberSaveable { mutableStateOf<Double?>(null) }
+
+    LaunchedEffect(Unit) {
+        val currentUser = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
+        if (currentUser != null) {
+            val email = currentUser.email.orEmpty()
+            com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                .collection("usuarios")
+                .document(currentUser.uid)
+                .get()
+                .addOnSuccessListener { document ->
+                    val usuario = document.toObject(com.vozbarrial.domain.Usuario::class.java)
+                    if (usuario != null) {
+                        signedInName = usuario.name.ifBlank { email.substringBefore("@") }
+                        signedInEmail = email
+                        signedInPhone = usuario.phone
+                        signedInPhoto = usuario.photoUrl
+                        equippedFrame = usuario.equippedFrame
+                        signedInPoints = usuario.points
+                        ownedFramesText = usuario.ownedFrames.joinToString("|")
+                    } else {
+                        signedInName = email.substringBefore("@")
+                        signedInEmail = email
+                    }
+                    screen = "com/vozbarrial/features/map"
+                }
+                .addOnFailureListener {
+                    signedInName = email.substringBefore("@")
+                    signedInEmail = email
+                    screen = "com/vozbarrial/features/map"
+                }
+        }
+    }
 
     fun accountKey(email: String): String = "account_${email.trim().lowercase()}"
 
@@ -121,11 +148,40 @@ fun AppNavGraph() {
                 }
             },
         )
-        "com/vozbarrial/features/map" -> ReportsMap(signedInName, profilePhoto = signedInPhoto, onSignOut = { screen = "com/vozbarrial/features/welcome" }, onNavigate = { page -> if (page == "createReport") screen = "createReport" else { dashboardPage = page; screen = "com/vozbarrial/features/dashboard" } }, points = signedInPoints, submittedTitle = reportTitle, submittedDescription = reportDescription, submittedCategory = reportCategory, submittedLatitude = reportLatitude, submittedLongitude = reportLongitude, onReportConsumed = { reportTitle = null; reportDescription = null; reportCategory = null; reportLatitude = null; reportLongitude = null })
-        "com/vozbarrial/features/dashboard" -> CommunityPage(dashboardPage, signedInName, onBack = { screen = "com/vozbarrial/features/map" }, onNavigate = { page -> if (page == "editProfile") screen = "editProfile" else if (page == "frames") screen = "frames" else if (page == "store") screen = "store" else dashboardPage = page }, onSignOut = { screen = "com/vozbarrial/features/welcome" }, onSaveName = { newName -> signedInName = newName; accounts.edit().putString(accountKey(signedInEmail) + "_name", newName).apply() }, onDeleteAccount = { val key = accountKey(signedInEmail); accounts.edit().remove(key + "_name").remove(key + "_salt").remove(key + "_hash").remove(key + "_phone").remove(key + "_photo").remove(key + "_frame").apply(); signedInName = ""; signedInEmail = ""; signedInPhone = ""; signedInPhoto = null; equippedFrame = "Clásico Cívico"; screen = "com/vozbarrial/features/welcome" }, profilePhoto = signedInPhoto, points = signedInPoints)
+        "com/vozbarrial/features/map" -> ReportsMap(
+            name = signedInName,
+            profilePhoto = signedInPhoto,
+            onSignOut = { com.google.firebase.auth.FirebaseAuth.getInstance().signOut(); screen = "com/vozbarrial/features/welcome" },
+            onNavigate = { page -> if (page == "createReport") screen = "createReport" else { dashboardPage = page; screen = "com/vozbarrial/features/dashboard" } },
+            points = signedInPoints
+        )
+        "com/vozbarrial/features/dashboard" -> CommunityPage(dashboardPage, signedInName, onBack = { screen = "com/vozbarrial/features/map" }, onNavigate = { page -> if (page == "editProfile") screen = "editProfile" else if (page == "frames") screen = "frames" else if (page == "store") screen = "store" else dashboardPage = page }, onSignOut = { com.google.firebase.auth.FirebaseAuth.getInstance().signOut(); screen = "com/vozbarrial/features/welcome" }, onSaveName = { newName -> signedInName = newName; accounts.edit().putString(accountKey(signedInEmail) + "_name", newName).apply() }, onDeleteAccount = { val key = accountKey(signedInEmail); accounts.edit().remove(key + "_name").remove(key + "_salt").remove(key + "_hash").remove(key + "_phone").remove(key + "_photo").remove(key + "_frame").apply(); signedInName = ""; signedInEmail = ""; signedInPhone = ""; signedInPhoto = null; equippedFrame = "Clásico Cívico"; screen = "com/vozbarrial/features/welcome" }, profilePhoto = signedInPhoto, points = signedInPoints)
         "frames" -> FramesPage(signedInName, equippedFrame, points = signedInPoints, onBack = { screen = "com/vozbarrial/features/dashboard"; dashboardPage = "profile" }, onEquip = { frame -> equippedFrame = frame; accounts.edit().putString(accountKey(signedInEmail) + "_frame", frame).apply() })
         "store" -> StorePage(signedInName, signedInPoints, ownedFramesText.split("|").filter { it.isNotBlank() }.toSet(), equippedFrame, onBack = { screen = "com/vozbarrial/features/dashboard"; dashboardPage = "profile" }, onPurchase = { frame, cost, owned -> signedInPoints -= cost; ownedFramesText = owned.joinToString("|"); val key = accountKey(signedInEmail); accounts.edit().putInt(key + "_points", signedInPoints).putString(key + "_owned_frames", ownedFramesText).apply() }, onEquip = { frame -> equippedFrame = frame; accounts.edit().putString(accountKey(signedInEmail) + "_frame", frame).apply() })
-        "createReport" -> ReportCreate(signedInName, onBack = { screen = "com/vozbarrial/features/map" }, onPublish = { title, description, category, latitude, longitude -> reportTitle = title; reportDescription = description; reportCategory = category; reportLatitude = latitude; reportLongitude = longitude; screen = "com/vozbarrial/features/map" })
+        "createReport" -> ReportCreate(
+            signedInName,
+            onBack = { screen = "com/vozbarrial/features/map" },
+            onPublish = { title, description, category, latitude, longitude ->
+                val reportId = java.util.UUID.randomUUID().toString()
+                val place = "Lat: " + "%.5f".format(java.util.Locale.US, latitude) + ", Lon: " + "%.5f".format(java.util.Locale.US, longitude)
+                val report = com.vozbarrial.domain.Reporte(
+                    id = reportId,
+                    title = title,
+                    description = description,
+                    place = place,
+                    category = category,
+                    authorEmail = signedInEmail,
+                    latitude = latitude,
+                    longitude = longitude,
+                    timestamp = System.currentTimeMillis()
+                )
+                com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                    .collection("reportes")
+                    .document(reportId)
+                    .set(report)
+                screen = "com/vozbarrial/features/map"
+            }
+        )
         "editProfile" -> EditProfile(signedInName, signedInPhone, signedInPhoto, onCancel = { screen = "com/vozbarrial/features/dashboard"; dashboardPage = "profile" }, onSave = { newName, newPhone, newPhoto -> 
             signedInName = newName
             signedInPhone = newPhone

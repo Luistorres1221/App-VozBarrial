@@ -80,7 +80,7 @@ private enum class ReportKind(val label: String, val color: Color) {
 }
 
 private data class CommunityReport(
-    val id: Int,
+    val id: String,
     val title: String,
     val description: String,
     val place: String,
@@ -90,31 +90,34 @@ private data class CommunityReport(
 )
 
 @Composable
-fun ReportsMap(name: String, profilePhoto: String? = null, onSignOut: () -> Unit, onNavigate: (String) -> Unit = {}, points: Int = 1450, submittedTitle: String? = null, submittedDescription: String? = null, submittedCategory: String? = null, submittedLatitude: Double? = null, submittedLongitude: Double? = null, onReportConsumed: () -> Unit = {}) {
-    val reports = remember {
-        mutableStateListOf(
-            CommunityReport(1, "Alerta de seguridad", "Persona sospechosa reportada por vecinos.", "Parque Central", ReportKind.SECURITY, .43f, .27f),
-            CommunityReport(2, "Bache en la vía", "Hueco profundo junto al cruce peatonal.", "Calle 12 con Carrera 8", ReportKind.ROAD, .68f, .43f),
-            CommunityReport(3, "Luminaria apagada", "El poste lleva varias noches sin iluminación.", "Villa del Río", ReportKind.COMMUNITY, .27f, .53f),
-            CommunityReport(4, "Daño en la calzada", "La vía está levantada y requiere mantenimiento.", "Parque Las Heras", ReportKind.ROAD, .57f, .66f),
-            CommunityReport(5, "Jornada vecinal", "Punto de encuentro para la limpieza del parque.", "Plaza del Barrio", ReportKind.COMMUNITY, .34f, .79f),
-        )
-    }
-    LaunchedEffect(submittedTitle, submittedLatitude, submittedLongitude) {
-        if (!submittedTitle.isNullOrBlank()) {
-            val kind = when { submittedCategory?.contains("seguridad", true) == true || submittedCategory?.contains("Emergencias", true) == true -> ReportKind.SECURITY; submittedCategory?.contains("vías", true) == true || submittedCategory?.contains("infraestructura", true) == true -> ReportKind.ROAD; else -> ReportKind.COMMUNITY }
-            val id = (reports.maxOfOrNull { it.id } ?: 0) + 1
-            val lat = submittedLatitude ?: 4.60971
-            val lon = submittedLongitude ?: -74.08175
-            val mapX = ((lon + 74.20) / .22).toFloat().coerceIn(.06f, .94f)
-            val mapY = ((4.82 - lat) / .38).toFloat().coerceIn(.08f, .92f)
-            val place = "Lat: " + "%.5f".format(Locale.US, lat) + ", Lon: " + "%.5f".format(Locale.US, lon)
-            reports.add(CommunityReport(id, submittedTitle, submittedDescription.orEmpty(), place, kind, mapX, mapY))
-            onReportConsumed()
-        }
+fun ReportsMap(name: String, profilePhoto: String? = null, onSignOut: () -> Unit, onNavigate: (String) -> Unit = {}, points: Int = 1450) {
+    val reports = remember { mutableStateListOf<CommunityReport>() }
+
+    LaunchedEffect(Unit) {
+        com.google.firebase.firestore.FirebaseFirestore.getInstance()
+            .collection("reportes")
+            .addSnapshotListener { snapshot, e ->
+                if (e != null) return@addSnapshotListener
+                if (snapshot != null) {
+                    reports.clear()
+                    for (doc in snapshot.documents) {
+                        val r = doc.toObject(com.vozbarrial.domain.Reporte::class.java)
+                        if (r != null) {
+                            val kind = when {
+                                r.category.contains("seguridad", true) || r.category.contains("Emergencias", true) -> ReportKind.SECURITY
+                                r.category.contains("vías", true) || r.category.contains("infraestructura", true) -> ReportKind.ROAD
+                                else -> ReportKind.COMMUNITY
+                            }
+                            val mapX = ((r.longitude + 74.20) / .22).toFloat().coerceIn(.06f, .94f)
+                            val mapY = ((4.82 - r.latitude) / .38).toFloat().coerceIn(.08f, .92f)
+                            reports.add(CommunityReport(r.id, r.title, r.description, r.place, kind, mapX, mapY))
+                        }
+                    }
+                }
+            }
     }
     var selectedKind by rememberSaveable { mutableStateOf("TODOS") }
-    var selectedReportId by rememberSaveable { mutableStateOf<Int?>(null) }
+    var selectedReportId by rememberSaveable { mutableStateOf<String?>(null) }
     var radarActive by rememberSaveable { mutableStateOf(true) }
     var distance by rememberSaveable { mutableStateOf("1.5 km") }
     var distanceMenu by remember { mutableStateOf(false) }
@@ -319,11 +322,11 @@ private fun MapFilter(text: String, count: Int, selected: Boolean, modifier: Mod
 private fun InteractiveMap(
     reports: List<CommunityReport>,
     selectedKind: String,
-    selectedReportId: Int?,
+    selectedReportId: String?,
     zoom: Float,
     mapPan: Offset,
     onPanZoom: (Float, Offset) -> Unit,
-    onSelectReport: (Int) -> Unit,
+    onSelectReport: (String) -> Unit,
     onRecenter: () -> Unit,
 ) {
     BoxWithConstraints(modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(topStart = 2.dp, topEnd = 2.dp))) {
