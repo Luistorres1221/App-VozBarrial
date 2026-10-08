@@ -1,24 +1,13 @@
 package com.vozbarrial.features.map
 
+import android.content.Context
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import coil.compose.AsyncImage
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectTransformGestures
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -34,42 +23,27 @@ import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
+import org.osmdroid.config.Configuration
+import org.osmdroid.tileprovider.tilesource.TileSourceFactory
+import org.osmdroid.util.GeoPoint
+import org.osmdroid.views.MapView
+import org.osmdroid.views.overlay.Marker
+import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
+import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider
 import com.vozbarrial.ui.theme.*
 import java.util.Locale
 
@@ -85,15 +59,31 @@ private data class CommunityReport(
     val description: String,
     val place: String,
     val kind: ReportKind,
-    val x: Float,
-    val y: Float,
+    val latitude: Double,
+    val longitude: Double,
 )
 
 @Composable
 fun ReportsMap(name: String, profilePhoto: String? = null, onSignOut: () -> Unit, onNavigate: (String) -> Unit = {}, points: Int = 1450) {
+    val context = LocalContext.current
+    remember {
+        Configuration.getInstance().load(context, context.getSharedPreferences("osm_prefs", Context.MODE_PRIVATE))
+        true
+    }
+
     val reports = remember { mutableStateListOf<CommunityReport>() }
 
+    val locationPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { _ -> }
+
     LaunchedEffect(Unit) {
+        locationPermissionLauncher.launch(
+            arrayOf(
+                android.Manifest.permission.ACCESS_FINE_LOCATION,
+                android.Manifest.permission.ACCESS_COARSE_LOCATION
+            )
+        )
         com.google.firebase.firestore.FirebaseFirestore.getInstance()
             .collection("reportes")
             .addSnapshotListener { snapshot, e ->
@@ -108,24 +98,21 @@ fun ReportsMap(name: String, profilePhoto: String? = null, onSignOut: () -> Unit
                                 r.category.contains("vías", true) || r.category.contains("infraestructura", true) -> ReportKind.ROAD
                                 else -> ReportKind.COMMUNITY
                             }
-                            val mapX = ((r.longitude + 74.20) / .22).toFloat().coerceIn(.06f, .94f)
-                            val mapY = ((4.82 - r.latitude) / .38).toFloat().coerceIn(.08f, .92f)
-                            reports.add(CommunityReport(r.id, r.title, r.description, r.place, kind, mapX, mapY))
+                            reports.add(CommunityReport(r.id, r.title, r.description, r.place, kind, r.latitude, r.longitude))
                         }
                     }
                 }
             }
     }
+
     var selectedKind by rememberSaveable { mutableStateOf("TODOS") }
     var selectedReportId by rememberSaveable { mutableStateOf<String?>(null) }
     var radarActive by rememberSaveable { mutableStateOf(true) }
     var distance by rememberSaveable { mutableStateOf("1.5 km") }
     var distanceMenu by remember { mutableStateOf(false) }
-    var showCreateReport by rememberSaveable { mutableStateOf(false) }
     var showNotifications by rememberSaveable { mutableStateOf(false) }
     var showPoints by rememberSaveable { mutableStateOf(false) }
-    var zoom by remember { mutableStateOf(1f) }
-    var mapPan by remember { mutableStateOf(Offset.Zero) }
+    var mapViewInstance by remember { mutableStateOf<MapView?>(null) }
 
     Column(modifier = Modifier.fillMaxSize().background(VozBackground)) {
         MapHeader(
@@ -178,15 +165,54 @@ fun ReportsMap(name: String, profilePhoto: String? = null, onSignOut: () -> Unit
         }
 
         Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
-            InteractiveMap(
-                reports = reports.toList(),
-                selectedKind = selectedKind,
-                selectedReportId = selectedReportId,
-                zoom = zoom,
-                mapPan = mapPan,
-                onPanZoom = { newZoom, pan -> zoom = newZoom; mapPan = pan },
-                onSelectReport = { selectedReportId = it },
-                onRecenter = { zoom = 1f; mapPan = Offset.Zero },
+            AndroidView(
+                modifier = Modifier.fillMaxSize(),
+                factory = { ctx ->
+                    MapView(ctx).apply {
+                        setTileSource(TileSourceFactory.MAPNIK)
+                        setMultiTouchControls(true)
+                        controller.setZoom(14.0)
+                        controller.setCenter(GeoPoint(4.60971, -74.08175))
+
+                        val locationOverlay = MyLocationNewOverlay(GpsMyLocationProvider(ctx), this).apply {
+                            enableMyLocation()
+                            enableFollowLocation()
+                            val dotBitmap = android.graphics.Bitmap.createBitmap(48, 48, android.graphics.Bitmap.Config.ARGB_8888).apply {
+                                val canvas = android.graphics.Canvas(this)
+                                val paint = android.graphics.Paint().apply {
+                                    color = android.graphics.Color.parseColor("#3188E8")
+                                    isAntiAlias = true
+                                }
+                                canvas.drawCircle(24f, 24f, 22f, paint)
+                                paint.color = android.graphics.Color.WHITE
+                                canvas.drawCircle(24f, 24f, 10f, paint)
+                            }
+                            setPersonIcon(dotBitmap)
+                            setDirectionIcon(dotBitmap)
+                        }
+                        overlays.add(locationOverlay)
+
+                        mapViewInstance = this
+                    }
+                },
+                update = { mapView ->
+                    mapView.overlays.removeAll { it is Marker }
+                    reports.filter { selectedKind == "TODOS" || it.kind.name == selectedKind }.forEach { report ->
+                        val marker = Marker(mapView).apply {
+                            position = GeoPoint(report.latitude, report.longitude)
+                            title = report.title
+                            snippet = report.description
+                            setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
+                            setOnMarkerClickListener { m, _ ->
+                                selectedReportId = report.id
+                                m.showInfoWindow()
+                                true
+                            }
+                        }
+                        mapView.overlays.add(marker)
+                    }
+                    mapView.invalidate()
+                }
             )
 
             Row(
@@ -203,9 +229,22 @@ fun ReportsMap(name: String, profilePhoto: String? = null, onSignOut: () -> Unit
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 MapControl(Icons.Default.Layers, "Capas", onClick = { selectedKind = "TODOS" })
-                MapControl(Icons.Default.MyLocation, "Centrar mapa", onClick = { zoom = 1f; mapPan = Offset.Zero })
-                MapControl(Icons.Default.Add, "Acercar", onClick = { zoom = (zoom + .2f).coerceAtMost(2f) })
-                MapControl(Icons.Default.Remove, "Alejar", onClick = { zoom = (zoom - .2f).coerceAtLeast(.8f) })
+                MapControl(Icons.Default.MyLocation, "Mi ubicación", onClick = {
+                    val myLoc = (mapViewInstance?.overlays?.firstOrNull { it is MyLocationNewOverlay } as? MyLocationNewOverlay)?.myLocation
+                    if (myLoc != null) {
+                        mapViewInstance?.controller?.setCenter(myLoc)
+                        mapViewInstance?.controller?.setZoom(16.0)
+                    } else {
+                        mapViewInstance?.controller?.setCenter(GeoPoint(4.60971, -74.08175))
+                        mapViewInstance?.controller?.setZoom(14.0)
+                    }
+                })
+                MapControl(Icons.Default.Add, "Acercar", onClick = {
+                    mapViewInstance?.controller?.zoomIn()
+                })
+                MapControl(Icons.Default.Remove, "Alejar", onClick = {
+                    mapViewInstance?.controller?.zoomOut()
+                })
             }
 
             selectedReportId?.let { id -> reports.firstOrNull { it.id == id }?.let { report ->
@@ -319,136 +358,6 @@ private fun MapFilter(text: String, count: Int, selected: Boolean, modifier: Mod
 }
 
 @Composable
-private fun InteractiveMap(
-    reports: List<CommunityReport>,
-    selectedKind: String,
-    selectedReportId: String?,
-    zoom: Float,
-    mapPan: Offset,
-    onPanZoom: (Float, Offset) -> Unit,
-    onSelectReport: (String) -> Unit,
-    onRecenter: () -> Unit,
-) {
-    BoxWithConstraints(modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(topStart = 2.dp, topEnd = 2.dp))) {
-        val mapWidth = maxWidth
-        val mapHeight = maxHeight
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .graphicsLayer(scaleX = zoom, scaleY = zoom, translationX = mapPan.x, translationY = mapPan.y)
-                .pointerInput(zoom, mapPan) {
-                    detectTransformGestures { _, pan, zoomChange, _ ->
-                        onPanZoom((zoom * zoomChange).coerceIn(.8f, 2f), mapPan + pan)
-                    }
-                },
-        ) {
-            CityArtwork(Modifier.fillMaxSize())
-            MapPlace("AEROPUERTO", .40f, .09f, mapWidth, mapHeight)
-            MapPlace("Universidad", .11f, .21f, mapWidth, mapHeight, Color(0xFF718296))
-            MapPlace("Parque Central", .12f, .40f, mapWidth, mapHeight, VozGreen)
-            MapPlace("Easy Shopping", .57f, .37f, mapWidth, mapHeight, Color(0xFF3682C5))
-            MapPlace("Parque Las Heras", .57f, .62f, mapWidth, mapHeight, VozGreen)
-            MapPlace("Villa del Río", .13f, .69f, mapWidth, mapHeight, VozGreen)
-            MapPlace("Centro", .57f, .84f, mapWidth, mapHeight, Color(0xFF718296))
-
-            Box(
-                modifier = Modifier.offset(x = mapWidth * .49f, y = mapHeight * .50f).size(22.dp).clip(CircleShape).background(Color.White).padding(4.dp),
-                contentAlignment = Alignment.Center,
-            ) {
-                Box(Modifier.fillMaxSize().clip(CircleShape).background(Color(0xFF3188E8)))
-            }
-
-            reports.filter { selectedKind == "TODOS" || it.kind.name == selectedKind }.forEach { report ->
-                ReportPin(
-                    report = report,
-                    selected = selectedReportId == report.id,
-                    modifier = Modifier.offset(x = mapWidth * report.x - 19.dp, y = mapHeight * report.y - 19.dp),
-                    onClick = { onSelectReport(report.id) },
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun MapPlace(label: String, x: Float, y: Float, width: Dp, height: Dp, color: Color = Color(0xFF8A959F)) {
-    Text(
-        label,
-        modifier = Modifier.offset(x = width * x, y = height * y),
-        color = color,
-        fontSize = 8.sp,
-        fontWeight = FontWeight.Medium,
-        maxLines = 1,
-    )
-}
-
-@Composable
-private fun CityArtwork(modifier: Modifier = Modifier) {
-    Canvas(modifier.background(Color(0xFFE8EEF0))) {
-        val w = size.width
-        val h = size.height
-        drawRect(Color(0xFFE8EEF0))
-        for (row in 0..9) {
-            for (column in 0..5) {
-                val left = column * w / 5.5f + if (row % 2 == 0) 5f else 14f
-                val top = row * h / 9.5f + 5f
-                val blockWidth = w / 6.5f
-                val blockHeight = h / 12f
-                val color = if ((row + column) % 3 == 0) Color(0xFFE1E9E8) else Color(0xFFE6ECEB)
-                drawRect(color, topLeft = Offset(left, top), size = Size(blockWidth, blockHeight))
-            }
-        }
-        drawRect(Color(0xFFD2F0DA), topLeft = Offset(w * .04f, h * .37f), size = Size(w * .27f, h * .10f))
-        drawRect(Color(0xFFD2F0DA), topLeft = Offset(w * .56f, h * .58f), size = Size(w * .24f, h * .11f))
-        drawRect(Color(0xFFD7EFDE), topLeft = Offset(w * .17f, h * .72f), size = Size(w * .17f, h * .08f))
-        val roadPaths = listOf(
-            Path().apply { moveTo(-w * .1f, h * .12f); cubicTo(w * .20f, h * .22f, w * .26f, h * .40f, w * .55f, h * .47f); cubicTo(w * .78f, h * .53f, w * .82f, h * .71f, w * 1.1f, h * .78f) },
-            Path().apply { moveTo(w * .53f, -h * .05f); cubicTo(w * .46f, h * .22f, w * .69f, h * .39f, w * .53f, h * .59f); cubicTo(w * .43f, h * .77f, w * .62f, h * .88f, w * .56f, h * 1.05f) },
-            Path().apply { moveTo(-w * .05f, h * .34f); cubicTo(w * .30f, h * .31f, w * .66f, h * .39f, w * 1.05f, h * .30f) },
-            Path().apply { moveTo(-w * .05f, h * .66f); cubicTo(w * .27f, h * .58f, w * .72f, h * .73f, w * 1.05f, h * .61f) },
-            Path().apply { moveTo(-w * .05f, h * .87f); cubicTo(w * .32f, h * .92f, w * .66f, h * .80f, w * 1.05f, h * .89f) },
-            Path().apply { moveTo(w * .14f, -h * .03f); cubicTo(w * .20f, h * .30f, w * .06f, h * .63f, w * .19f, h * 1.04f) },
-            Path().apply { moveTo(w * .84f, -h * .04f); cubicTo(w * .78f, h * .28f, w * .98f, h * .51f, w * .81f, h * 1.04f) },
-        )
-        roadPaths.forEach { path ->
-            drawPath(path, Color(0xFFFAFBFC), style = Stroke(width = 25f, cap = StrokeCap.Round))
-            drawPath(path, Color(0xFFC6D0D5), style = Stroke(width = 17f, cap = StrokeCap.Round))
-            drawPath(path, Color(0xFFE9EDEF), style = Stroke(width = 12f, cap = StrokeCap.Round))
-        }
-        drawLine(Color(0xFFB7E6DD), Offset(w * .05f, h * .52f), Offset(w * .94f, h * .48f), strokeWidth = 5f)
-        for (index in 0..11) {
-            val x = (index % 4) * w / 4f + w * .08f
-            val y = (index / 4) * h / 3.5f + h * .14f
-            drawCircle(Color(0xFFCCD8D7), radius = 2f, center = Offset(x, y))
-        }
-    }
-}
-
-@Composable
-private fun ReportPin(report: CommunityReport, selected: Boolean, modifier: Modifier, onClick: () -> Unit) {
-    val icon = when (report.kind) {
-        ReportKind.SECURITY -> Icons.Default.Warning
-        ReportKind.ROAD -> Icons.Default.Build
-        ReportKind.COMMUNITY -> Icons.Default.Groups
-    }
-    Column(modifier = modifier.clickable(onClick = onClick), horizontalAlignment = Alignment.CenterHorizontally) {
-        Surface(
-            modifier = Modifier.size(if (selected) 39.dp else 34.dp).border(2.dp, Color.White, CircleShape),
-            shape = CircleShape,
-            color = report.kind.color,
-            shadowElevation = 5.dp,
-        ) {
-            Box(contentAlignment = Alignment.Center) {
-                Icon(icon, contentDescription = report.title, tint = Color.White, modifier = Modifier.size(18.dp))
-            }
-        }
-        Surface(color = VozNavy.copy(alpha = .9f), shape = RoundedCornerShape(5.dp)) {
-            Text(report.place, modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp), color = Color.White, fontSize = 7.sp, maxLines = 1)
-        }
-    }
-}
-
-@Composable
 private fun MapControl(icon: ImageVector, label: String, onClick: () -> Unit) {
     Surface(
         modifier = Modifier.size(38.dp).clickable(onClick = onClick),
@@ -485,38 +394,4 @@ private fun SelectedReportCard(report: CommunityReport, modifier: Modifier, onCl
             }
         }
     }
-}
-
-@Composable
-private fun CreateReportDialog(onDismiss: () -> Unit, onCreate: (String, String, ReportKind) -> Unit) {
-    var title by rememberSaveable { mutableStateOf("") }
-    var description by rememberSaveable { mutableStateOf("") }
-    var kind by rememberSaveable { mutableStateOf(ReportKind.SECURITY) }
-    var error by rememberSaveable { mutableStateOf("") }
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Crear reporte", color = VozNavy, fontWeight = FontWeight.Bold) },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.verticalScroll(rememberScrollState())) {
-                Text("Ayuda a tu comunidad compartiendo una situación cercana.", color = VozMuted, fontSize = 12.sp)
-                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                    ReportKind.values().forEach { option ->
-                        FilterChip(
-                            selected = kind == option,
-                            onClick = { kind = option },
-                            label = { Text(option.label, fontSize = 9.sp) },
-                        )
-                    }
-                }
-                OutlinedTextField(value = title, onValueChange = { title = it; error = "" }, label = { Text("Título") }, singleLine = true)
-            }
-        },
-        confirmButton = {
-            Button(onClick = {
-                if (title.isBlank()) error = "Escribe un título"
-                else { onCreate(title, description, kind); onDismiss() }
-            }) { Text("Crear") }
-        },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancelar") } },
-    )
 }
