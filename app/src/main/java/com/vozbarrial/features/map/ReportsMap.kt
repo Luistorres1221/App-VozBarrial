@@ -28,6 +28,7 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.zIndex
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -114,156 +115,174 @@ fun ReportsMap(name: String, profilePhoto: String? = null, onSignOut: () -> Unit
     var showPoints by rememberSaveable { mutableStateOf(false) }
     var mapViewInstance by remember { mutableStateOf<MapView?>(null) }
 
-    Column(modifier = Modifier.fillMaxSize().background(VozBackground)) {
-        MapHeader(
-            name = name,
-            profilePhoto = profilePhoto,
-            reportCount = reports.size,
-            points = points,
-            onPoints = { onNavigate("badges") },
-            onNotifications = { onNavigate("activity") },
-            onSignOut = onSignOut,
-            onProfile = { onNavigate("profile") },
-        )
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 13.dp, vertical = 5.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Box {
-                Surface(
-                    modifier = Modifier.clickable { distanceMenu = true },
-                    shape = RoundedCornerShape(50),
-                    color = Color(0xFFF0F3F8),
-                ) {
-                    Row(Modifier.padding(horizontal = 10.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.LocationOn, null, tint = VozNavy, modifier = Modifier.size(14.dp))
-                        Spacer(Modifier.width(4.dp))
-                        Text("Distancia ($distance)⌄", fontSize = 10.sp, color = VozNavy, fontWeight = FontWeight.Medium)
+    Box(modifier = Modifier.fillMaxSize().background(VozBackground)) {
+        AndroidView(
+            modifier = Modifier.fillMaxSize(),
+            factory = { ctx ->
+                MapView(ctx).apply {
+                    setTileSource(TileSourceFactory.MAPNIK)
+                    setMultiTouchControls(true)
+                    setBuiltInZoomControls(false)
+                    controller.setZoom(14.0)
+                    controller.setCenter(GeoPoint(4.60971, -74.08175))
+
+                    val locationOverlay = MyLocationNewOverlay(GpsMyLocationProvider(ctx), this).apply {
+                        enableMyLocation()
+                        enableFollowLocation()
+                        val dotBitmap = android.graphics.Bitmap.createBitmap(48, 48, android.graphics.Bitmap.Config.ARGB_8888).apply {
+                            val canvas = android.graphics.Canvas(this)
+                            val paint = android.graphics.Paint().apply {
+                                color = android.graphics.Color.parseColor("#3188E8")
+                                isAntiAlias = true
+                            }
+                            canvas.drawCircle(24f, 24f, 22f, paint)
+                            paint.color = android.graphics.Color.WHITE
+                            canvas.drawCircle(24f, 24f, 10f, paint)
+                        }
+                        setPersonIcon(dotBitmap)
+                        setDirectionIcon(dotBitmap)
                     }
+                    overlays.add(locationOverlay)
+
+                    mapViewInstance = this
                 }
-                DropdownMenu(expanded = distanceMenu, onDismissRequest = { distanceMenu = false }) {
-                    listOf("500 m", "1.5 km", "3 km", "5 km").forEach { option ->
-                        DropdownMenuItem(
-                            text = { Text(option) },
-                            onClick = { distance = option; distanceMenu = false },
-                        )
+            },
+            update = { mapView ->
+                mapView.overlays.removeAll { it is Marker }
+                reports.filter { selectedKind == "TODOS" || it.kind.name == selectedKind }.forEach { report ->
+                    val marker = Marker(mapView).apply {
+                        position = GeoPoint(report.latitude, report.longitude)
+                        title = report.title
+                        snippet = report.description
+                        setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
+                        setOnMarkerClickListener { m, _ ->
+                            selectedReportId = report.id
+                            m.showInfoWindow()
+                            true
+                        }
                     }
+                    mapView.overlays.add(marker)
                 }
+                mapView.invalidate()
             }
-            Spacer(Modifier.weight(1f))
+        )
+
+        Column(
+            modifier = Modifier.fillMaxWidth().align(Alignment.TopCenter).zIndex(2f)
+        ) {
+            MapHeader(
+                name = name,
+                profilePhoto = profilePhoto,
+                reportCount = reports.size,
+                points = points,
+                onPoints = { onNavigate("badges") },
+                onNotifications = { onNavigate("activity") },
+                onSignOut = onSignOut,
+                onProfile = { onNavigate("profile") },
+            )
             Row(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(50))
-                    .clickable { radarActive = !radarActive }
-                    .padding(horizontal = 8.dp, vertical = 5.dp),
+                modifier = Modifier.fillMaxWidth().background(Color.White).padding(horizontal = 13.dp, vertical = 5.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Box(Modifier.size(7.dp).clip(CircleShape).background(if (radarActive) VozGreen else Color.Gray))
-                Spacer(Modifier.width(5.dp))
-                Text(if (radarActive) "Radar Activo" else "Radar Pausado", color = if (radarActive) VozGreen else VozMuted, fontSize = 10.sp, fontWeight = FontWeight.SemiBold)
+                Box {
+                    Surface(
+                        modifier = Modifier.clickable { distanceMenu = true },
+                        shape = RoundedCornerShape(50),
+                        color = Color(0xFFF0F3F8),
+                    ) {
+                        Row(Modifier.padding(horizontal = 10.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.LocationOn, null, tint = VozNavy, modifier = Modifier.size(14.dp))
+                            Spacer(Modifier.width(4.dp))
+                            Text("Distancia ($distance)⌄", fontSize = 10.sp, color = VozNavy, fontWeight = FontWeight.Medium)
+                        }
+                    }
+                    DropdownMenu(expanded = distanceMenu, onDismissRequest = { distanceMenu = false }) {
+                        listOf("500 m", "1.5 km", "3 km", "5 km").forEach { option ->
+                            DropdownMenuItem(
+                                text = { Text(option) },
+                                onClick = { distance = option; distanceMenu = false },
+                            )
+                        }
+                    }
+                }
+                Spacer(Modifier.weight(1f))
+                Row(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(50))
+                        .clickable { radarActive = !radarActive }
+                        .padding(horizontal = 8.dp, vertical = 5.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Box(Modifier.size(7.dp).clip(CircleShape).background(if (radarActive) VozGreen else Color.Gray))
+                    Spacer(Modifier.width(5.dp))
+                    Text(if (radarActive) "Radar Activo" else "Radar Pausado", color = if (radarActive) VozGreen else VozMuted, fontSize = 10.sp, fontWeight = FontWeight.SemiBold)
+                }
             }
         }
 
-        Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
-            AndroidView(
-                modifier = Modifier.fillMaxSize(),
-                factory = { ctx ->
-                    MapView(ctx).apply {
-                        setTileSource(TileSourceFactory.MAPNIK)
-                        setMultiTouchControls(true)
-                        controller.setZoom(14.0)
-                        controller.setCenter(GeoPoint(4.60971, -74.08175))
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .align(Alignment.TopCenter)
+                .padding(top = 118.dp, start = 9.dp, end = 9.dp)
+                .zIndex(2f),
+            horizontalArrangement = Arrangement.spacedBy(5.dp),
+        ) {
+            MapFilter("Todos", reports.size, selectedKind == "TODOS", Modifier.weight(1f)) { selectedKind = "TODOS" }
+            MapFilter("Seguridad", reports.count { it.kind == ReportKind.SECURITY }, selectedKind == "SECURITY", Modifier.weight(1f)) { selectedKind = "SECURITY" }
+            MapFilter("Vías & Baches", reports.count { it.kind == ReportKind.ROAD }, selectedKind == "ROAD", Modifier.weight(1.2f)) { selectedKind = "ROAD" }
+        }
 
-                        val locationOverlay = MyLocationNewOverlay(GpsMyLocationProvider(ctx), this).apply {
-                            enableMyLocation()
-                            enableFollowLocation()
-                            val dotBitmap = android.graphics.Bitmap.createBitmap(48, 48, android.graphics.Bitmap.Config.ARGB_8888).apply {
-                                val canvas = android.graphics.Canvas(this)
-                                val paint = android.graphics.Paint().apply {
-                                    color = android.graphics.Color.parseColor("#3188E8")
-                                    isAntiAlias = true
-                                }
-                                canvas.drawCircle(24f, 24f, 22f, paint)
-                                paint.color = android.graphics.Color.WHITE
-                                canvas.drawCircle(24f, 24f, 10f, paint)
-                            }
-                            setPersonIcon(dotBitmap)
-                            setDirectionIcon(dotBitmap)
-                        }
-                        overlays.add(locationOverlay)
-
-                        mapViewInstance = this
-                    }
-                },
-                update = { mapView ->
-                    mapView.overlays.removeAll { it is Marker }
-                    reports.filter { selectedKind == "TODOS" || it.kind.name == selectedKind }.forEach { report ->
-                        val marker = Marker(mapView).apply {
-                            position = GeoPoint(report.latitude, report.longitude)
-                            title = report.title
-                            snippet = report.description
-                            setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
-                            setOnMarkerClickListener { m, _ ->
-                                selectedReportId = report.id
-                                m.showInfoWindow()
-                                true
-                            }
-                        }
-                        mapView.overlays.add(marker)
-                    }
-                    mapView.invalidate()
+        Column(
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(top = 165.dp, end = 10.dp)
+                .zIndex(2f),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            MapControl(Icons.Default.Layers, "Capas", onClick = { selectedKind = "TODOS" })
+            MapControl(Icons.Default.MyLocation, "Mi ubicación", onClick = {
+                val myLoc = (mapViewInstance?.overlays?.firstOrNull { it is MyLocationNewOverlay } as? MyLocationNewOverlay)?.myLocation
+                if (myLoc != null) {
+                    mapViewInstance?.controller?.setCenter(myLoc)
+                    mapViewInstance?.controller?.setZoom(16.0)
+                } else {
+                    mapViewInstance?.controller?.setCenter(GeoPoint(4.60971, -74.08175))
+                    mapViewInstance?.controller?.setZoom(14.0)
                 }
+            })
+            MapControl(Icons.Default.Add, "Acercar", onClick = {
+                mapViewInstance?.controller?.zoomIn()
+            })
+            MapControl(Icons.Default.Remove, "Alejar", onClick = {
+                mapViewInstance?.controller?.zoomOut()
+            })
+        }
+
+        selectedReportId?.let { id -> reports.firstOrNull { it.id == id }?.let { report ->
+            SelectedReportCard(
+                report = report,
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(start = 12.dp, end = 12.dp, bottom = 76.dp)
+                    .zIndex(2f),
+                onClose = { selectedReportId = null },
             )
+        } }
 
-            Row(
-                modifier = Modifier.fillMaxWidth().align(Alignment.TopCenter).padding(horizontal = 9.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(5.dp),
-            ) {
-                MapFilter("Todos", reports.size, selectedKind == "TODOS", Modifier.weight(1f)) { selectedKind = "TODOS" }
-                MapFilter("Seguridad", reports.count { it.kind == ReportKind.SECURITY }, selectedKind == "SECURITY", Modifier.weight(1f)) { selectedKind = "SECURITY" }
-                MapFilter("Vías & Baches", reports.count { it.kind == ReportKind.ROAD }, selectedKind == "ROAD", Modifier.weight(1.2f)) { selectedKind = "ROAD" }
-            }
-
-            Column(
-                modifier = Modifier.align(Alignment.TopEnd).padding(top = 58.dp, end = 10.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                MapControl(Icons.Default.Layers, "Capas", onClick = { selectedKind = "TODOS" })
-                MapControl(Icons.Default.MyLocation, "Mi ubicación", onClick = {
-                    val myLoc = (mapViewInstance?.overlays?.firstOrNull { it is MyLocationNewOverlay } as? MyLocationNewOverlay)?.myLocation
-                    if (myLoc != null) {
-                        mapViewInstance?.controller?.setCenter(myLoc)
-                        mapViewInstance?.controller?.setZoom(16.0)
-                    } else {
-                        mapViewInstance?.controller?.setCenter(GeoPoint(4.60971, -74.08175))
-                        mapViewInstance?.controller?.setZoom(14.0)
-                    }
-                })
-                MapControl(Icons.Default.Add, "Acercar", onClick = {
-                    mapViewInstance?.controller?.zoomIn()
-                })
-                MapControl(Icons.Default.Remove, "Alejar", onClick = {
-                    mapViewInstance?.controller?.zoomOut()
-                })
-            }
-
-            selectedReportId?.let { id -> reports.firstOrNull { it.id == id }?.let { report ->
-                SelectedReportCard(
-                    report = report,
-                    modifier = Modifier.align(Alignment.BottomCenter).padding(start = 12.dp, end = 12.dp, bottom = 76.dp),
-                    onClose = { selectedReportId = null },
-                )
-            } }
-
-            Surface(
-                modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 13.dp).size(58.dp).clickable { onNavigate("createReport") },
-                shape = CircleShape,
-                color = Color(0xFF071C2D),
-                shadowElevation = 10.dp,
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(Icons.Default.Add, contentDescription = "Crear reporte", tint = Color.White, modifier = Modifier.size(29.dp))
-                }
+        Surface(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 13.dp)
+                .size(58.dp)
+                .clickable { onNavigate("createReport") }
+                .zIndex(2f),
+            shape = CircleShape,
+            color = Color(0xFF071C2D),
+            shadowElevation = 10.dp,
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Icon(Icons.Default.Add, contentDescription = "Crear reporte", tint = Color.White, modifier = Modifier.size(29.dp))
             }
         }
     }
