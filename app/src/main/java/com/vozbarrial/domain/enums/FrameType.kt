@@ -1,4 +1,4 @@
-package com.vozbarrial.domain
+package com.vozbarrial.domain.enums
 
 enum class FrameType(val frameName: String, val rarity: String, val cost: Int) {
     CLASICO_CIVICO("Clásico Cívico", "Básico", 0),

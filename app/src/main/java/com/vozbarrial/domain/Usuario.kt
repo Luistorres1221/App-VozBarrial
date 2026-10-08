@@ -1,5 +1,8 @@
 package com.vozbarrial.domain
 
+import com.vozbarrial.domain.enums.FrameType
+import com.vozbarrial.domain.enums.UserRole
+
 data class Usuario(
     val uid: String = "",
     val name: String = "",

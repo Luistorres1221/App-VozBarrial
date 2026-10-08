@@ -1,4 +1,4 @@
-package com.vozbarrial.domain
+package com.vozbarrial.domain.enums
 
 enum class UserRole(val value: String) {
     USUARIO("USUARIO"),
