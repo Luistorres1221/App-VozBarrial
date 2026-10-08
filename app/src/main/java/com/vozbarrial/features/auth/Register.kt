@@ -62,10 +62,11 @@ import com.vozbarrial.ui.theme.*
 fun Register(
     onBack: () -> Unit,
     onLoginClick: () -> Unit,
-    onCreateAccount: (name: String, email: String, password: String, (Boolean, String?) -> Unit) -> Unit,
+    onCreateAccount: (name: String, email: String, phone: String, password: String, (Boolean, String?) -> Unit) -> Unit,
 ) {
     var name by rememberSaveable { mutableStateOf("") }
     var email by rememberSaveable { mutableStateOf("") }
+    var phone by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
     var confirmation by rememberSaveable { mutableStateOf("") }
     var passwordVisible by rememberSaveable { mutableStateOf(false) }
@@ -171,7 +172,7 @@ fun Register(
                 }
                 if (error.isBlank()) {
                     loading = true
-                    onCreateAccount(name.trim(), cleanEmail, password) { ok, err ->
+                    onCreateAccount(name.trim(), cleanEmail, phone.trim(), password) { ok, err ->
                         loading = false
                         if (ok) {
                             onLoginClick()

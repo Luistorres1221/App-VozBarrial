@@ -1,5 +1,6 @@
 package com.vozbarrial.features.map
 
+import coil.compose.AsyncImage
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -89,7 +90,7 @@ private data class CommunityReport(
 )
 
 @Composable
-fun ReportsMap(name: String, onSignOut: () -> Unit, onNavigate: (String) -> Unit = {}, points: Int = 1450, submittedTitle: String? = null, submittedDescription: String? = null, submittedCategory: String? = null, submittedLatitude: Double? = null, submittedLongitude: Double? = null, onReportConsumed: () -> Unit = {}) {
+fun ReportsMap(name: String, profilePhoto: String? = null, onSignOut: () -> Unit, onNavigate: (String) -> Unit = {}, points: Int = 1450, submittedTitle: String? = null, submittedDescription: String? = null, submittedCategory: String? = null, submittedLatitude: Double? = null, submittedLongitude: Double? = null, onReportConsumed: () -> Unit = {}) {
     val reports = remember {
         mutableStateListOf(
             CommunityReport(1, "Alerta de seguridad", "Persona sospechosa reportada por vecinos.", "Parque Central", ReportKind.SECURITY, .43f, .27f),
@@ -126,6 +127,7 @@ fun ReportsMap(name: String, onSignOut: () -> Unit, onNavigate: (String) -> Unit
     Column(modifier = Modifier.fillMaxSize().background(VozBackground)) {
         MapHeader(
             name = name,
+            profilePhoto = profilePhoto,
             reportCount = reports.size,
             points = points,
             onPoints = { onNavigate("badges") },
@@ -245,6 +247,7 @@ fun ReportsMap(name: String, onSignOut: () -> Unit, onNavigate: (String) -> Unit
 @Composable
 private fun MapHeader(
     name: String,
+    profilePhoto: String? = null,
     reportCount: Int,
     points: Int,
     onPoints: () -> Unit,
@@ -259,7 +262,16 @@ private fun MapHeader(
     ) {
         Surface(shape = CircleShape, color = Color(0xFFDCEBE7), modifier = Modifier.size(35.dp).clickable(onClick = onProfile)) {
             Box(contentAlignment = Alignment.Center) {
-                Text(name.take(1).uppercase(), color = VozGreen, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                if (!profilePhoto.isNullOrBlank()) {
+                    AsyncImage(
+                        model = profilePhoto,
+                        contentDescription = "Foto de perfil",
+                        modifier = Modifier.fillMaxSize().clip(CircleShape),
+                        contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                    )
+                } else {
+                    Text(name.take(1).uppercase(), color = VozGreen, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                }
             }
         }
         Column(modifier = Modifier.weight(1f).clickable(onClick = onProfile)) {

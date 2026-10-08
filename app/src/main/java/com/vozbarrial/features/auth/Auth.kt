@@ -67,7 +67,7 @@ import com.vozbarrial.ui.theme.*
 fun Auth(
     onBack: () -> Unit,
     onLogin: (email: String, password: String, (Boolean) -> Unit) -> Unit,
-    onRegister: (name: String, email: String, password: String, (Boolean, String?) -> Unit) -> Unit,
+    onRegister: (name: String, email: String, phone: String, password: String, (Boolean, String?) -> Unit) -> Unit,
     onAuthenticated: (name: String) -> Unit,
     onAccountExists: (String) -> Boolean,
     onResetPassword: (String, String) -> Boolean,
@@ -94,11 +94,7 @@ fun Auth(
         Register(
             onBack = { registering = false; message = "" },
             onLoginClick = { registering = false; message = "¡Cuenta creada con éxito! Inicia sesión."; success = true },
-            onCreateAccount = { newName, newEmail, newPassword, onResult ->
-                onRegister(newName, newEmail, newPassword) { ok, err ->
-                    onResult(ok, err)
-                }
-            },
+            onCreateAccount = onRegister,
         )
         return
     }
@@ -213,7 +209,7 @@ fun Auth(
                             message = "Las contraseñas no coinciden."
                         } else if (registering) {
                             loading = true
-                            onRegister(name.trim(), cleanEmail, password) { ok, err ->
+                            onRegister(name.trim(), cleanEmail, "", password) { ok, err ->
                                 loading = false
                                 if (ok) {
                                     registering = false
