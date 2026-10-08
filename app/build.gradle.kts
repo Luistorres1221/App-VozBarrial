@@ -1,6 +1,7 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.plugin.compose")
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -32,6 +33,11 @@ dependencies {
     implementation("androidx.compose.material:material-icons-extended")
     implementation("androidx.fragment:fragment-ktx:1.9.1")
     debugImplementation("androidx.compose.ui:ui-tooling")
+
+    // Firebase BoM
+    implementation(platform("com.google.firebase:firebase-bom:33.8.0"))
+    implementation("com.google.firebase:firebase-auth-ktx")
+    implementation("com.google.firebase:firebase-firestore-ktx")
 }
 
 

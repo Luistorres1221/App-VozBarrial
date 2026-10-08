@@ -32,9 +32,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.vozbarrial.ui.theme.*
 
-private val Navy = Color(0xFF12395A)
-private val Green = Color(0xFF35C98B)
 private val Gold = Color(0xFFF4B942)
 
 /** Pantalla inicial de VozBarrial. Conecta [onLoginClick] con la ruta de inicio de sesión. */
@@ -70,7 +69,7 @@ fun Welcome(
                 Box(
                     modifier = Modifier
                         .size(64.dp)
-                        .background(Navy, CircleShape),
+                        .background(VozNavy, CircleShape),
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(
@@ -89,13 +88,13 @@ fun Welcome(
                     ) {
                         Icon(Icons.Filled.Check, contentDescription = null, tint = Color.White, modifier = Modifier.size(14.dp))
                     }
-                    Box(Modifier.align(Alignment.BottomStart).padding(start = 17.dp, bottom = 12.dp).size(6.dp).background(Green, CircleShape))
+                    Box(Modifier.align(Alignment.BottomStart).padding(start = 17.dp, bottom = 12.dp).size(6.dp).background(VozGreen, CircleShape))
                     Box(Modifier.align(Alignment.BottomEnd).padding(end = 17.dp, bottom = 12.dp).size(6.dp).background(Gold, CircleShape))
                 }
             }
 
             Spacer(Modifier.height(18.dp))
-            Text("VozBarrial", color = Navy, fontSize = 27.sp, fontWeight = FontWeight.Bold)
+            Text("VozBarrial", color = VozNavy, fontSize = 27.sp, fontWeight = FontWeight.Bold)
             Spacer(Modifier.height(3.dp))
             Text("Red Cívica Vecinal", color = Color(0xFF52606D), fontSize = 16.sp)
             Spacer(Modifier.height(14.dp))
@@ -105,7 +104,7 @@ fun Welcome(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                 ) {
-                    Box(Modifier.size(7.dp).background(Green, CircleShape))
+                    Box(Modifier.size(7.dp).background(VozGreen, CircleShape))
                     Text("COMUNIDAD ACTIVA", color = Color(0xFF52606D), fontSize = 10.sp, fontWeight = FontWeight.SemiBold)
                 }
             }
@@ -119,7 +118,7 @@ fun Welcome(
                 onClick = onLoginClick,
                 modifier = Modifier.fillMaxWidth().height(54.dp).shadow(12.dp, RoundedCornerShape(12.dp)),
                 shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Navy),
+                colors = ButtonDefaults.buttonColors(containerColor = VozNavy),
             ) {
                 Text("Iniciar Sesión", fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
                 Spacer(Modifier.size(9.dp))
@@ -144,4 +143,3 @@ fun Welcome(
 private fun WelcomePreview() {
     Welcome(onLoginClick = {})
 }
-

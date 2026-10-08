@@ -28,10 +28,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-
-private val EditNavy=Color(0xFF001428)
-private val EditGreen=Color(0xFF006C49)
-private val EditBg=Color(0xFFF8F9FF)
+import com.vozbarrial.ui.theme.*
 
 @Composable
 fun EditProfile(name:String,phone:String,photo:String?,onCancel:()->Unit,onSave:(String,String,String?)->Unit) {
@@ -56,42 +53,42 @@ fun EditProfile(name:String,phone:String,photo:String?,onCancel:()->Unit,onSave:
   }
  }
  val bitmap=remember(photoUri){runCatching { photoUri?.let { context.contentResolver.openInputStream(Uri.parse(it))?.use(BitmapFactory::decodeStream)?.asImageBitmap() } }.getOrNull()}
- Column(Modifier.fillMaxSize().background(EditBg)) {
+ Column(Modifier.fillMaxSize().background(VozBackground)) {
   Row(Modifier.fillMaxWidth().background(Color.White).padding(horizontal=12.dp,vertical=9.dp),verticalAlignment=Alignment.CenterVertically) {
-   Text("‹",Modifier.clickable(onClick=onCancel).padding(horizontal=8.dp),fontSize=25.sp,color=EditNavy)
-   Surface(Modifier.size(25.dp),shape=CircleShape,color=EditNavy){Box(contentAlignment=Alignment.Center){Text("V",color=Color.White,fontWeight=FontWeight.Bold,fontSize=12.sp)}}
-   Text("Editar perfil",Modifier.weight(1f).padding(start=8.dp),fontSize=16.sp,fontWeight=FontWeight.SemiBold,color=EditNavy)
+   Text("‹",Modifier.clickable(onClick=onCancel).padding(horizontal=8.dp),fontSize=25.sp,color=VozNavy)
+   Surface(Modifier.size(25.dp),shape=CircleShape,color=VozNavy){Box(contentAlignment=Alignment.Center){Text("V",color=Color.White,fontWeight=FontWeight.Bold,fontSize=12.sp)}}
+   Text("Editar perfil",Modifier.weight(1f).padding(start=8.dp),fontSize=16.sp,fontWeight=FontWeight.SemiBold,color=VozNavy)
   }
   Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal=14.dp,vertical=10.dp),verticalArrangement=Arrangement.spacedBy(12.dp)) {
    Card(colors=CardDefaults.cardColors(containerColor=Color.White),shape=RoundedCornerShape(16.dp)) {
     Column(Modifier.fillMaxWidth().padding(12.dp),horizontalAlignment=Alignment.CenterHorizontally) {
      Box(Modifier.size(104.dp),contentAlignment=Alignment.BottomEnd) {
       if(bitmap!=null) Image(bitmap,contentDescription="Foto de perfil",modifier=Modifier.fillMaxSize().clip(CircleShape),contentScale=ContentScale.Crop)
-      else Surface(Modifier.fillMaxSize(),shape=CircleShape,color=Color(0xFFF8F9FF),shadowElevation=2.dp) {
-       Box(contentAlignment=Alignment.Center){Text(fullName,Modifier.padding(12.dp),textAlign=TextAlign.Center,color=EditNavy,fontSize=14.sp,fontWeight=FontWeight.Medium)}
+      else Surface(Modifier.fillMaxSize(),shape=CircleShape,color=VozBackground,shadowElevation=2.dp) {
+       Box(contentAlignment=Alignment.Center){Text(fullName,Modifier.padding(12.dp),textAlign=TextAlign.Center,color=VozNavy,fontSize=14.sp,fontWeight=FontWeight.Medium)}
       }
-      Surface(Modifier.size(34.dp).clickable{picker.launch(arrayOf("image/jpeg","image/png"))},shape=CircleShape,color=EditNavy,shadowElevation=3.dp) {
+      Surface(Modifier.size(34.dp).clickable{picker.launch(arrayOf("image/jpeg","image/png"))},shape=CircleShape,color=VozNavy,shadowElevation=3.dp) {
        Box(contentAlignment=Alignment.Center){Text("📷",fontSize=16.sp)}
       }
      }
      Spacer(Modifier.height(7.dp))
-     Text(fullName,color=EditNavy,fontSize=15.sp,fontWeight=FontWeight.Bold)
-     Text("Toca el ícono de cámara para actualizar tu foto (JPG o PNG, máx. 5MB)",Modifier.padding(top=2.dp),textAlign=TextAlign.Center,color=EditNavy,fontSize=10.sp,lineHeight=13.sp)
+     Text(fullName,color=VozNavy,fontSize=15.sp,fontWeight=FontWeight.Bold)
+     Text("Toca el ícono de cámara para actualizar tu foto (JPG o PNG, máx. 5MB)",Modifier.padding(top=2.dp),textAlign=TextAlign.Center,color=VozNavy,fontSize=10.sp,lineHeight=13.sp)
     }
    }
    Card(colors=CardDefaults.cardColors(containerColor=Color.White),shape=RoundedCornerShape(16.dp)) {
     Column(Modifier.fillMaxWidth().padding(13.dp),verticalArrangement=Arrangement.spacedBy(8.dp)) {
-     Text("♙  Datos Personales",color=EditNavy,fontSize=15.sp,fontWeight=FontWeight.Bold)
-     Text("NOMBRE COMPLETO",color=EditNavy,fontSize=10.sp,fontWeight=FontWeight.SemiBold)
-     OutlinedTextField(value=fullName,onValueChange={fullName=it},modifier=Modifier.fillMaxWidth().height(54.dp),singleLine=true,placeholder={Text("Nombre y apellidos",fontSize=12.sp)},leadingIcon={Text("♙",color=Color(0xFF68788B))},shape=RoundedCornerShape(12.dp),colors=OutlinedTextFieldDefaults.colors(focusedContainerColor=Color(0xFFEFF4FF),unfocusedContainerColor=Color(0xFFEFF4FF),focusedBorderColor=Color.Transparent,unfocusedBorderColor=Color.Transparent))
-     Text("TELÉFONO DE ALERTAS CIUDADANAS",color=EditNavy,fontSize=10.sp,fontWeight=FontWeight.SemiBold)
-     OutlinedTextField(value=phoneNumber,onValueChange={phoneNumber=it.filter{ch->ch.isDigit()||ch=='+'||ch==' '}.take(18)},modifier=Modifier.fillMaxWidth().height(54.dp),singleLine=true,placeholder={Text("+57 312 456 7890",fontSize=12.sp)},leadingIcon={Text("☎",color=Color(0xFF68788B))},shape=RoundedCornerShape(12.dp),colors=OutlinedTextFieldDefaults.colors(focusedContainerColor=Color(0xFFEFF4FF),unfocusedContainerColor=Color(0xFFEFF4FF),focusedBorderColor=Color.Transparent,unfocusedBorderColor=Color.Transparent))
+     Text("♙  Datos Personales",color=VozNavy,fontSize=15.sp,fontWeight=FontWeight.Bold)
+     Text("NOMBRE COMPLETO",color=VozNavy,fontSize=10.sp,fontWeight=FontWeight.SemiBold)
+     OutlinedTextField(value=fullName,onValueChange={fullName=it},modifier=Modifier.fillMaxWidth().height(54.dp),singleLine=true,placeholder={Text("Nombre y apellidos",fontSize=12.sp)},leadingIcon={Text("♙",color=Color(0xFF68788B))},shape=RoundedCornerShape(12.dp),colors=OutlinedTextFieldDefaults.colors(focusedContainerColor=VozBlueSurface,unfocusedContainerColor=VozBlueSurface,focusedBorderColor=Color.Transparent,unfocusedBorderColor=Color.Transparent))
+     Text("TELÉFONO DE ALERTAS CIUDADANAS",color=VozNavy,fontSize=10.sp,fontWeight=FontWeight.SemiBold)
+     OutlinedTextField(value=phoneNumber,onValueChange={phoneNumber=it.filter{ch->ch.isDigit()||ch=='+'||ch==' '}.take(18)},modifier=Modifier.fillMaxWidth().height(54.dp),singleLine=true,placeholder={Text("+57 312 456 7890",fontSize=12.sp)},leadingIcon={Text("☎",color=Color(0xFF68788B))},shape=RoundedCornerShape(12.dp),colors=OutlinedTextFieldDefaults.colors(focusedContainerColor=VozBlueSurface,unfocusedContainerColor=VozBlueSurface,focusedBorderColor=Color.Transparent,unfocusedBorderColor=Color.Transparent))
     }
    }
-   Button(onClick={val clean=fullName.trim();if(clean.split(Regex("\\s+")).size<2)error="Escribe tu nombre y apellido.";else{onSave(clean,phoneNumber.trim(),photoUri)}},modifier=Modifier.fillMaxWidth().height(48.dp),shape=RoundedCornerShape(11.dp),colors=ButtonDefaults.buttonColors(containerColor=EditNavy),elevation=ButtonDefaults.buttonElevation(defaultElevation=3.dp)){Text("▣  Guardar Cambios",color=Color.White,fontWeight=FontWeight.Bold,fontSize=14.sp)}
-   Surface(Modifier.fillMaxWidth().height(42.dp).clickable(onClick=onCancel),shape=RoundedCornerShape(11.dp),color=Color(0xFFEFF4FF)){Box(contentAlignment=Alignment.Center){Text("Cancelar Cambios",color=EditNavy,fontSize=14.sp)}}
+   Button(onClick={val clean=fullName.trim();if(clean.split(Regex("\\s+")).size<2)error="Escribe tu nombre y apellido.";else{onSave(clean,phoneNumber.trim(),photoUri)}},modifier=Modifier.fillMaxWidth().height(48.dp),shape=RoundedCornerShape(11.dp),colors=ButtonDefaults.buttonColors(containerColor=VozNavy),elevation=ButtonDefaults.buttonElevation(defaultElevation=3.dp)){Text("▣  Guardar Cambios",color=Color.White,fontWeight=FontWeight.Bold,fontSize=14.sp)}
+   Surface(Modifier.fillMaxWidth().height(42.dp).clickable(onClick=onCancel),shape=RoundedCornerShape(11.dp),color=VozBlueSurface){Box(contentAlignment=Alignment.Center){Text("Cancelar Cambios",color=VozNavy,fontSize=14.sp)}}
    Spacer(Modifier.height(6.dp))
   }
  }
- if(error.isNotBlank())AlertDialog(onDismissRequest={error=""},title={Text("Revisa los datos",color=EditNavy)},text={Text(error)},confirmButton={TextButton(onClick={error=""}){Text("Entendido",color=EditGreen)}})
+ if(error.isNotBlank())AlertDialog(onDismissRequest={error=""},title={Text("Revisa los datos",color=VozNavy)},text={Text(error)},confirmButton={TextButton(onClick={error=""}){Text("Entendido",color=VozGreen)}})
 }

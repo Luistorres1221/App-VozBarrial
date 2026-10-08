@@ -35,7 +35,6 @@ import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilterChip
@@ -70,11 +69,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.vozbarrial.ui.theme.*
 import java.util.Locale
-
-private val MapNavy = Color(0xFF102B45)
-private val MapGreen = Color(0xFF0B9B72)
-private val MapMuted = Color(0xFF68788B)
 
 private enum class ReportKind(val label: String, val color: Color) {
     SECURITY("Seguridad", Color(0xFFE34652)),
@@ -127,7 +123,7 @@ fun ReportsMap(name: String, onSignOut: () -> Unit, onNavigate: (String) -> Unit
     var zoom by remember { mutableStateOf(1f) }
     var mapPan by remember { mutableStateOf(Offset.Zero) }
 
-    Column(modifier = Modifier.fillMaxSize().background(Color(0xFFF5F7FA))) {
+    Column(modifier = Modifier.fillMaxSize().background(VozBackground)) {
         MapHeader(
             name = name,
             reportCount = reports.size,
@@ -148,9 +144,9 @@ fun ReportsMap(name: String, onSignOut: () -> Unit, onNavigate: (String) -> Unit
                     color = Color(0xFFF0F3F8),
                 ) {
                     Row(Modifier.padding(horizontal = 10.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.LocationOn, null, tint = MapNavy, modifier = Modifier.size(14.dp))
+                        Icon(Icons.Default.LocationOn, null, tint = VozNavy, modifier = Modifier.size(14.dp))
                         Spacer(Modifier.width(4.dp))
-                        Text("Distancia ($distance)⌄", fontSize = 10.sp, color = MapNavy, fontWeight = FontWeight.Medium)
+                        Text("Distancia ($distance)⌄", fontSize = 10.sp, color = VozNavy, fontWeight = FontWeight.Medium)
                     }
                 }
                 DropdownMenu(expanded = distanceMenu, onDismissRequest = { distanceMenu = false }) {
@@ -170,9 +166,9 @@ fun ReportsMap(name: String, onSignOut: () -> Unit, onNavigate: (String) -> Unit
                     .padding(horizontal = 8.dp, vertical = 5.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Box(Modifier.size(7.dp).clip(CircleShape).background(if (radarActive) MapGreen else Color.Gray))
+                Box(Modifier.size(7.dp).clip(CircleShape).background(if (radarActive) VozGreen else Color.Gray))
                 Spacer(Modifier.width(5.dp))
-                Text(if (radarActive) "Radar Activo" else "Radar Pausado", color = if (radarActive) MapGreen else MapMuted, fontSize = 10.sp, fontWeight = FontWeight.SemiBold)
+                Text(if (radarActive) "Radar Activo" else "Radar Pausado", color = if (radarActive) VozGreen else VozMuted, fontSize = 10.sp, fontWeight = FontWeight.SemiBold)
             }
         }
 
@@ -231,7 +227,7 @@ fun ReportsMap(name: String, onSignOut: () -> Unit, onNavigate: (String) -> Unit
     if (showNotifications) {
         AlertDialog(
             onDismissRequest = { showNotifications = false },
-            title = { Text("Notificaciones", color = MapNavy) },
+            title = { Text("Notificaciones", color = VozNavy) },
             text = { Text("Tienes ${reports.count { it.kind == ReportKind.SECURITY }} alerta de seguridad en tu zona y ${reports.size} reportes comunitarios activos.") },
             confirmButton = { TextButton(onClick = { showNotifications = false }) { Text("Listo") } },
         )
@@ -239,7 +235,7 @@ fun ReportsMap(name: String, onSignOut: () -> Unit, onNavigate: (String) -> Unit
     if (showPoints) {
         AlertDialog(
             onDismissRequest = { showPoints = false },
-            title = { Text("Mis puntos vecinales", color = MapNavy) },
+            title = { Text("Mis puntos vecinales", color = VozNavy) },
             text = { Text("Tienes $points puntos. Puedes ganar más reportando situaciones y participando en tu comunidad.") },
             confirmButton = { TextButton(onClick = { showPoints = false }) { Text("Entendido") } },
         )
@@ -263,12 +259,12 @@ private fun MapHeader(
     ) {
         Surface(shape = CircleShape, color = Color(0xFFDCEBE7), modifier = Modifier.size(35.dp).clickable(onClick = onProfile)) {
             Box(contentAlignment = Alignment.Center) {
-                Text(name.take(1).uppercase(), color = MapGreen, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                Text(name.take(1).uppercase(), color = VozGreen, fontWeight = FontWeight.Bold, fontSize = 16.sp)
             }
         }
         Column(modifier = Modifier.weight(1f).clickable(onClick = onProfile)) {
-            Text("¡Hola, ${name.substringBefore('%').substringBefore(' ')}!", color = MapNavy, fontWeight = FontWeight.Bold, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Text("Nivel 3 · Guardián", color = MapGreen, fontSize = 9.sp, fontWeight = FontWeight.Medium)
+            Text("¡Hola, ${name.substringBefore('%').substringBefore(' ')}!", color = VozNavy, fontWeight = FontWeight.Bold, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text("Nivel 3 · Guardián", color = VozGreen, fontSize = 9.sp, fontWeight = FontWeight.Medium)
         }
         Surface(
             modifier = Modifier.clickable(onClick = onPoints),
@@ -279,7 +275,7 @@ private fun MapHeader(
         }
         IconButton(onClick = onNotifications, modifier = Modifier.size(34.dp)) {
             Box(contentAlignment = Alignment.TopEnd) {
-                Icon(Icons.Default.Notifications, contentDescription = "Notificaciones", tint = MapNavy, modifier = Modifier.size(21.dp))
+                Icon(Icons.Default.Notifications, contentDescription = "Notificaciones", tint = VozNavy, modifier = Modifier.size(21.dp))
                 Box(Modifier.size(7.dp).clip(CircleShape).background(Color(0xFFE35454)))
             }
         }
@@ -302,7 +298,7 @@ private fun MapFilter(text: String, count: Int, selected: Boolean, modifier: Mod
             if (text == "Seguridad") Icon(Icons.Default.Warning, null, tint = if (selected) Color(0xFFFF6B66) else Color(0xFFE34C51), modifier = Modifier.size(12.dp))
             if (text == "Vías & Baches") Icon(Icons.Default.Build, null, tint = if (selected) Color(0xFFFFBD67) else Color(0xFFF19A42), modifier = Modifier.size(12.dp))
             if (text != "Todos") Spacer(Modifier.width(3.dp))
-            Text("$text ($count)", color = if (selected) Color.White else MapNavy, fontSize = 9.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
+            Text("$text ($count)", color = if (selected) Color.White else VozNavy, fontSize = 9.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
         }
     }
 }
@@ -334,10 +330,10 @@ private fun InteractiveMap(
             CityArtwork(Modifier.fillMaxSize())
             MapPlace("AEROPUERTO", .40f, .09f, mapWidth, mapHeight)
             MapPlace("Universidad", .11f, .21f, mapWidth, mapHeight, Color(0xFF718296))
-            MapPlace("Parque Central", .12f, .40f, mapWidth, mapHeight, MapGreen)
+            MapPlace("Parque Central", .12f, .40f, mapWidth, mapHeight, VozGreen)
             MapPlace("Easy Shopping", .57f, .37f, mapWidth, mapHeight, Color(0xFF3682C5))
-            MapPlace("Parque Las Heras", .57f, .62f, mapWidth, mapHeight, MapGreen)
-            MapPlace("Villa del Río", .13f, .69f, mapWidth, mapHeight, MapGreen)
+            MapPlace("Parque Las Heras", .57f, .62f, mapWidth, mapHeight, VozGreen)
+            MapPlace("Villa del Río", .13f, .69f, mapWidth, mapHeight, VozGreen)
             MapPlace("Centro", .57f, .84f, mapWidth, mapHeight, Color(0xFF718296))
 
             Box(
@@ -431,7 +427,7 @@ private fun ReportPin(report: CommunityReport, selected: Boolean, modifier: Modi
                 Icon(icon, contentDescription = report.title, tint = Color.White, modifier = Modifier.size(18.dp))
             }
         }
-        Surface(color = MapNavy.copy(alpha = .9f), shape = RoundedCornerShape(5.dp)) {
+        Surface(color = VozNavy.copy(alpha = .9f), shape = RoundedCornerShape(5.dp)) {
             Text(report.place, modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp), color = Color.White, fontSize = 7.sp, maxLines = 1)
         }
     }
@@ -446,7 +442,7 @@ private fun MapControl(icon: ImageVector, label: String, onClick: () -> Unit) {
         shadowElevation = 3.dp,
     ) {
         Box(contentAlignment = Alignment.Center) {
-            Icon(icon, contentDescription = label, tint = MapNavy, modifier = Modifier.size(19.dp))
+            Icon(icon, contentDescription = label, tint = VozNavy, modifier = Modifier.size(19.dp))
         }
     }
 }
@@ -465,12 +461,12 @@ private fun SelectedReportCard(report: CommunityReport, modifier: Modifier, onCl
             }
             Spacer(Modifier.width(9.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text(report.title, color = MapNavy, fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                Text("${report.kind.label} · ${report.place}", color = MapMuted, fontSize = 9.sp)
-                Text(report.description, color = MapNavy, fontSize = 10.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                Text(report.title, color = VozNavy, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                Text("${report.kind.label} · ${report.place}", color = VozMuted, fontSize = 9.sp)
+                Text(report.description, color = VozNavy, fontSize = 10.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
             }
             IconButton(onClick = onClose, modifier = Modifier.size(30.dp)) {
-                Icon(Icons.Default.Close, contentDescription = "Cerrar detalle", tint = MapMuted, modifier = Modifier.size(17.dp))
+                Icon(Icons.Default.Close, contentDescription = "Cerrar detalle", tint = VozMuted, modifier = Modifier.size(17.dp))
             }
         }
     }
@@ -484,10 +480,10 @@ private fun CreateReportDialog(onDismiss: () -> Unit, onCreate: (String, String,
     var error by rememberSaveable { mutableStateOf("") }
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Crear reporte", color = MapNavy, fontWeight = FontWeight.Bold) },
+        title = { Text("Crear reporte", color = VozNavy, fontWeight = FontWeight.Bold) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.verticalScroll(rememberScrollState())) {
-                Text("Ayuda a tu comunidad compartiendo una situación cercana.", color = MapMuted, fontSize = 12.sp)
+                Text("Ayuda a tu comunidad compartiendo una situación cercana.", color = VozMuted, fontSize = 12.sp)
                 Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                     ReportKind.values().forEach { option ->
                         FilterChip(
@@ -498,18 +494,13 @@ private fun CreateReportDialog(onDismiss: () -> Unit, onCreate: (String, String,
                     }
                 }
                 OutlinedTextField(value = title, onValueChange = { title = it; error = "" }, label = { Text("Título") }, singleLine = true)
-                OutlinedTextField(value = description, onValueChange = { description = it; error = "" }, label = { Text("Descripción") }, minLines = 2)
-                if (error.isNotBlank()) Text(error, color = Color(0xFFB42318), fontSize = 11.sp)
             }
         },
         confirmButton = {
-            Button(
-                onClick = {
-                    if (title.isBlank() || description.isBlank()) error = "Completa el título y la descripción."
-                    else onCreate(title.trim(), description.trim(), kind)
-                },
-                colors = ButtonDefaults.buttonColors(containerColor = MapNavy),
-            ) { Text("Publicar") }
+            Button(onClick = {
+                if (title.isBlank()) error = "Escribe un título"
+                else { onCreate(title, description, kind); onDismiss() }
+            }) { Text("Crear") }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Cancelar") } },
     )

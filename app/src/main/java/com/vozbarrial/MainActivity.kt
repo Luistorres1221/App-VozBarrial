@@ -3,7 +3,6 @@ package com.vozbarrial
 import android.os.Bundle
 import android.util.Base64
 import androidx.activity.compose.setContent
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -12,6 +11,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
 import androidx.fragment.app.FragmentActivity
+import com.vozbarrial.ui.theme.VozBarrialTheme
 import com.vozbarrial.features.auth.Auth
 import com.vozbarrial.features.dashboard.CommunityPage
 import com.vozbarrial.features.dashboard.EditProfile
@@ -31,7 +31,7 @@ class MainActivity : FragmentActivity() {
         setContent {
             val baseDensity = LocalDensity.current
             CompositionLocalProvider(LocalDensity provides Density(baseDensity.density, baseDensity.fontScale * 1.10f)) {
-            MaterialTheme {
+            VozBarrialTheme {
                 var screen by rememberSaveable { mutableStateOf("com/vozbarrial/features/welcome") }
                 var signedInName by rememberSaveable { mutableStateOf("") }
                 var signedInEmail by rememberSaveable { mutableStateOf("") }
@@ -78,25 +78,21 @@ class MainActivity : FragmentActivity() {
         return true
     }
 
-    private fun createAccount(name: String, email: String, password: String): Boolean {
-        val key = accountKey(email)
-        if (accounts.contains("${key}_hash")) return false
-        val salt = ByteArray(16).also { SecureRandom().nextBytes(it) }
-        accounts.edit()
-            .putString("${key}_name", name)
-            .putString("${key}_salt", Base64.encodeToString(salt, Base64.NO_WRAP))
-            .putString("${key}_hash", passwordHash(salt, password))
-            .apply()
-        return true
+    private fun createAccount(name: String, email: String, password: String, onResult: (Boolean, String?) -> Unit) {
+        com.google.firebase.auth.FirebaseAuth.getInstance().createUserWithEmailAndPassword(email, password)
+            .addOnSuccessListener { authResult ->
+                val uid = authResult.user?.uid ?: ""
+                val usuario = com.vozbarrial.domain.Usuario(uid = uid, name = name, email = email)
+                com.google.firebase.firestore.FirebaseFirestore.getInstance().collection("usuarios").document(uid).set(usuario)
+                onResult(true, null)
+            }
+            .addOnFailureListener { e -> onResult(false, e.localizedMessage) }
     }
 
-    private fun verifyAccount(email: String, password: String): Boolean {
-        val key = accountKey(email)
-        val saltText = accounts.getString("${key}_salt", null) ?: return false
-        val expected = accounts.getString("${key}_hash", null) ?: return false
-        val salt = Base64.decode(saltText, Base64.NO_WRAP)
-        val actual = passwordHash(salt, password)
-        return MessageDigest.isEqual(expected.toByteArray(), actual.toByteArray())
+    private fun verifyAccount(email: String, password: String, onResult: (Boolean) -> Unit) {
+        com.google.firebase.auth.FirebaseAuth.getInstance().signInWithEmailAndPassword(email, password)
+            .addOnSuccessListener { onResult(true) }
+            .addOnFailureListener { onResult(false) }
     }
 
     private fun displayName(email: String): String {
