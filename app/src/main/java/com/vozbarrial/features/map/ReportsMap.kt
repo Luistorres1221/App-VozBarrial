@@ -45,6 +45,7 @@ import org.osmdroid.views.overlay.Marker
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider
 import com.vozbarrial.ui.theme.*
+import com.vozbarrial.domain.Reporte
 import java.util.Locale
 
 private enum class ReportKind(val label: String, val color: Color) {
@@ -64,14 +65,23 @@ private data class CommunityReport(
 )
 
 @Composable
-fun ReportsMap(name: String, profilePhoto: String? = null, onSignOut: () -> Unit, onNavigate: (String) -> Unit = {}, points: Int = 1450) {
+fun ReportsMap(name: String, profilePhoto: String? = null, onSignOut: () -> Unit, onNavigate: (String) -> Unit = {}, points: Int = 1450, communityReports: List<Reporte> = emptyList()) {
     val context = LocalContext.current
     remember {
         Configuration.getInstance().load(context, context.getSharedPreferences("osm_prefs", Context.MODE_PRIVATE))
         true
     }
 
-    val reports = remember { mutableStateListOf<CommunityReport>() }
+    val reports = remember(communityReports) {
+        communityReports.map { report ->
+            val kind = when {
+                report.category.contains("seguridad", true) || report.category.contains("Emergencias", true) -> ReportKind.SECURITY
+                report.category.contains("vías", true) || report.category.contains("infraestructura", true) -> ReportKind.ROAD
+                else -> ReportKind.COMMUNITY
+            }
+            CommunityReport(report.id, report.title, report.description, report.place, kind, report.latitude, report.longitude)
+        }
+    }
 
     val locationPermissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -84,25 +94,6 @@ fun ReportsMap(name: String, profilePhoto: String? = null, onSignOut: () -> Unit
                 android.Manifest.permission.ACCESS_COARSE_LOCATION
             )
         )
-        com.google.firebase.firestore.FirebaseFirestore.getInstance()
-            .collection("reportes")
-            .addSnapshotListener { snapshot, e ->
-                if (e != null) return@addSnapshotListener
-                if (snapshot != null) {
-                    reports.clear()
-                    for (doc in snapshot.documents) {
-                        val r = doc.toObject(com.vozbarrial.domain.Reporte::class.java)
-                        if (r != null) {
-                            val kind = when {
-                                r.category.contains("seguridad", true) || r.category.contains("Emergencias", true) -> ReportKind.SECURITY
-                                r.category.contains("vías", true) || r.category.contains("infraestructura", true) -> ReportKind.ROAD
-                                else -> ReportKind.COMMUNITY
-                            }
-                            reports.add(CommunityReport(r.id, r.title, r.description, r.place, kind, r.latitude, r.longitude))
-                        }
-                    }
-                }
-            }
     }
 
     var selectedKind by rememberSaveable { mutableStateOf("TODOS") }

@@ -7,7 +7,10 @@ data class Reporte(
     val place: String = "",
     val category: String = "",
     val authorEmail: String = "",
+    val authorUid: String = "",
+    val imageUrl: String? = null,
     val latitude: Double = 0.0,
     val longitude: Double = 0.0,
+    val status: String = "ACTIVO",
     val timestamp: Long = System.currentTimeMillis()
 )

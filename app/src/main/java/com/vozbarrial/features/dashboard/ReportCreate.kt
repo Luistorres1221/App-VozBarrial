@@ -5,6 +5,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import android.Manifest
 import android.content.Context
+import android.net.Uri
 import android.content.pm.PackageManager
 import android.location.Location
 import android.location.LocationListener
@@ -55,8 +56,8 @@ private val reportCategories = listOf(
  ReportCategory("Comunidad y Entorno","Basuras, polución o ruido excesivo","♧"),
  ReportCategory("Alumbrado y Servicios","Postes sin luz, fugas de agua o gas","♧"),
 )
-@Composable fun ReportCreate(name:String,onBack:()->Unit,onPublish:(String,String,String,Double,Double)->Unit){
- var category by rememberSaveable{mutableStateOf("Seguridad")}; var menu by remember{mutableStateOf(false)}
+@Composable fun ReportCreate(name:String,onBack:()->Unit,onPublish:(String,String,String,Double,Double,Uri,(Boolean,String?)->Unit)->Unit){
+ var category by rememberSaveable{mutableStateOf("Seguridad")}; var menu by remember{mutableStateOf(false)}; var publishing by rememberSaveable{mutableStateOf(false)}
  var title by rememberSaveable{mutableStateOf("")}; var description by rememberSaveable{mutableStateOf("")}; var photo by rememberSaveable{mutableStateOf<String?>(null)}; var error by rememberSaveable{mutableStateOf("")}
  var latitude by rememberSaveable { mutableDoubleStateOf(4.60971) }; var longitude by rememberSaveable { mutableDoubleStateOf(-74.08175) }; var gpsActive by rememberSaveable { mutableStateOf(false) }; var locationSelected by rememberSaveable { mutableStateOf(false) }; var showMapPicker by rememberSaveable { mutableStateOf(false) }; var locationMessage by rememberSaveable { mutableStateOf("") }; val context = LocalContext.current
  val picker= rememberLauncherForActivityResult(ActivityResultContracts.GetContent()){photo=it?.toString();error=""}
@@ -141,7 +142,7 @@ private val reportCategories = listOf(
    }
    if(error.isNotBlank())Text(error,color=Color(0xFFB42318),fontSize=11.sp)
   }
-  Button(onClick={error=when{title.isBlank()->"Escribe un título para el reporte.";description.isBlank()->"Describe brevemente lo sucedido.";!locationSelected->"Usa el GPS o elige un punto en el mapa.";photo==null->"Adjunta al menos una fotografía como evidencia.";else->""};if(error.isBlank())onPublish(title.trim(),description.trim(),category,latitude,longitude)},Modifier.fillMaxWidth().padding(horizontal=10.dp,vertical=7.dp).height(49.dp),shape=RoundedCornerShape(9.dp),colors=ButtonDefaults.buttonColors(containerColor=VozNavy)){Icon(Icons.Default.Send,null);Spacer(Modifier.width(7.dp));Text("Publicar Reporte Ciudadano",fontWeight=FontWeight.Bold,fontSize=12.sp)}
+  Button(onClick={error=when{title.isBlank()->"Escribe un título para el reporte.";description.isBlank()->"Describe brevemente lo sucedido.";!locationSelected->"Usa el GPS o elige un punto en el mapa.";photo==null->"Adjunta al menos una fotografía como evidencia.";else->""};if(error.isBlank()&&!publishing){publishing=true;onPublish(title.trim(),description.trim(),category,latitude,longitude,Uri.parse(photo)){ok,message->publishing=false;if(!ok)error=message?:"No se pudo publicar el reporte."}}},enabled=!publishing,modifier=Modifier.fillMaxWidth().padding(horizontal=10.dp,vertical=7.dp).height(49.dp),shape=RoundedCornerShape(9.dp),colors=ButtonDefaults.buttonColors(containerColor=VozNavy)){if(publishing)CircularProgressIndicator(Modifier.size(19.dp),color=Color.White,strokeWidth=2.dp)else Icon(Icons.Default.Send,null);Spacer(Modifier.width(7.dp));Text(if(publishing)"Publicando…" else "Publicar Reporte Ciudadano",fontWeight=FontWeight.Bold,fontSize=12.sp)}
   if(showMapPicker) ReportMapPicker(latitude,longitude,onConfirm={lat,lon->latitude=lat;longitude=lon;gpsActive=false;locationSelected=true;locationMessage="Punto seleccionado en el mapa";showMapPicker=false},onDismiss={showMapPicker=false})
  }
 }

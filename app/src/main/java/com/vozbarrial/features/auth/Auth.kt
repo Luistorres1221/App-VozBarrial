@@ -49,6 +49,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -62,6 +64,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.vozbarrial.domain.auth.AuthOperationResult
+import com.vozbarrial.features.auth.presentation.viewmodel.AuthFormViewModel
 import com.vozbarrial.ui.theme.*
 
 @Composable
@@ -74,25 +77,27 @@ fun Auth(
 ) {
     var registering by rememberSaveable { mutableStateOf(false) }
     var name by rememberSaveable { mutableStateOf("") }
-    var email by rememberSaveable { mutableStateOf("") }
-    var password by rememberSaveable { mutableStateOf("") }
+    val formViewModel: AuthFormViewModel = viewModel()
+    val formState by formViewModel.uiState.collectAsStateWithLifecycle()
+    val email = formState.email
+    val password = formState.password
     var confirmPassword by rememberSaveable { mutableStateOf("") }
-    var passwordVisible by rememberSaveable { mutableStateOf(false) }
-    var message by rememberSaveable { mutableStateOf("") }
-    var success by rememberSaveable { mutableStateOf(false) }
-    var loading by rememberSaveable { mutableStateOf(false) }
-    var dialogMessage by rememberSaveable { mutableStateOf("") }
-    var showRecovery by rememberSaveable { mutableStateOf(false) }
+    val passwordVisible = formState.passwordVisible
+    val message = formState.message
+    val success = formState.success
+    val loading = formState.loading
+    val dialogMessage = formState.dialogMessage
+    val showRecovery = formState.showRecovery
 
     if (showRecovery) {
-        PasswordRecovery(onBack = { showRecovery = false }, onRequestPasswordReset = onRequestPasswordReset)
+        PasswordRecovery(onBack = { formViewModel.showRecovery(false) }, onRequestPasswordReset = onRequestPasswordReset)
         return
     }
 
     if (registering) {
         Register(
-            onBack = { registering = false; message = "" },
-            onLoginClick = { registering = false; message = "¡Cuenta creada con éxito! Inicia sesión."; success = true },
+            onBack = { registering = false; formViewModel.clearMessage() },
+            onLoginClick = { registering = false; formViewModel.showMessage("¡Cuenta creada con éxito! Inicia sesión.", true) },
             onCreateAccount = onRegister,
         )
         return
@@ -123,7 +128,7 @@ fun Auth(
                     FieldLabel("Nombre completo")
                     AuthField(
                         value = name,
-                        onValueChange = { name = it; message = "" },
+                        onValueChange = { name = it; formViewModel.clearMessage() },
                         placeholder = "Tu nombre",
                         leading = { Icon(Icons.Default.PersonAdd, null, tint = VozMuted, modifier = Modifier.size(17.dp)) },
                         keyboardType = KeyboardType.Text,
@@ -136,7 +141,7 @@ fun Auth(
                 }
                 AuthField(
                     value = email,
-                    onValueChange = { email = it; message = "" },
+                    onValueChange = formViewModel::updateEmail,
                     placeholder = "nombre@correo.com",
                     leading = { Icon(Icons.Default.MailOutline, null, tint = VozMuted, modifier = Modifier.size(17.dp)) },
                     keyboardType = KeyboardType.Email,
@@ -149,32 +154,32 @@ fun Auth(
                             "¿Olvidaste tu contraseña?",
                             color = Color(0xFF45628A),
                             fontSize = 10.sp,
-                            modifier = Modifier.clickable { showRecovery = true },
+                            modifier = Modifier.clickable { formViewModel.showRecovery(true) },
                         )
                     }
                 }
                 AuthField(
                     value = password,
-                    onValueChange = { password = it; message = "" },
+                    onValueChange = formViewModel::updatePassword,
                     placeholder = "Mínimo 6 caracteres",
                     leading = { Icon(Icons.Default.Lock, null, tint = VozMuted, modifier = Modifier.size(17.dp)) },
                     keyboardType = KeyboardType.Password,
                     password = true,
                     visible = passwordVisible,
-                    onToggleVisibility = { passwordVisible = !passwordVisible },
+                    onToggleVisibility = formViewModel::togglePasswordVisibility,
                 )
 
                 if (registering) {
                     FieldLabel("Confirmar contraseña")
                     AuthField(
                         value = confirmPassword,
-                        onValueChange = { confirmPassword = it; message = "" },
+                        onValueChange = { confirmPassword = it; formViewModel.clearMessage() },
                         placeholder = "Repite tu contraseña",
                         leading = { Icon(Icons.Default.Lock, null, tint = VozMuted, modifier = Modifier.size(17.dp)) },
                         keyboardType = KeyboardType.Password,
                         password = true,
                         visible = passwordVisible,
-                        onToggleVisibility = { passwordVisible = !passwordVisible },
+                        onToggleVisibility = formViewModel::togglePasswordVisibility,
                     )
                 } else {
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -196,38 +201,36 @@ fun Auth(
                 Button(
                     onClick = {
                         val cleanEmail = email.trim()
-                        message = ""
-                        success = false
+                        formViewModel.clearMessage()
                         if (!cleanEmail.matches(Regex("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$"))) {
-                            message = "Escribe un correo electrónico válido."
+                            formViewModel.showMessage("Escribe un correo electrónico válido.")
                         } else if (password.length < 6) {
-                            message = "La contraseña debe tener al menos 6 caracteres."
+                            formViewModel.showMessage("La contraseña debe tener al menos 6 caracteres.")
                         } else if (registering && name.isBlank()) {
-                            message = "Escribe tu nombre para continuar."
+                            formViewModel.showMessage("Escribe tu nombre para continuar.")
                         } else if (registering && password != confirmPassword) {
-                            message = "Las contraseñas no coinciden."
+                            formViewModel.showMessage("Las contraseñas no coinciden.")
                         } else if (registering) {
-                            loading = true
+                            formViewModel.setLoading(true)
                             onRegister(name.trim(), cleanEmail, "", password) { ok, err ->
-                                loading = false
+                                formViewModel.setLoading(false)
                                 if (ok) {
                                     registering = false
                                     confirmPassword = ""
-                                    password = ""
-                                    message = "¡Cuenta creada en Firebase! Ahora puedes iniciar sesión."
-                                    success = true
+                                    formViewModel.updatePassword("")
+                                    formViewModel.showMessage("¡Cuenta creada en Firebase! Ahora puedes iniciar sesión.", true)
                                 } else {
-                                    message = err ?: "Error al registrar la cuenta."
+                                    formViewModel.showMessage(err ?: "Error al registrar la cuenta.")
                                 }
                             }
                         } else {
-                            loading = true
+                            formViewModel.setLoading(true)
                             onLogin(cleanEmail, password) { ok ->
-                                loading = false
+                                formViewModel.setLoading(false)
                                 if (ok) {
                                     onAuthenticated(cleanEmail)
                                 } else {
-                                    message = "El correo o la contraseña no son correctos."
+                                    formViewModel.showMessage("El correo o la contraseña no son correctos.")
                                 }
                             }
                         }
@@ -250,7 +253,7 @@ fun Auth(
                     DividerLabel("O CONTINÚA CON")
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         OutlinedButton(
-                            onClick = { dialogMessage = "El acceso con Google estará disponible cuando conectemos el proveedor de autenticación." },
+                            onClick = { formViewModel.showDialog("El acceso con Google estará disponible cuando conectemos el proveedor de autenticación.") },
                             modifier = Modifier.weight(1f).height(42.dp),
                             shape = RoundedCornerShape(9.dp),
                         ) {
@@ -259,7 +262,7 @@ fun Auth(
                             Text("Google", color = VozNavy, fontSize = 11.sp)
                         }
                         OutlinedButton(
-                            onClick = { dialogMessage = "El acceso biométrico estará disponible cuando configuremos la autenticación segura del dispositivo." },
+                            onClick = { formViewModel.showDialog("El acceso biométrico estará disponible cuando configuremos la autenticación segura del dispositivo.") },
                             modifier = Modifier.weight(1f).height(42.dp),
                             shape = RoundedCornerShape(9.dp),
                         ) {
@@ -305,8 +308,7 @@ fun Auth(
                 Button(
                     onClick = {
                         registering = !registering
-                        message = ""
-                        success = false
+                        formViewModel.clearMessage()
                     },
                     contentPadding = PaddingValues(horizontal = 10.dp, vertical = 0.dp),
                     modifier = Modifier.height(34.dp),
@@ -331,10 +333,10 @@ fun Auth(
 
     if (dialogMessage.isNotBlank()) {
         AlertDialog(
-            onDismissRequest = { dialogMessage = "" },
+            onDismissRequest = { formViewModel.showDialog("") },
             title = { Text("VozBarrial", color = VozNavy) },
             text = { Text(dialogMessage) },
-            confirmButton = { TextButton(onClick = { dialogMessage = "" }) { Text("Entendido") } },
+            confirmButton = { TextButton(onClick = { formViewModel.showDialog("") }) { Text("Entendido") } },
         )
     }
 }

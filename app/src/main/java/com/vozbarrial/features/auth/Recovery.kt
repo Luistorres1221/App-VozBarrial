@@ -17,6 +17,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -31,6 +36,7 @@ import androidx.compose.ui.unit.sp
 import com.vozbarrial.R
 import com.vozbarrial.domain.auth.AuthError
 import com.vozbarrial.domain.auth.AuthOperationResult
+import com.vozbarrial.features.auth.presentation.viewmodel.RecoveryViewModel
 import com.vozbarrial.ui.theme.*
 
 @Composable
@@ -38,10 +44,12 @@ fun PasswordRecovery(
     onBack: () -> Unit,
     onRequestPasswordReset: (String, (AuthOperationResult<Unit>) -> Unit) -> Unit,
 ) {
-    var email by remember { mutableStateOf("") }
+    val recoveryViewModel: RecoveryViewModel = viewModel()
+    val state by recoveryViewModel.uiState.collectAsStateWithLifecycle()
     var message by remember { mutableStateOf("") }
     var isSending by remember { mutableStateOf(false) }
     var requestSucceeded by remember { mutableStateOf(false) }
+    val email = state.email
 
     Column(Modifier.fillMaxSize().background(VozBackground)) {
         Row(
@@ -157,10 +165,7 @@ fun PasswordRecovery(
             Spacer(Modifier.height(3.dp))
             OutlinedTextField(
                 value = email,
-                onValueChange = {
-                    email = it
-                    message = ""
-                },
+                onValueChange = recoveryViewModel::updateEmail,
                 modifier = Modifier.fillMaxWidth().height(56.dp),
                 placeholder = { Text("Escribe tu correo electrónico", fontSize = 12.sp) },
                 leadingIcon = { Icon(Icons.Default.Email, contentDescription = null, tint = VozNavy) },
