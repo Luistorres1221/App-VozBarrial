@@ -4,19 +4,20 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Transaction
 import com.vozbarrial.domain.Usuario
+import com.vozbarrial.domain.repository.StoreGateway
 
 class StoreRepository(
     private val auth: FirebaseAuth = FirebaseAuth.getInstance(),
     private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance(),
-) {
-    fun equip(frame: String, onResult: (Result<Unit>) -> Unit) {
+) : StoreGateway {
+    override fun equip(frame: String, onResult: (Result<Unit>) -> Unit) {
         val uid = auth.currentUser?.uid ?: return onResult(Result.failure(IllegalStateException("No hay una sesión activa.")))
         firestore.collection(USERS).document(uid).update("equippedFrame", frame)
             .addOnSuccessListener { onResult(Result.success(Unit)) }
             .addOnFailureListener { onResult(Result.failure(it)) }
     }
 
-    fun purchase(frame: String, cost: Int, onResult: (Result<Usuario>) -> Unit) {
+    override fun purchase(frame: String, cost: Int, onResult: (Result<Usuario>) -> Unit) {
         val uid = auth.currentUser?.uid ?: return onResult(Result.failure(IllegalStateException("No hay una sesión activa.")))
         val expectedCost = when {
             frame.startsWith("Guardi") -> 800

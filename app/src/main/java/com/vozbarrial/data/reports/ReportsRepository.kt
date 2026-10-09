@@ -6,15 +6,16 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.storage.FirebaseStorage
 import com.vozbarrial.domain.Reporte
+import com.vozbarrial.domain.repository.ReportsGateway
 
 class ReportsRepository(
     private val auth: FirebaseAuth = FirebaseAuth.getInstance(),
     private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance(),
     private val storage: FirebaseStorage = FirebaseStorage.getInstance(),
-) {
+) : ReportsGateway {
     private var listener: ListenerRegistration? = null
 
-    fun observeReports(onChange: (List<Reporte>) -> Unit) {
+    override fun observeReports(onChange: (List<Reporte>) -> Unit) {
         if (listener != null) return
         listener = firestore.collection(REPORTS).addSnapshotListener { snapshot, error ->
             if (error != null || snapshot == null) return@addSnapshotListener
@@ -22,9 +23,9 @@ class ReportsRepository(
         }
     }
 
-    fun stopObserving() { listener?.remove(); listener = null }
+    override fun stopObserving() { listener?.remove(); listener = null }
 
-    fun publish(report: Reporte, photoUri: Uri, onResult: (Result<Unit>) -> Unit) {
+    override fun publish(report: Reporte, photoUri: Uri, onResult: (Result<Unit>) -> Unit) {
         val ref = storage.reference.child("reportes/${report.id}/evidencia")
         ref.putFile(photoUri).continueWithTask { task ->
             if (!task.isSuccessful) throw (task.exception ?: IllegalStateException("No se pudo subir la evidencia."))
@@ -36,7 +37,7 @@ class ReportsRepository(
             .addOnFailureListener { onResult(Result.failure(it)) }
     }
 
-    fun update(reportId: String, title: String, description: String, onResult: (Result<Unit>) -> Unit) {
+    override fun update(reportId: String, title: String, description: String, onResult: (Result<Unit>) -> Unit) {
         val user = auth.currentUser ?: return onResult(Result.failure(IllegalStateException("No hay una sesión activa.")))
         val ref = firestore.collection(REPORTS).document(reportId)
         firestore.runTransaction { tx ->
@@ -49,7 +50,7 @@ class ReportsRepository(
             .addOnFailureListener { onResult(Result.failure(it)) }
     }
 
-    fun delete(reportId: String, onResult: (Result<Unit>) -> Unit) {
+    override fun delete(reportId: String, onResult: (Result<Unit>) -> Unit) {
         val user = auth.currentUser ?: return onResult(Result.failure(IllegalStateException("No hay una sesión activa.")))
         val ref = firestore.collection(REPORTS).document(reportId)
         firestore.runTransaction { tx ->

@@ -2,9 +2,9 @@ package com.vozbarrial.features.reports
 
 import android.net.Uri
 import androidx.lifecycle.ViewModel
-import com.vozbarrial.data.reports.ReportsRepository
 import com.vozbarrial.domain.Reporte
 import com.vozbarrial.domain.Usuario
+import com.vozbarrial.domain.repository.ReportsGateway
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -13,7 +13,7 @@ import java.util.UUID
 
 data class ReportsUiState(val reports: List<Reporte> = emptyList(), val error: String? = null)
 
-class ReportsViewModel(private val repository: ReportsRepository) : ViewModel() {
+class ReportsViewModel(private val repository: ReportsGateway) : ViewModel() {
     private val _uiState = MutableStateFlow(ReportsUiState())
     val uiState: StateFlow<ReportsUiState> = _uiState.asStateFlow()
 

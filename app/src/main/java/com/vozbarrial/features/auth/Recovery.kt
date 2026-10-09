@@ -14,12 +14,6 @@ import androidx.compose.material.icons.filled.Security
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.ui.Alignment
@@ -34,7 +28,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.vozbarrial.R
-import com.vozbarrial.domain.auth.AuthError
 import com.vozbarrial.domain.auth.AuthOperationResult
 import com.vozbarrial.features.auth.presentation.viewmodel.RecoveryViewModel
 import com.vozbarrial.ui.theme.*
@@ -46,9 +39,9 @@ fun PasswordRecovery(
 ) {
     val recoveryViewModel: RecoveryViewModel = viewModel()
     val state by recoveryViewModel.uiState.collectAsStateWithLifecycle()
-    var message by remember { mutableStateOf("") }
-    var isSending by remember { mutableStateOf(false) }
-    var requestSucceeded by remember { mutableStateOf(false) }
+    val message = state.message
+    val isSending = state.sending
+    val requestSucceeded = state.succeeded
     val email = state.email
 
     Column(Modifier.fillMaxSize().background(VozBackground)) {
@@ -196,30 +189,7 @@ fun PasswordRecovery(
             }
             Spacer(Modifier.height(9.dp))
             Button(
-                onClick = {
-                    message = ""
-                    val normalizedEmail = email.trim()
-                    if (!normalizedEmail.matches(Regex("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$"))) {
-                        message = "Escribe un correo válido."
-                    } else {
-                        isSending = true
-                        onRequestPasswordReset(normalizedEmail) { result ->
-                            isSending = false
-                            when (result) {
-                                is AuthOperationResult.Success -> {
-                                    requestSucceeded = true
-                                }
-                                is AuthOperationResult.Failure -> when (result.error) {
-                                    AuthError.AccountNotFound -> {
-                                        requestSucceeded = true
-                                    }
-                                    AuthError.NetworkUnavailable -> message = "No hay conexión. Verifica tu conexión e inténtalo de nuevo."
-                                    else -> message = "No se pudo completar la solicitud. Inténtalo de nuevo."
-                                }
-                            }
-                        }
-                    }
-                },
+                onClick = { recoveryViewModel.requestReset(onRequestPasswordReset) },
                 modifier = Modifier.fillMaxWidth().height(50.dp),
                 enabled = !isSending,
                 shape = RoundedCornerShape(8.dp),

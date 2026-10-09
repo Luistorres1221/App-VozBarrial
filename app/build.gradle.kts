@@ -20,7 +20,6 @@ android {
         compose = true
     }
 
-    sourceSets["main"].kotlin.srcDirs("src/main/java", "../features", "../navigation", "../domain")
 }
 
 dependencies {

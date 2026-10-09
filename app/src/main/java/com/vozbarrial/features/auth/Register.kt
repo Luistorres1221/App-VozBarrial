@@ -1,4 +1,4 @@
-﻿package com.vozbarrial.features.auth
+package com.vozbarrial.features.auth
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -42,9 +42,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -57,6 +56,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.vozbarrial.ui.theme.*
+import com.vozbarrial.features.auth.presentation.viewmodel.RegisterViewModel
 
 @Composable
 fun Register(
@@ -64,17 +64,19 @@ fun Register(
     onLoginClick: () -> Unit,
     onCreateAccount: (name: String, email: String, phone: String, password: String, (Boolean, String?) -> Unit) -> Unit,
 ) {
-    var name by rememberSaveable { mutableStateOf("") }
-    var email by rememberSaveable { mutableStateOf("") }
-    var phone by rememberSaveable { mutableStateOf("") }
-    var password by rememberSaveable { mutableStateOf("") }
-    var confirmation by rememberSaveable { mutableStateOf("") }
-    var passwordVisible by rememberSaveable { mutableStateOf(false) }
-    var acceptedTerms by rememberSaveable { mutableStateOf(true) }
-    var receiveAlerts by rememberSaveable { mutableStateOf(true) }
-    var error by rememberSaveable { mutableStateOf("") }
-    var showTerms by rememberSaveable { mutableStateOf(false) }
-    var loading by rememberSaveable { mutableStateOf(false) }
+    val registerViewModel: RegisterViewModel = viewModel()
+    val state by registerViewModel.uiState.collectAsStateWithLifecycle()
+    val name = state.name
+    val email = state.email
+    val phone = state.phone
+    val password = state.password
+    val confirmation = state.confirmation
+    val passwordVisible = state.passwordVisible
+    val acceptedTerms = state.acceptedTerms
+    val receiveAlerts = state.receiveAlerts
+    val error = state.error.orEmpty()
+    val showTerms = state.showTerms
+    val loading = state.loading
 
     Column(
         modifier = Modifier
@@ -84,13 +86,13 @@ fun Register(
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        RegisterHeader(onBack)
+        RegisterHeader(onBack = { registerViewModel.reset(); onBack() })
         Text("Únete a tu comunidad", color = VozNavy, fontSize = 26.sp, fontWeight = FontWeight.Bold)
 
         RegisterLabel("Nombre Completo")
         RegisterField(
             value = name,
-            onValueChange = { name = it; error = "" },
+            onValueChange = registerViewModel::updateName,
             placeholder = "ej. Carlos Mendoza",
             icon = { Icon(Icons.Default.Person, null, tint = VozMuted, modifier = Modifier.size(19.dp)) },
             keyboardType = KeyboardType.Text,
@@ -99,7 +101,7 @@ fun Register(
         RegisterLabel("Correo electrónico")
         RegisterField(
             value = email,
-            onValueChange = { email = it; error = "" },
+            onValueChange = registerViewModel::updateEmail,
             placeholder = "ej. carlos.mendoza@correo.com",
             icon = { Icon(Icons.Default.MailOutline, null, tint = VozMuted, modifier = Modifier.size(19.dp)) },
             keyboardType = KeyboardType.Email,
@@ -112,13 +114,13 @@ fun Register(
         }
         RegisterField(
             value = password,
-            onValueChange = { password = it; error = "" },
+            onValueChange = registerViewModel::updatePassword,
             placeholder = "Mínimo 8 caracteres",
             icon = { Icon(Icons.Default.Lock, null, tint = VozMuted, modifier = Modifier.size(18.dp)) },
             keyboardType = KeyboardType.Password,
             password = true,
             visible = passwordVisible,
-            onToggleVisibility = { passwordVisible = !passwordVisible },
+            onToggleVisibility = registerViewModel::togglePasswordVisibility,
         )
         StrengthBar(password)
         Row(
@@ -133,24 +135,24 @@ fun Register(
         RegisterLabel("Confirmar contraseña")
         RegisterField(
             value = confirmation,
-            onValueChange = { confirmation = it; error = "" },
+            onValueChange = registerViewModel::updateConfirmation,
             placeholder = "Escribe de nuevo tu contraseña",
             icon = { Icon(Icons.Default.Lock, null, tint = VozMuted, modifier = Modifier.size(18.dp)) },
             keyboardType = KeyboardType.Password,
             password = true,
             visible = passwordVisible,
-            onToggleVisibility = { passwordVisible = !passwordVisible },
+            onToggleVisibility = registerViewModel::togglePasswordVisibility,
         )
 
         ConsentRow(
             checked = acceptedTerms,
-            onCheckedChange = { acceptedTerms = it; error = "" },
+            onCheckedChange = registerViewModel::setTermsAccepted,
             text = "Acepto los términos cívicos de convivencia y veracidad de reportes.",
-            onTextClick = { showTerms = true },
+            onTextClick = { registerViewModel.showTerms(true) },
         )
         ConsentRow(
             checked = receiveAlerts,
-            onCheckedChange = { receiveAlerts = it },
+            onCheckedChange = registerViewModel::setAlertsEnabled,
             text = "Recibir notificaciones sobre alertas de seguridad en mi sector.",
         )
 
@@ -159,29 +161,7 @@ fun Register(
         }
 
         Button(
-            onClick = {
-                val cleanEmail = email.trim()
-                error = when {
-                    name.trim().length < 2 -> "Escribe tu nombre completo."
-                    !cleanEmail.matches(Regex("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")) -> "Escribe un correo electrónico válido."
-                    password.length < 8 -> "La contraseña debe tener al menos 8 caracteres."
-                    !password.any { it.isDigit() || !it.isLetterOrDigit() } -> "Incluye al menos un número o un símbolo en la contraseña."
-                    password != confirmation -> "Las contraseñas no coinciden."
-                    !acceptedTerms -> "Debes aceptar las normas de convivencia para crear tu cuenta."
-                    else -> ""
-                }
-                if (error.isBlank()) {
-                    loading = true
-                    onCreateAccount(name.trim(), cleanEmail, phone.trim(), password) { ok, err ->
-                        loading = false
-                        if (ok) {
-                            onLoginClick()
-                        } else {
-                            error = err ?: "Ya existe una cuenta con ese correo o hubo un error."
-                        }
-                    }
-                }
-            },
+            onClick = { registerViewModel.submit(onCreateAccount, onLoginClick) },
             enabled = !loading,
             modifier = Modifier.fillMaxWidth().height(58.dp),
             shape = RoundedCornerShape(10.dp),
@@ -216,11 +196,11 @@ fun Register(
 
     if (showTerms) {
         AlertDialog(
-            onDismissRequest = { showTerms = false },
+            onDismissRequest = { registerViewModel.showTerms(false) },
             title = { Text("Normas de convivencia", color = VozNavy) },
             text = { Text("Al crear tu cuenta, te comprometes a compartir información veraz, respetar a la comunidad y reportar situaciones de forma responsable.") },
-            confirmButton = { TextButton(onClick = { acceptedTerms = true; showTerms = false }) { Text("Aceptar") } },
-            dismissButton = { TextButton(onClick = { showTerms = false }) { Text("Cerrar") } },
+            confirmButton = { TextButton(onClick = { registerViewModel.setTermsAccepted(true); registerViewModel.showTerms(false) }) { Text("Aceptar") } },
+            dismissButton = { TextButton(onClick = { registerViewModel.showTerms(false) }) { Text("Cerrar") } },
         )
     }
 }

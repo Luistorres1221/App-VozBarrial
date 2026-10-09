@@ -16,7 +16,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -29,25 +30,29 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.vozbarrial.ui.theme.*
+import com.vozbarrial.features.profile.EditProfileViewModel
 
 @Composable
 fun EditProfile(name:String,phone:String,photo:String?,onCancel:()->Unit,onSave:(String,String,String?)->Unit) {
  val context= LocalContext.current
- var fullName by rememberSaveable { mutableStateOf(name) }
- var phoneNumber by rememberSaveable { mutableStateOf(phone) }
- var photoUri by rememberSaveable { mutableStateOf(photo) }
- var error by rememberSaveable { mutableStateOf("") }
+ val editViewModel: EditProfileViewModel = viewModel()
+ val state by editViewModel.uiState.collectAsStateWithLifecycle()
+ LaunchedEffect(name, phone, photo) { editViewModel.initialize(name, phone, photo) }
+ val fullName = state.name
+ val phoneNumber = state.phone
+ val photoUri = state.photoUri
+ val error = state.error.orEmpty()
  val picker=rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
   if(uri!=null) {
    val mime=context.contentResolver.getType(uri)
    var size=0L
    context.contentResolver.query(uri,arrayOf(OpenableColumns.SIZE),null,null,null)?.use { c->if(c.moveToFirst())size=c.getLong(0) }
    when {
-    mime !in listOf("image/jpeg","image/png") -> error="Selecciona una foto JPG o PNG."
-    size>5*1024*1024 -> error="La foto debe pesar máximo 5 MB."
+    mime !in listOf("image/jpeg","image/png") -> editViewModel.showError("Selecciona una foto JPG o PNG.")
+    size>5*1024*1024 -> editViewModel.showError("La foto debe pesar máximo 5 MB.")
     else -> {
      try { context.contentResolver.takePersistableUriPermission(uri,Intent.FLAG_GRANT_READ_URI_PERMISSION) } catch(_:SecurityException) {}
-     photoUri=uri.toString(); error=""
+     editViewModel.setPhoto(uri.toString())
     }
    }
   }
@@ -80,15 +85,15 @@ fun EditProfile(name:String,phone:String,photo:String?,onCancel:()->Unit,onSave:
     Column(Modifier.fillMaxWidth().padding(13.dp),verticalArrangement=Arrangement.spacedBy(8.dp)) {
      Text("♙  Datos Personales",color=VozNavy,fontSize=15.sp,fontWeight=FontWeight.Bold)
      Text("NOMBRE COMPLETO",color=VozNavy,fontSize=10.sp,fontWeight=FontWeight.SemiBold)
-     OutlinedTextField(value=fullName,onValueChange={fullName=it},modifier=Modifier.fillMaxWidth().height(54.dp),singleLine=true,placeholder={Text("Nombre y apellidos",fontSize=12.sp)},leadingIcon={Text("♙",color=Color(0xFF68788B))},shape=RoundedCornerShape(12.dp),colors=OutlinedTextFieldDefaults.colors(focusedContainerColor=VozBlueSurface,unfocusedContainerColor=VozBlueSurface,focusedBorderColor=Color.Transparent,unfocusedBorderColor=Color.Transparent))
+     OutlinedTextField(value=fullName,onValueChange=editViewModel::updateName,modifier=Modifier.fillMaxWidth().height(54.dp),singleLine=true,placeholder={Text("Nombre y apellidos",fontSize=12.sp)},leadingIcon={Text("♙",color=Color(0xFF68788B))},shape=RoundedCornerShape(12.dp),colors=OutlinedTextFieldDefaults.colors(focusedContainerColor=VozBlueSurface,unfocusedContainerColor=VozBlueSurface,focusedBorderColor=Color.Transparent,unfocusedBorderColor=Color.Transparent))
      Text("TELÉFONO DE ALERTAS CIUDADANAS",color=VozNavy,fontSize=10.sp,fontWeight=FontWeight.SemiBold)
-     OutlinedTextField(value=phoneNumber,onValueChange={phoneNumber=it.filter{ch->ch.isDigit()||ch=='+'||ch==' '}.take(18)},modifier=Modifier.fillMaxWidth().height(54.dp),singleLine=true,placeholder={Text("+57 312 456 7890",fontSize=12.sp)},leadingIcon={Text("☎",color=Color(0xFF68788B))},shape=RoundedCornerShape(12.dp),colors=OutlinedTextFieldDefaults.colors(focusedContainerColor=VozBlueSurface,unfocusedContainerColor=VozBlueSurface,focusedBorderColor=Color.Transparent,unfocusedBorderColor=Color.Transparent))
+     OutlinedTextField(value=phoneNumber,onValueChange={value->editViewModel.updatePhone(value.filter{ch->ch.isDigit()||ch=='+'||ch==' '}.take(18))},modifier=Modifier.fillMaxWidth().height(54.dp),singleLine=true,placeholder={Text("+57 312 456 7890",fontSize=12.sp)},leadingIcon={Text("☎",color=Color(0xFF68788B))},shape=RoundedCornerShape(12.dp),colors=OutlinedTextFieldDefaults.colors(focusedContainerColor=VozBlueSurface,unfocusedContainerColor=VozBlueSurface,focusedBorderColor=Color.Transparent,unfocusedBorderColor=Color.Transparent))
     }
    }
-   Button(onClick={val clean=fullName.trim();if(clean.split(Regex("\\s+")).size<2)error="Escribe tu nombre y apellido.";else{onSave(clean,phoneNumber.trim(),photoUri)}},modifier=Modifier.fillMaxWidth().height(48.dp),shape=RoundedCornerShape(11.dp),colors=ButtonDefaults.buttonColors(containerColor=VozNavy),elevation=ButtonDefaults.buttonElevation(defaultElevation=3.dp)){Text("▣  Guardar Cambios",color=Color.White,fontWeight=FontWeight.Bold,fontSize=14.sp)}
+   Button(onClick={editViewModel.save(onSave)},modifier=Modifier.fillMaxWidth().height(48.dp),shape=RoundedCornerShape(11.dp),colors=ButtonDefaults.buttonColors(containerColor=VozNavy),elevation=ButtonDefaults.buttonElevation(defaultElevation=3.dp)){Text("▣  Guardar Cambios",color=Color.White,fontWeight=FontWeight.Bold,fontSize=14.sp)}
    Surface(Modifier.fillMaxWidth().height(42.dp).clickable(onClick=onCancel),shape=RoundedCornerShape(11.dp),color=VozBlueSurface){Box(contentAlignment=Alignment.Center){Text("Cancelar Cambios",color=VozNavy,fontSize=14.sp)}}
    Spacer(Modifier.height(6.dp))
   }
  }
- if(error.isNotBlank())AlertDialog(onDismissRequest={error=""},title={Text("Revisa los datos",color=VozNavy)},text={Text(error)},confirmButton={TextButton(onClick={error=""}){Text("Entendido",color=VozGreen)}})
+ if(error.isNotBlank())AlertDialog(onDismissRequest=editViewModel::clearError,title={Text("Revisa los datos",color=VozNavy)},text={Text(error)},confirmButton={TextButton(onClick=editViewModel::clearError){Text("Entendido",color=VozGreen)}})
 }

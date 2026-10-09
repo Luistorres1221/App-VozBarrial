@@ -6,15 +6,16 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
 import com.google.firebase.storage.FirebaseStorage
 import com.vozbarrial.domain.Usuario
+import com.vozbarrial.domain.repository.ProfileGateway
 
 class ProfileRepository(
     private val auth: FirebaseAuth = FirebaseAuth.getInstance(),
     private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance(),
     private val storage: FirebaseStorage = FirebaseStorage.getInstance(),
-) {
-    fun hasActiveSession(): Boolean = auth.currentUser != null
+) : ProfileGateway {
+    override fun hasActiveSession(): Boolean = auth.currentUser != null
 
-    fun loadProfile(onResult: (Result<Usuario?>) -> Unit) {
+    override fun loadProfile(onResult: (Result<Usuario?>) -> Unit) {
         val user = auth.currentUser ?: return onResult(Result.success(null))
         firestore.collection(USERS).document(user.uid).get()
             .addOnSuccessListener { snapshot ->
@@ -27,7 +28,7 @@ class ProfileRepository(
             .addOnFailureListener { onResult(Result.failure(it)) }
     }
 
-    fun updateProfile(name: String, phone: String, photoUrl: String?, onResult: (Result<Usuario>) -> Unit) {
+    override fun updateProfile(name: String, phone: String, photoUrl: String?, onResult: (Result<Usuario>) -> Unit) {
         val user = auth.currentUser ?: return onResult(Result.failure(IllegalStateException("No hay una sesión activa.")))
         fun save(url: String?) {
             val updated = mapOf("name" to name.trim(), "phone" to phone.trim(), "photoUrl" to url)
@@ -48,7 +49,7 @@ class ProfileRepository(
         } else save(photoUrl)
     }
 
-    fun deleteAccount(onResult: (Result<Unit>) -> Unit) {
+    override fun deleteAccount(onResult: (Result<Unit>) -> Unit) {
         val user = auth.currentUser ?: return onResult(Result.failure(IllegalStateException("No hay una sesión activa.")))
         user.delete().addOnSuccessListener {
             firestore.collection(USERS).document(user.uid).delete()
@@ -57,7 +58,7 @@ class ProfileRepository(
         }.addOnFailureListener { onResult(Result.failure(it)) }
     }
 
-    fun signOut() = auth.signOut()
+    override fun signOut() = auth.signOut()
 
     companion object { private const val USERS = "usuarios" }
 }

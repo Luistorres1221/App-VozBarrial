@@ -1,10 +1,10 @@
 package com.vozbarrial.features.store
 
 import androidx.lifecycle.ViewModel
-import com.vozbarrial.data.store.StoreRepository
 import com.vozbarrial.domain.Usuario
+import com.vozbarrial.domain.repository.StoreGateway
 
-class StoreViewModel(private val repository: StoreRepository) : ViewModel() {
+class StoreViewModel(private val repository: StoreGateway) : ViewModel() {
     fun equip(frame: String, onComplete: (Boolean, String?) -> Unit = { _, _ -> }) =
         repository.equip(frame) { result -> onComplete(result.isSuccess, result.exceptionOrNull()?.localizedMessage) }
 

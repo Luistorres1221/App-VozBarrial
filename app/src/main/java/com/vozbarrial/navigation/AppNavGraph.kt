@@ -1,21 +1,15 @@
 ﻿package com.vozbarrial.navigation
 
 import androidx.compose.runtime.*
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.vozbarrial.data.auth.AuthRepository
-import com.vozbarrial.data.profile.ProfileRepository
-import com.vozbarrial.data.reports.ReportsRepository
-import com.vozbarrial.data.store.StoreRepository
+import com.vozbarrial.VozBarrialApplication
 import com.vozbarrial.features.auth.Auth
 import com.vozbarrial.features.auth.presentation.viewmodel.AuthViewModel
-import com.vozbarrial.features.auth.presentation.viewmodel.AuthViewModelFactory
 import com.vozbarrial.features.profile.ProfileViewModel
-import com.vozbarrial.features.profile.ProfileViewModelFactory
 import com.vozbarrial.features.reports.ReportsViewModel
-import com.vozbarrial.features.reports.ReportsViewModelFactory
 import com.vozbarrial.features.store.StoreViewModel
-import com.vozbarrial.features.store.StoreViewModelFactory
 import com.vozbarrial.features.dashboard.CommunityPage
 import com.vozbarrial.features.dashboard.EditProfile
 import com.vozbarrial.features.dashboard.FramesPage
@@ -26,10 +20,12 @@ import com.vozbarrial.features.welcome.Welcome
 
 @Composable
 fun AppNavGraph() {
-    val authViewModel: AuthViewModel = viewModel(factory = AuthViewModelFactory(remember { AuthRepository() }))
-    val profileViewModel: ProfileViewModel = viewModel(factory = ProfileViewModelFactory(remember { ProfileRepository() }))
-    val reportsViewModel: ReportsViewModel = viewModel(factory = ReportsViewModelFactory(remember { ReportsRepository() }))
-    val storeViewModel: StoreViewModel = viewModel(factory = StoreViewModelFactory(remember { StoreRepository() }))
+    val app = LocalContext.current.applicationContext as VozBarrialApplication
+    val container = app.appContainer
+    val authViewModel: AuthViewModel = viewModel(factory = container.authViewModelFactory)
+    val profileViewModel: ProfileViewModel = viewModel(factory = container.profileViewModelFactory)
+    val reportsViewModel: ReportsViewModel = viewModel(factory = container.reportsViewModelFactory)
+    val storeViewModel: StoreViewModel = viewModel(factory = container.storeViewModelFactory)
     val navigationViewModel: NavigationViewModel = viewModel()
     val profileState by profileViewModel.uiState.collectAsStateWithLifecycle()
     val reportsState by reportsViewModel.uiState.collectAsStateWithLifecycle()

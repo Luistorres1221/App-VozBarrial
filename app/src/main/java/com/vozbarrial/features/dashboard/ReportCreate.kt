@@ -44,7 +44,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.compose.ui.window.Dialog
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.vozbarrial.ui.theme.*
+import com.vozbarrial.features.reports.ReportCreateViewModel
 import java.util.Locale
 
 private data class ReportCategory(val name:String,val description:String,val icon:String)
@@ -57,14 +60,19 @@ private val reportCategories = listOf(
  ReportCategory("Alumbrado y Servicios","Postes sin luz, fugas de agua o gas","♧"),
 )
 @Composable fun ReportCreate(name:String,onBack:()->Unit,onPublish:(String,String,String,Double,Double,Uri,(Boolean,String?)->Unit)->Unit){
- var category by rememberSaveable{mutableStateOf("Seguridad")}; var menu by remember{mutableStateOf(false)}; var publishing by rememberSaveable{mutableStateOf(false)}
- var title by rememberSaveable{mutableStateOf("")}; var description by rememberSaveable{mutableStateOf("")}; var photo by rememberSaveable{mutableStateOf<String?>(null)}; var error by rememberSaveable{mutableStateOf("")}
- var latitude by rememberSaveable { mutableDoubleStateOf(4.60971) }; var longitude by rememberSaveable { mutableDoubleStateOf(-74.08175) }; var gpsActive by rememberSaveable { mutableStateOf(false) }; var locationSelected by rememberSaveable { mutableStateOf(false) }; var showMapPicker by rememberSaveable { mutableStateOf(false) }; var locationMessage by rememberSaveable { mutableStateOf("") }; val context = LocalContext.current
- val picker= rememberLauncherForActivityResult(ActivityResultContracts.GetContent()){photo=it?.toString();error=""}
- val locationPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { grants -> if (grants.values.any { it }) requestReportLocation(context) { loc -> latitude=loc.latitude; longitude=loc.longitude; gpsActive=true; locationSelected=true; locationMessage="Ubicación GPS actualizada" } else locationMessage="Permite el acceso a la ubicación para usar el GPS." }
+ val reportViewModel: ReportCreateViewModel = viewModel()
+ val state by reportViewModel.uiState.collectAsStateWithLifecycle()
+ var menu by remember{mutableStateOf(false)}
+ var showMapPicker by rememberSaveable { mutableStateOf(false) }
+ val category = state.category; val title = state.title; val description = state.description; val photo = state.photoUri
+ val latitude = state.latitude; val longitude = state.longitude; val gpsActive = state.gpsActive
+ val locationSelected = state.locationSelected; val locationMessage = state.locationMessage
+ val publishing = state.publishing; val error = state.error.orEmpty(); val context = LocalContext.current
+ val picker= rememberLauncherForActivityResult(ActivityResultContracts.GetContent()){ reportViewModel.setPhoto(it?.toString()) }
+ val locationPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { grants -> if (grants.values.any { it }) requestReportLocation(context) { loc -> reportViewModel.updateGpsLocation(loc.latitude, loc.longitude) } else reportViewModel.denyLocationPermission() }
  Column(Modifier.fillMaxSize().background(VozBackground)){
   Row(Modifier.fillMaxWidth().height(47.dp).background(Color.White).padding(horizontal=8.dp),verticalAlignment=Alignment.CenterVertically){
-   IconButton(onClick=onBack){Icon(Icons.Default.ArrowBack,"Volver",tint=VozNavy)}
+    IconButton(onClick={reportViewModel.reset();onBack()}){Icon(Icons.Default.ArrowBack,"Volver",tint=VozNavy)}
    Text("▧ VozBarrial",Modifier.weight(1f),color=VozNavy,fontWeight=FontWeight.Bold,fontSize=13.sp);Text("Reportar Incidente",color=VozNavy,fontWeight=FontWeight.Bold,fontSize=10.sp)
   }
   Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal=10.dp,vertical=8.dp),verticalArrangement=Arrangement.spacedBy(9.dp)){
@@ -88,7 +96,7 @@ private val reportCategories = listOf(
       DropdownMenu(expanded=menu,onDismissRequest={menu=false},modifier=Modifier.width(300.dp).background(Color.White)) {
        Text("CATEGORÍAS DISPONIBLES",Modifier.fillMaxWidth().padding(horizontal=13.dp,vertical=8.dp),color=VozNavy,fontSize=9.sp,fontWeight=FontWeight.Bold)
        reportCategories.forEach { option ->
-        Row(Modifier.fillMaxWidth().background(if(option.name==category)Color(0xFFE8F1FF)else Color.White).clickable { category=option.name;menu=false }.padding(horizontal=11.dp,vertical=9.dp),verticalAlignment=Alignment.CenterVertically) {
+        Row(Modifier.fillMaxWidth().background(if(option.name==category)Color(0xFFE8F1FF)else Color.White).clickable { reportViewModel.selectCategory(option.name);menu=false }.padding(horizontal=11.dp,vertical=9.dp),verticalAlignment=Alignment.CenterVertically) {
          Box(Modifier.size(29.dp).clip(RoundedCornerShape(7.dp)).background(if(option.name=="Seguridad")Color(0xFFFFE1E1)else Color(0xFFDDEAFF)),contentAlignment=Alignment.Center){Text(option.icon,fontSize=15.sp)}
          Spacer(Modifier.width(9.dp))
          Column(Modifier.weight(1f)) { Text(option.name,color=VozNavy,fontSize=11.sp,fontWeight=if(option.name==category)FontWeight.Bold else FontWeight.Medium,maxLines=1);Text(option.description,color=VozMuted,fontSize=8.sp,maxLines=1) }
@@ -121,7 +129,7 @@ private val reportCategories = listOf(
       Button(onClick={
        val fine=ContextCompat.checkSelfPermission(context,Manifest.permission.ACCESS_FINE_LOCATION)==PackageManager.PERMISSION_GRANTED
        val coarse=ContextCompat.checkSelfPermission(context,Manifest.permission.ACCESS_COARSE_LOCATION)==PackageManager.PERMISSION_GRANTED
-       if(fine||coarse) requestReportLocation(context){loc->latitude=loc.latitude;longitude=loc.longitude;gpsActive=true;locationSelected=true;locationMessage="Ubicación GPS actualizada"}
+       if(fine||coarse) requestReportLocation(context){loc->reportViewModel.updateGpsLocation(loc.latitude, loc.longitude)}
        else locationPermission.launch(arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION,Manifest.permission.ACCESS_FINE_LOCATION))
       },modifier=Modifier.weight(1f).height(40.dp),contentPadding=PaddingValues(4.dp),shape=RoundedCornerShape(8.dp),colors=ButtonDefaults.buttonColors(containerColor=VozNavy)){Text("◎  Usar mi GPS",fontSize=10.sp)}
      }
@@ -136,14 +144,14 @@ private val reportCategories = listOf(
    }
    Section("4","Información Detallada",null){
     Text("Título del reporte",color=VozNavy,fontSize=10.sp,fontWeight=FontWeight.SemiBold)
-    OutlinedTextField(title,{title=it.take(60);error=""},Modifier.fillMaxWidth(),placeholder={Text("Ej. Luminaria rota en esquina de parque",fontSize=10.sp)},supportingText={Text("${title.length}/60",Modifier.fillMaxWidth(),textAlign=TextAlign.End)},singleLine=true,shape=RoundedCornerShape(9.dp),colors=OutlinedTextFieldDefaults.colors(unfocusedContainerColor=Color.White,focusedContainerColor=Color.White))
+    OutlinedTextField(title,{reportViewModel.updateTitle(it)},Modifier.fillMaxWidth(),placeholder={Text("Ej. Luminaria rota en esquina de parque",fontSize=10.sp)},supportingText={Text("${title.length}/60",Modifier.fillMaxWidth(),textAlign=TextAlign.End)},singleLine=true,shape=RoundedCornerShape(9.dp),colors=OutlinedTextFieldDefaults.colors(unfocusedContainerColor=Color.White,focusedContainerColor=Color.White))
     Text("Descripción de lo sucedido",color=VozNavy,fontSize=10.sp,fontWeight=FontWeight.SemiBold)
-    OutlinedTextField(description,{description=it.take(280);error=""},Modifier.fillMaxWidth().height(104.dp),placeholder={Text("Describe detalles relevantes: hora aproximada, puntos de referencia clave o si hay personas vulnerables en riesgo...",fontSize=10.sp,lineHeight=13.sp)},supportingText={Text("${description.length}/280",Modifier.fillMaxWidth(),textAlign=TextAlign.End)},shape=RoundedCornerShape(9.dp),colors=OutlinedTextFieldDefaults.colors(unfocusedContainerColor=Color.White,focusedContainerColor=Color.White))
+    OutlinedTextField(description,{reportViewModel.updateDescription(it)},Modifier.fillMaxWidth().height(104.dp),placeholder={Text("Describe detalles relevantes: hora aproximada, puntos de referencia clave o si hay personas vulnerables en riesgo...",fontSize=10.sp,lineHeight=13.sp)},supportingText={Text("${description.length}/280",Modifier.fillMaxWidth(),textAlign=TextAlign.End)},shape=RoundedCornerShape(9.dp),colors=OutlinedTextFieldDefaults.colors(unfocusedContainerColor=Color.White,focusedContainerColor=Color.White))
    }
    if(error.isNotBlank())Text(error,color=Color(0xFFB42318),fontSize=11.sp)
   }
-  Button(onClick={error=when{title.isBlank()->"Escribe un título para el reporte.";description.isBlank()->"Describe brevemente lo sucedido.";!locationSelected->"Usa el GPS o elige un punto en el mapa.";photo==null->"Adjunta al menos una fotografía como evidencia.";else->""};if(error.isBlank()&&!publishing){publishing=true;onPublish(title.trim(),description.trim(),category,latitude,longitude,Uri.parse(photo)){ok,message->publishing=false;if(!ok)error=message?:"No se pudo publicar el reporte."}}},enabled=!publishing,modifier=Modifier.fillMaxWidth().padding(horizontal=10.dp,vertical=7.dp).height(49.dp),shape=RoundedCornerShape(9.dp),colors=ButtonDefaults.buttonColors(containerColor=VozNavy)){if(publishing)CircularProgressIndicator(Modifier.size(19.dp),color=Color.White,strokeWidth=2.dp)else Icon(Icons.Default.Send,null);Spacer(Modifier.width(7.dp));Text(if(publishing)"Publicando…" else "Publicar Reporte Ciudadano",fontWeight=FontWeight.Bold,fontSize=12.sp)}
-  if(showMapPicker) ReportMapPicker(latitude,longitude,onConfirm={lat,lon->latitude=lat;longitude=lon;gpsActive=false;locationSelected=true;locationMessage="Punto seleccionado en el mapa";showMapPicker=false},onDismiss={showMapPicker=false})
+  Button(onClick={reportViewModel.publish(onPublish)},enabled=!publishing,modifier=Modifier.fillMaxWidth().padding(horizontal=10.dp,vertical=7.dp).height(49.dp),shape=RoundedCornerShape(9.dp),colors=ButtonDefaults.buttonColors(containerColor=VozNavy)){if(publishing)CircularProgressIndicator(Modifier.size(19.dp),color=Color.White,strokeWidth=2.dp)else Icon(Icons.Default.Send,null);Spacer(Modifier.width(7.dp));Text(if(publishing)"Publicando…" else "Publicar Reporte Ciudadano",fontWeight=FontWeight.Bold,fontSize=12.sp)}
+  if(showMapPicker) ReportMapPicker(latitude,longitude,onConfirm={lat,lon->reportViewModel.confirmMapLocation(lat,lon);showMapPicker=false},onDismiss={showMapPicker=false})
  }
 }
 

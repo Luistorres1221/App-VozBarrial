@@ -75,10 +75,10 @@ fun Auth(
     onAuthenticated: (name: String) -> Unit,
     onRequestPasswordReset: (String, (AuthOperationResult<Unit>) -> Unit) -> Unit,
 ) {
-    var registering by rememberSaveable { mutableStateOf(false) }
-    var name by rememberSaveable { mutableStateOf("") }
     val formViewModel: AuthFormViewModel = viewModel()
     val formState by formViewModel.uiState.collectAsStateWithLifecycle()
+    val registering = formState.registering
+    var name by rememberSaveable { mutableStateOf("") }
     val email = formState.email
     val password = formState.password
     var confirmPassword by rememberSaveable { mutableStateOf("") }
@@ -96,8 +96,8 @@ fun Auth(
 
     if (registering) {
         Register(
-            onBack = { registering = false; formViewModel.clearMessage() },
-            onLoginClick = { registering = false; formViewModel.showMessage("¡Cuenta creada con éxito! Inicia sesión.", true) },
+            onBack = { formViewModel.setRegistering(false); formViewModel.clearMessage() },
+            onLoginClick = { formViewModel.setRegistering(false); formViewModel.showMessage("¡Cuenta creada con éxito! Inicia sesión.", true) },
             onCreateAccount = onRegister,
         )
         return
@@ -199,42 +199,7 @@ fun Auth(
                 }
 
                 Button(
-                    onClick = {
-                        val cleanEmail = email.trim()
-                        formViewModel.clearMessage()
-                        if (!cleanEmail.matches(Regex("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$"))) {
-                            formViewModel.showMessage("Escribe un correo electrónico válido.")
-                        } else if (password.length < 6) {
-                            formViewModel.showMessage("La contraseña debe tener al menos 6 caracteres.")
-                        } else if (registering && name.isBlank()) {
-                            formViewModel.showMessage("Escribe tu nombre para continuar.")
-                        } else if (registering && password != confirmPassword) {
-                            formViewModel.showMessage("Las contraseñas no coinciden.")
-                        } else if (registering) {
-                            formViewModel.setLoading(true)
-                            onRegister(name.trim(), cleanEmail, "", password) { ok, err ->
-                                formViewModel.setLoading(false)
-                                if (ok) {
-                                    registering = false
-                                    confirmPassword = ""
-                                    formViewModel.updatePassword("")
-                                    formViewModel.showMessage("¡Cuenta creada en Firebase! Ahora puedes iniciar sesión.", true)
-                                } else {
-                                    formViewModel.showMessage(err ?: "Error al registrar la cuenta.")
-                                }
-                            }
-                        } else {
-                            formViewModel.setLoading(true)
-                            onLogin(cleanEmail, password) { ok ->
-                                formViewModel.setLoading(false)
-                                if (ok) {
-                                    onAuthenticated(cleanEmail)
-                                } else {
-                                    formViewModel.showMessage("El correo o la contraseña no son correctos.")
-                                }
-                            }
-                        }
-                    },
+                    onClick = { formViewModel.submitLogin(onLogin, onAuthenticated) },
                     enabled = !loading,
                     modifier = Modifier.fillMaxWidth().height(46.dp),
                     shape = RoundedCornerShape(9.dp),
@@ -306,10 +271,7 @@ fun Auth(
                     )
                 }
                 Button(
-                    onClick = {
-                        registering = !registering
-                        formViewModel.clearMessage()
-                    },
+                    onClick = { formViewModel.toggleRegister() },
                     contentPadding = PaddingValues(horizontal = 10.dp, vertical = 0.dp),
                     modifier = Modifier.height(34.dp),
                     shape = RoundedCornerShape(8.dp),

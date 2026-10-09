@@ -7,12 +7,13 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.vozbarrial.domain.Usuario
 import com.vozbarrial.domain.auth.AuthError
 import com.vozbarrial.domain.auth.AuthOperationResult
+import com.vozbarrial.domain.repository.AuthGateway
 
 class AuthRepository(
     private val firebaseAuth: FirebaseAuth = FirebaseAuth.getInstance(),
     private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance(),
-) {
-    fun signIn(email: String, password: String, onResult: (Result<String>) -> Unit) {
+) : AuthGateway {
+    override fun signIn(email: String, password: String, onResult: (Result<String>) -> Unit) {
         firebaseAuth.signInWithEmailAndPassword(email.trim(), password)
             .addOnSuccessListener { result ->
                 result.user?.uid?.let { onResult(Result.success(it)) }
@@ -21,7 +22,7 @@ class AuthRepository(
             .addOnFailureListener { onResult(Result.failure(it)) }
     }
 
-    fun createAccount(name: String, email: String, phone: String, password: String, onResult: (Result<String>) -> Unit) {
+    override fun createAccount(name: String, email: String, phone: String, password: String, onResult: (Result<String>) -> Unit) {
         firebaseAuth.createUserWithEmailAndPassword(email.trim(), password)
             .addOnSuccessListener { result ->
                 val user = result.user
@@ -39,9 +40,9 @@ class AuthRepository(
             .addOnFailureListener { onResult(Result.failure(it)) }
     }
 
-    fun signOut() = firebaseAuth.signOut()
+    override fun signOut() = firebaseAuth.signOut()
 
-    fun sendPasswordResetEmail(
+    override fun sendPasswordResetEmail(
         email: String,
         onResult: (AuthOperationResult<Unit>) -> Unit,
     ) {
