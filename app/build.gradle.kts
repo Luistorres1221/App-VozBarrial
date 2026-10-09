@@ -36,7 +36,7 @@ dependencies {
     implementation("com.google.firebase:firebase-firestore-ktx")
     implementation("androidx.compose.material:material-icons-extended")
     implementation(platform("androidx.compose:compose-bom:2024.12.01"))
-    implementation(platform("com.google.firebase:firebase-bom:33.8.0"))
+    implementation(platform("com.google.firebase:firebase-bom:33.16.0"))
     implementation("org.osmdroid:osmdroid-android:6.1.18")
     debugImplementation("androidx.compose.ui:ui-tooling")
 }

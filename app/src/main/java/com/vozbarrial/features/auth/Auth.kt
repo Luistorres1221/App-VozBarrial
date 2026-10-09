@@ -61,6 +61,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.vozbarrial.domain.auth.AuthOperationResult
 import com.vozbarrial.ui.theme.*
 
 @Composable
@@ -69,9 +70,7 @@ fun Auth(
     onLogin: (email: String, password: String, (Boolean) -> Unit) -> Unit,
     onRegister: (name: String, email: String, phone: String, password: String, (Boolean, String?) -> Unit) -> Unit,
     onAuthenticated: (name: String) -> Unit,
-    onAccountExists: (String) -> Boolean,
-    onResetPassword: (String, String) -> Boolean,
-    onResolveName: (String) -> String,
+    onRequestPasswordReset: (String, (AuthOperationResult<Unit>) -> Unit) -> Unit,
 ) {
     var registering by rememberSaveable { mutableStateOf(false) }
     var name by rememberSaveable { mutableStateOf("") }
@@ -86,7 +85,7 @@ fun Auth(
     var showRecovery by rememberSaveable { mutableStateOf(false) }
 
     if (showRecovery) {
-        PasswordRecovery(onBack = { showRecovery = false }, onAccountExists = onAccountExists, onResetPassword = onResetPassword, onResolveName = onResolveName)
+        PasswordRecovery(onBack = { showRecovery = false }, onRequestPasswordReset = onRequestPasswordReset)
         return
     }
 

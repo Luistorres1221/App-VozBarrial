@@ -1,10 +1,11 @@
 package com.vozbarrial.navigation
 
 import android.content.Context
-import android.util.Base64
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.platform.LocalContext
+import com.vozbarrial.data.auth.AuthRepository
+import com.vozbarrial.domain.auth.AuthOperationResult
 import com.vozbarrial.features.auth.Auth
 import com.vozbarrial.features.dashboard.CommunityPage
 import com.vozbarrial.features.dashboard.EditProfile
@@ -13,13 +14,12 @@ import com.vozbarrial.features.dashboard.StorePage
 import com.vozbarrial.features.dashboard.ReportCreate
 import com.vozbarrial.features.map.ReportsMap
 import com.vozbarrial.features.welcome.Welcome
-import java.security.MessageDigest
-import java.security.SecureRandom
 
 @Composable
 fun AppNavGraph() {
     val context = LocalContext.current
     val accounts by lazy { context.getSharedPreferences("voz_barrial_accounts", Context.MODE_PRIVATE) }
+    val authRepository = remember { AuthRepository() }
 
     var screen by rememberSaveable { mutableStateOf("com/vozbarrial/features/welcome") }
     var signedInName by rememberSaveable { mutableStateOf("") }
@@ -65,27 +65,8 @@ fun AppNavGraph() {
 
     fun accountKey(email: String): String = "account_${email.trim().lowercase()}"
 
-    fun passwordHash(salt: ByteArray, password: String): String {
-        val digest = MessageDigest.getInstance("SHA-256").digest(salt + password.toByteArray(Charsets.UTF_8))
-        return digest.joinToString("") { byte -> "%02x".format(byte.toInt() and 0xff) }
-    }
-
-    fun displayName(email: String): String {
-        val key = accountKey(email)
-        val saved = accounts.getString("${key}_name", null)?.trim().orEmpty()
-        val malformed = saved.contains("%") || saved.equals(email.substringBefore("@"), ignoreCase = true)
-        if (saved.isNotBlank() && !malformed) return saved
-        val repaired = if (email.equals("torresluisalberto95@gmail.com", ignoreCase = true)) "Luis Alberto Torres Berrio" else email.substringBefore("@").replace(Regex("[0-9]+$"), "")
-        accounts.edit().putString("${key}_name", repaired).apply()
-        return repaired
-    }
-
-    fun resetPassword(email: String, password: String): Boolean {
-        val key = accountKey(email)
-        if (!accounts.contains(key + "_hash")) return false
-        val salt = ByteArray(16).also { SecureRandom().nextBytes(it) }
-        accounts.edit().putString(key + "_salt", Base64.encodeToString(salt, Base64.NO_WRAP)).putString(key + "_hash", passwordHash(salt, password)).apply()
-        return true
+    fun requestPasswordReset(email: String, onResult: (AuthOperationResult<Unit>) -> Unit) {
+        authRepository.sendPasswordResetEmail(email.trim(), onResult)
     }
 
     fun createAccount(name: String, email: String, phone: String, password: String, onResult: (Boolean, String?) -> Unit) {
@@ -110,9 +91,7 @@ fun AppNavGraph() {
             onBack = { screen = "com/vozbarrial/features/welcome" },
             onLogin = ::verifyAccount,
             onRegister = ::createAccount,
-            onAccountExists = { email -> accounts.contains(accountKey(email) + "_hash") },
-            onResetPassword = ::resetPassword,
-            onResolveName = ::displayName,
+            onRequestPasswordReset = ::requestPasswordReset,
             onAuthenticated = { email -> 
                 val currentUser = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
                 if (currentUser != null) {
