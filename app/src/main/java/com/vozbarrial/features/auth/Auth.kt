@@ -46,9 +46,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.ui.Alignment
@@ -70,18 +67,15 @@ import com.vozbarrial.ui.theme.*
 @Composable
 fun Auth(
     onBack: () -> Unit,
+    onRegisterClick: () -> Unit,
     onLogin: (email: String, password: String, (Boolean) -> Unit) -> Unit,
-    onRegister: (name: String, email: String, phone: String, password: String, (Boolean, String?) -> Unit) -> Unit,
     onAuthenticated: (name: String) -> Unit,
     onRequestPasswordReset: (String, (AuthOperationResult<Unit>) -> Unit) -> Unit,
 ) {
     val formViewModel: AuthFormViewModel = viewModel()
     val formState by formViewModel.uiState.collectAsStateWithLifecycle()
-    val registering = formState.registering
-    var name by rememberSaveable { mutableStateOf("") }
     val email = formState.email
     val password = formState.password
-    var confirmPassword by rememberSaveable { mutableStateOf("") }
     val passwordVisible = formState.passwordVisible
     val message = formState.message
     val success = formState.success
@@ -94,14 +88,6 @@ fun Auth(
         return
     }
 
-    if (registering) {
-        Register(
-            onBack = { formViewModel.setRegistering(false); formViewModel.clearMessage() },
-            onLoginClick = { formViewModel.setRegistering(false); formViewModel.showMessage("¡Cuenta creada con éxito! Inicia sesión.", true) },
-            onCreateAccount = onRegister,
-        )
-        return
-    }
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -112,7 +98,7 @@ fun Auth(
     ) {
         Header(onBack)
         StatusRow()
-        IntroCard(registering)
+        IntroCard()
 
         Surface(
             modifier = Modifier.fillMaxWidth(),
@@ -124,20 +110,9 @@ fun Auth(
                 modifier = Modifier.padding(horizontal = 14.dp, vertical = 13.dp),
                 verticalArrangement = Arrangement.spacedBy(7.dp),
             ) {
-                if (registering) {
-                    FieldLabel("Nombre completo")
-                    AuthField(
-                        value = name,
-                        onValueChange = { name = it; formViewModel.clearMessage() },
-                        placeholder = "Tu nombre",
-                        leading = { Icon(Icons.Default.PersonAdd, null, tint = VozMuted, modifier = Modifier.size(17.dp)) },
-                        keyboardType = KeyboardType.Text,
-                    )
-                }
-
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     FieldLabel("Correo Electrónico", Modifier.weight(1f))
-                    Text(if (registering) "Crea tu cuenta" else "Perfil Ciudadano", color = VozMuted, fontSize = 10.sp)
+                    Text("Perfil Ciudadano", color = VozMuted, fontSize = 10.sp)
                 }
                 AuthField(
                     value = email,
@@ -149,14 +124,12 @@ fun Auth(
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     FieldLabel("Contraseña", Modifier.weight(1f))
-                    if (!registering) {
-                        Text(
-                            "¿Olvidaste tu contraseña?",
-                            color = Color(0xFF45628A),
-                            fontSize = 10.sp,
-                            modifier = Modifier.clickable { formViewModel.showRecovery(true) },
-                        )
-                    }
+                    Text(
+                        "¿Olvidaste tu contraseña?",
+                        color = Color(0xFF45628A),
+                        fontSize = 10.sp,
+                        modifier = Modifier.clickable { formViewModel.showRecovery(true) },
+                    )
                 }
                 AuthField(
                     value = password,
@@ -169,24 +142,10 @@ fun Auth(
                     onToggleVisibility = formViewModel::togglePasswordVisibility,
                 )
 
-                if (registering) {
-                    FieldLabel("Confirmar contraseña")
-                    AuthField(
-                        value = confirmPassword,
-                        onValueChange = { confirmPassword = it; formViewModel.clearMessage() },
-                        placeholder = "Repite tu contraseña",
-                        leading = { Icon(Icons.Default.Lock, null, tint = VozMuted, modifier = Modifier.size(17.dp)) },
-                        keyboardType = KeyboardType.Password,
-                        password = true,
-                        visible = passwordVisible,
-                        onToggleVisibility = formViewModel::togglePasswordVisibility,
-                    )
-                } else {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Security, null, tint = VozGreen, modifier = Modifier.size(12.dp))
-                        Spacer(Modifier.width(5.dp))
-                        Text("Te enviaremos un enlace de recuperación seguro si no la recuerdas.", color = VozMuted, fontSize = 10.sp, lineHeight = 13.sp)
-                    }
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.Security, null, tint = VozGreen, modifier = Modifier.size(12.dp))
+                    Spacer(Modifier.width(5.dp))
+                    Text("Te enviaremos un enlace de recuperación seguro si no la recuerdas.", color = VozMuted, fontSize = 10.sp, lineHeight = 13.sp)
                 }
 
                 if (message.isNotBlank()) {
@@ -208,15 +167,14 @@ fun Auth(
                     if (loading) {
                         CircularProgressIndicator(modifier = Modifier.size(20.dp), color = Color.White, strokeWidth = 2.dp)
                     } else {
-                        Icon(if (registering) Icons.Default.PersonAdd else Icons.Default.Login, null, modifier = Modifier.size(17.dp))
+                        Icon(Icons.Default.Login, null, modifier = Modifier.size(17.dp))
                         Spacer(Modifier.width(8.dp))
-                        Text(if (registering) "Crear mi cuenta" else "Ingresar a mi Barrio", fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                        Text("Ingresar a mi Barrio", fontSize = 13.sp, fontWeight = FontWeight.Bold)
                     }
                 }
 
-                if (!registering) {
-                    DividerLabel("O CONTINÚA CON")
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                DividerLabel("O CONTINÚA CON")
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         OutlinedButton(
                             onClick = { formViewModel.showDialog("El acceso con Google estará disponible cuando conectemos el proveedor de autenticación.") },
                             modifier = Modifier.weight(1f).height(42.dp),
@@ -235,7 +193,6 @@ fun Auth(
                             Spacer(Modifier.width(5.dp))
                             Text("Huella / Face", color = VozNavy, fontSize = 11.sp)
                         }
-                    }
                 }
             }
         }
@@ -259,25 +216,25 @@ fun Auth(
                 }
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        if (registering) "¿Ya eres miembro?" else "¿Aún no eres miembro?",
+                        "¿Aún no eres miembro?",
                         color = VozNavy,
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
                     )
                     Text(
-                        if (registering) "Entra a tu comunidad vecinal." else "Súmate a la vigilancia y cuidado barrial.",
+                        "Súmate a la vigilancia y cuidado barrial.",
                         color = VozMuted,
                         fontSize = 10.sp,
                     )
                 }
                 Button(
-                    onClick = { formViewModel.toggleRegister() },
+                    onClick = onRegisterClick,
                     contentPadding = PaddingValues(horizontal = 10.dp, vertical = 0.dp),
                     modifier = Modifier.height(34.dp),
                     shape = RoundedCornerShape(8.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF087A55)),
                 ) {
-                    Text(if (registering) "Iniciar sesión" else "Registrarme", fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                    Text("Registrarme", fontSize = 10.sp, fontWeight = FontWeight.Bold)
                 }
             }
         }
@@ -352,7 +309,7 @@ private fun StatusPill(text: String, modifier: Modifier, secure: Boolean) {
 }
 
 @Composable
-private fun IntroCard(registering: Boolean) {
+private fun IntroCard() {
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(18.dp),
@@ -377,14 +334,14 @@ private fun IntroCard(registering: Boolean) {
             Spacer(Modifier.height(6.dp))
             Text("VOZBARRIAL DIGITAL", color = Color(0xFF07885F), fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
             Text(
-                if (registering) "Únete a VozBarrial" else "Bienvenido a VozBarrial",
+                "Bienvenido a VozBarrial",
                 color = VozNavy,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center,
             )
             Text(
-                if (registering) "Crea tu cuenta y participa en tu comunidad." else "Tu red de colaboración y seguridad vecinal en tiempo real.",
+                "Tu red de colaboración y seguridad vecinal en tiempo real.",
                 color = VozMuted,
                 fontSize = 11.sp,
                 lineHeight = 15.sp,

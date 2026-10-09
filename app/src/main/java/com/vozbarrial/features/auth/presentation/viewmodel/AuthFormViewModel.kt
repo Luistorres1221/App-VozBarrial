@@ -14,7 +14,6 @@ data class AuthFormUiState(
     val message: String = "",
     val success: Boolean = false,
     val dialogMessage: String = "",
-    val registering: Boolean = false,
     val showRecovery: Boolean = false,
 )
 
@@ -26,10 +25,8 @@ class AuthFormViewModel : ViewModel() {
     fun updatePassword(value: String) = update { copy(password = value, message = "") }
     fun togglePasswordVisibility() = update { copy(passwordVisible = !passwordVisible) }
     fun setLoading(value: Boolean) = update { copy(loading = value) }
-    fun setRegistering(value: Boolean) = update { copy(registering = value) }
     fun showMessage(value: String, isSuccess: Boolean = false) = update { copy(message = value, success = isSuccess) }
     fun clearMessage() = update { copy(message = "", success = false) }
-    fun toggleRegister() = update { copy(registering = !registering, message = "", success = false) }
     fun showRecovery(value: Boolean) = update { copy(showRecovery = value) }
     fun showDialog(value: String) = update { copy(dialogMessage = value) }
 

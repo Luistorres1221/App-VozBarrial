@@ -62,6 +62,7 @@ import com.vozbarrial.features.auth.presentation.viewmodel.RegisterViewModel
 fun Register(
     onBack: () -> Unit,
     onLoginClick: () -> Unit,
+    onAccountCreated: () -> Unit,
     onCreateAccount: (name: String, email: String, phone: String, password: String, (Boolean, String?) -> Unit) -> Unit,
 ) {
     val registerViewModel: RegisterViewModel = viewModel()
@@ -161,7 +162,7 @@ fun Register(
         }
 
         Button(
-            onClick = { registerViewModel.submit(onCreateAccount, onLoginClick) },
+            onClick = { registerViewModel.submit(onCreateAccount, onAccountCreated) },
             enabled = !loading,
             modifier = Modifier.fillMaxWidth().height(58.dp),
             shape = RoundedCornerShape(10.dp),
@@ -189,7 +190,7 @@ fun Register(
                 fontSize =  15.sp,
                 fontWeight = FontWeight.Bold,
                 textDecoration = TextDecoration.Underline,
-                modifier = Modifier.clickable(onClick = onLoginClick),
+                modifier = Modifier.clickable { registerViewModel.reset(); onLoginClick() },
             )
         }
     }

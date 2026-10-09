@@ -6,6 +6,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.vozbarrial.VozBarrialApplication
 import com.vozbarrial.features.auth.Auth
+import com.vozbarrial.features.auth.Register
+import com.vozbarrial.features.auth.presentation.viewmodel.AuthFormViewModel
 import com.vozbarrial.features.auth.presentation.viewmodel.AuthViewModel
 import com.vozbarrial.features.profile.ProfileViewModel
 import com.vozbarrial.features.reports.ReportsViewModel
@@ -23,6 +25,7 @@ fun AppNavGraph() {
     val app = LocalContext.current.applicationContext as VozBarrialApplication
     val container = app.appContainer
     val authViewModel: AuthViewModel = viewModel(factory = container.authViewModelFactory)
+    val authFormViewModel: AuthFormViewModel = viewModel()
     val profileViewModel: ProfileViewModel = viewModel(factory = container.profileViewModelFactory)
     val reportsViewModel: ReportsViewModel = viewModel(factory = container.reportsViewModelFactory)
     val storeViewModel: StoreViewModel = viewModel(factory = container.storeViewModelFactory)
@@ -59,10 +62,19 @@ fun AppNavGraph() {
     when (screen) {
         "auth" -> Auth(
             onBack = { navigationViewModel.navigate("welcome") },
+            onRegisterClick = { navigationViewModel.navigate("register") },
             onLogin = authViewModel::signIn,
-            onRegister = authViewModel::createAccount,
             onRequestPasswordReset = authViewModel::requestPasswordReset,
             onAuthenticated = { enterApp() },
+        )
+        "register" -> Register(
+            onBack = { navigationViewModel.navigate("auth") },
+            onLoginClick = { navigationViewModel.navigate("auth") },
+            onAccountCreated = {
+                authFormViewModel.showMessage("¡Cuenta creada con éxito! Inicia sesión.", true)
+                navigationViewModel.navigate("auth")
+            },
+            onCreateAccount = authViewModel::createAccount,
         )
         "map" -> ReportsMap(
             name = name,
