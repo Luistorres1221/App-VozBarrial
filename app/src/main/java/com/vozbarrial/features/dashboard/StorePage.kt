@@ -19,7 +19,7 @@ import androidx.compose.ui.unit.sp
 import com.vozbarrial.ui.theme.*
 
 private data class CatalogFrame(val name:String,val type:String,val cost:Int,val color:Color,val pale:Color,val locked:Boolean=false)
-@Composable fun StorePage(name:String,points:Int,owned:Set<String>,activeFrame:String,onBack:()->Unit,onPurchase:(String,Int,Set<String>)->Unit,onEquip:(String)->Unit){
+@Composable fun StorePage(name:String,points:Int,owned:Set<String>,activeFrame:String,onBack:()->Unit,onPurchase:(String,Int,Set<String>,(Boolean,String?)->Unit)->Unit,onEquip:(String,(Boolean,String?)->Unit)->Unit){
  val items=listOf(CatalogFrame("Guardián Dorado","Legendario",800,Color(0xFFE8A800),Color(0xFFFFF1BC)),CatalogFrame("Eco Barrio Verde","Raro",450,Color(0xFF07966C),Color(0xFFDDF8EA)),CatalogFrame("Ojo Vigilante Neón","Épico",800,Color(0xFF00A6C7),Color(0xFFDDF8FF)),CatalogFrame("Paz Comunitaria","Épico",1200,Color(0xFF2453F5),Color(0xFFE3E9FF)),CatalogFrame("Líder Platino","Mítico",1800,Color(0xFF8996A5),Color(0xFFE9EDF2),true),CatalogFrame("Escudo Ciudadano","Común",500,Color(0xFFE84A12),Color(0xFFFFE4DA)))
  var preview by remember(activeFrame){mutableStateOf(activeFrame.ifBlank{"Guardián Dorado"})};var message by remember{mutableStateOf("")}
  val chosen=items.firstOrNull{it.name==preview}?:items.first()
@@ -32,7 +32,7 @@ private data class CatalogFrame(val name:String,val type:String,val cost:Int,val
     Text("Toca Probar para ver el marco en directo antes de canjear tus puntos.",color=Color(0xFF43474D),fontSize=9.sp,textAlign=TextAlign.Center)
    }}
    Row(verticalAlignment=Alignment.CenterVertically){Text("Catálogo de Marcos",Modifier.weight(1f),fontSize=14.sp,color=VozNavy,fontWeight=FontWeight.Bold);Text("Tienda de Puntos",Modifier.background(Color(0xFF90F3C2),RoundedCornerShape(40.dp)).padding(6.dp),fontSize=8.sp,color=VozGreen,fontWeight=FontWeight.Bold)}
-   items.chunked(2).forEach{row->Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(7.dp)){row.forEach{item->CatalogCard(item,points,item.name in owned,preview==item.name,Modifier.weight(1f),onTry={preview=item.name},onAction={if(item.name in owned)onEquip(item.name)else if(points>=item.cost){onPurchase(item.name,item.cost,owned+item.name);onEquip(item.name);message=item.name+" canjeado y equipado."}else message="Te faltan "+(item.cost-points)+" puntos para "+item.name+"."})};if(row.size==1)Spacer(Modifier.weight(1f))}}
+   items.chunked(2).forEach{row->Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(7.dp)){row.forEach{item->CatalogCard(item,points,item.name in owned,preview==item.name,Modifier.weight(1f),onTry={preview=item.name},onAction={if(item.name in owned)onEquip(item.name){ok,error->message=if(ok)item.name+" equipado." else error?:"No se pudo equipar el marco."}else if(points>=item.cost)onPurchase(item.name,item.cost,owned+item.name){ok,error->message=if(ok)item.name+" canjeado y equipado." else error?:"No se pudo completar el canje."}else message="Te faltan "+(item.cost-points)+" puntos para "+item.name+"."})};if(row.size==1)Spacer(Modifier.weight(1f))}}
   }
  }
  if(message.isNotBlank())AlertDialog(onDismissRequest={message=""},title={Text("Tienda de Marcos",color=VozNavy)},text={Text(message)},confirmButton={TextButton(onClick={message=""}){Text("Entendido",color=VozGreen)}})

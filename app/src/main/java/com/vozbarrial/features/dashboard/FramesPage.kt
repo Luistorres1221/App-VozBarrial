@@ -22,7 +22,7 @@ import com.vozbarrial.ui.theme.*
 private data class FrameItem(val name:String,val category:String,val detail:String,val color:Color,val pale:Color,val acquired:String)
 
 @Composable
-fun FramesPage(name:String,activeFrame:String,points:Int=1450,onBack:()->Unit,onEquip:(String)->Unit) {
+fun FramesPage(name:String,activeFrame:String,points:Int=0,owned:Set<String> = setOf("Clásico Cívico"),onBack:()->Unit,onEquip:(String)->Unit,onOpenStore:()->Unit = {}) {
  var showStore by remember { mutableStateOf(false) }
  val frames=listOf(
   FrameItem("Clásico Cívico","Básico","Marco de bienvenida",Color(0xFF07966C),Color(0xFFDDF8EA),"En tu inventario"),
@@ -30,6 +30,10 @@ fun FramesPage(name:String,activeFrame:String,points:Int=1450,onBack:()->Unit,on
   FrameItem("Eco Barrio Verde","Raro","Canjeado hace 1 sem",Color(0xFF07966C),Color(0xFFDDF8EA),"Adquirido"),
   FrameItem("Escudo Ciudadano","Común","Canjeado hace 2 sem",Color(0xFFE64B13),Color(0xFFFFE7DE),"Adquirido")
  )
+ val visibleFrames = frames.map { item ->
+  if (item.name in owned) item.copy(detail = "Disponible en tu inventario", acquired = "Adquirido")
+  else item.copy(detail = "Adquiérelo en la tienda", acquired = "Bloqueado")
+ }
  Column(Modifier.fillMaxSize().background(VozBackground)) {
   Row(Modifier.fillMaxWidth().background(Color.White).padding(horizontal=10.dp,vertical=8.dp),verticalAlignment=Alignment.CenterVertically) {
    Text("‹",Modifier.clickable(onClick=onBack).padding(horizontal=7.dp),fontSize=24.sp,color=VozNavy)
@@ -55,22 +59,22 @@ fun FramesPage(name:String,activeFrame:String,points:Int=1450,onBack:()->Unit,on
    Surface(Modifier.fillMaxWidth().clickable{showStore=true},shape=RoundedCornerShape(50.dp),color=Color.White,shadowElevation=1.dp) {Text("▣  Ir a la Tienda",Modifier.padding(horizontal=12.dp,vertical=7.dp),fontSize=10.sp,color=VozNavy,fontWeight=FontWeight.SemiBold)}
    Row(verticalAlignment=Alignment.CenterVertically) {
     Text("Marcos Adquiridos",Modifier.weight(1f),color=VozNavy,fontSize=15.sp,fontWeight=FontWeight.Bold)
-    Text("4 de 6 en total",color=Color(0xFF68788B),fontSize=9.sp)
+    Text("${owned.size} en tu inventario",color=Color(0xFF68788B),fontSize=9.sp)
     Spacer(Modifier.width(5.dp))
     Surface(shape=RoundedCornerShape(50.dp),color=Color(0xFF90F3C2)){Text("✓ En tu inventario",Modifier.padding(horizontal=7.dp,vertical=4.dp),color=VozGreen,fontSize=8.sp,fontWeight=FontWeight.Bold)}
    }
-   frames.chunked(2).forEach { row ->
+   visibleFrames.chunked(2).forEach { row ->
     Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(7.dp)) {
-     row.forEach { frame->FrameCard(frame,activeFrame==frame.name,Modifier.weight(1f),onClick={onEquip(frame.name)}) }
+     row.forEach { frame->FrameCard(frame,activeFrame==frame.name,frame.name in owned,Modifier.weight(1f),onClick={onEquip(frame.name)}) }
      if(row.size==1)Spacer(Modifier.weight(1f))
     }
    }
   }
  }
- if(showStore)AlertDialog(onDismissRequest={showStore=false},title={Text("Tienda de Marcos",color=VozNavy)},text={Text("Tienes "+points+" puntos. Pronto podrás canjearlos por nuevos marcos para tu perfil.")},confirmButton={TextButton(onClick={showStore=false}){Text("Entendido",color=VozGreen)}})
+ if(showStore)AlertDialog(onDismissRequest={showStore=false},title={Text("Tienda de Marcos",color=VozNavy)},text={Text("Tienes $points puntos disponibles para canjear marcos.")},confirmButton={TextButton(onClick={onOpenStore();showStore=false}){Text("Ir a la tienda",color=VozGreen)}})
 }
 
-@Composable private fun FrameCard(frame:FrameItem,active:Boolean,modifier:Modifier,onClick:()->Unit) {
+@Composable private fun FrameCard(frame:FrameItem,active:Boolean,owned:Boolean,modifier:Modifier,onClick:()->Unit) {
  Card(modifier,colors=CardDefaults.cardColors(containerColor=Color.White),shape=RoundedCornerShape(12.dp),elevation=CardDefaults.cardElevation(defaultElevation=2.dp)) {
   Column(Modifier.fillMaxWidth().padding(7.dp),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(4.dp)) {
    Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically) {
@@ -80,7 +84,7 @@ fun FramesPage(name:String,activeFrame:String,points:Int=1450,onBack:()->Unit,on
    Box(Modifier.padding(vertical=3.dp).size(52.dp).border(2.dp,frame.color,CircleShape).padding(4.dp).border(1.dp,frame.color,CircleShape).padding(4.dp).background(VozBlueSurface,CircleShape),contentAlignment=Alignment.Center){Text("✦",fontSize=20.sp,color=frame.color)}
    Text(frame.name,color=VozNavy,fontWeight=FontWeight.Bold,fontSize=10.sp,textAlign=TextAlign.Center,maxLines=1)
    Text(frame.detail,color=Color(0xFF68788B),fontSize=8.sp,textAlign=TextAlign.Center,maxLines=1)
-   Button(onClick=onClick,modifier=Modifier.fillMaxWidth().height(31.dp),shape=RoundedCornerShape(7.dp),contentPadding=PaddingValues(2.dp),colors=ButtonDefaults.buttonColors(containerColor=if(active)Color(0xFF90F3C2) else VozNavy,contentColor=if(active)VozGreen else Color.White)) {Text(if(active)"✓ En Uso" else "⊙ Equipar",fontSize=9.sp,fontWeight=FontWeight.Bold)}
+   Button(onClick=onClick,enabled=owned,modifier=Modifier.fillMaxWidth().height(31.dp),shape=RoundedCornerShape(7.dp),contentPadding=PaddingValues(2.dp),colors=ButtonDefaults.buttonColors(containerColor=if(active)Color(0xFF90F3C2) else VozNavy,contentColor=if(active)VozGreen else Color.White)) {Text(if(active)"✓ En Uso" else if(owned)"Equipar" else "Bloqueado",fontSize=9.sp,fontWeight=FontWeight.Bold)}
   }
  }
 }
