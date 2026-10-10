@@ -1,6 +1,7 @@
 package com.vozbarrial.features.auth.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel
+import com.vozbarrial.core.validation.InputValidator
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -37,7 +38,7 @@ class AuthFormViewModel : ViewModel() {
         val form = _uiState.value
         val cleanEmail = form.email.trim()
         val error = when {
-            !cleanEmail.matches(EMAIL_PATTERN) -> "Escribe un correo electrónico válido."
+            !InputValidator.isValidEmail(cleanEmail) -> "Escribe un correo electrónico válido."
             form.password.length < 6 -> "La contraseña debe tener al menos 6 caracteres."
             form.loading -> return
             else -> null
@@ -56,10 +57,6 @@ class AuthFormViewModel : ViewModel() {
             )
             if (authenticated) onAuthenticated(cleanEmail)
         }
-    }
-
-    private companion object {
-        val EMAIL_PATTERN = Regex("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")
     }
 
     private inline fun update(transform: AuthFormUiState.() -> AuthFormUiState) {

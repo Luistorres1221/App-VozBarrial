@@ -1,6 +1,7 @@
 package com.vozbarrial.features.auth.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel
+import com.vozbarrial.core.validation.InputValidator
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -43,7 +44,7 @@ class RegisterViewModel : ViewModel() {
         val cleanEmail = form.email.trim()
         val validationError = when {
             form.name.trim().length < 2 -> "Escribe tu nombre completo."
-            !cleanEmail.matches(EMAIL_PATTERN) -> "Escribe un correo electrónico válido."
+            !InputValidator.isValidEmail(cleanEmail) -> "Escribe un correo electrónico válido."
             form.password.length < 8 -> "La contraseña debe tener al menos 8 caracteres."
             !form.password.any { it.isDigit() || !it.isLetterOrDigit() } -> "Incluye al menos un número o un símbolo en la contraseña."
             form.password != form.confirmation -> "Las contraseñas no coinciden."
@@ -72,7 +73,4 @@ class RegisterViewModel : ViewModel() {
         _uiState.value = _uiState.value.transform()
     }
 
-    private companion object {
-        val EMAIL_PATTERN = Regex("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")
-    }
 }

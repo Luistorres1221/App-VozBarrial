@@ -1,6 +1,7 @@
 package com.vozbarrial.features.auth.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel
+import com.vozbarrial.core.validation.InputValidator
 import com.vozbarrial.domain.auth.AuthError
 import com.vozbarrial.domain.auth.AuthOperationResult
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,7 +23,7 @@ class RecoveryViewModel : ViewModel() {
 
     fun requestReset(request: (String, (AuthOperationResult<Unit>) -> Unit) -> Unit) {
         val normalizedEmail = _uiState.value.email.trim()
-        if (!normalizedEmail.matches(EMAIL_PATTERN)) {
+        if (!InputValidator.isValidEmail(normalizedEmail)) {
             _uiState.value = _uiState.value.copy(message = "Escribe un correo válido.")
             return
         }
@@ -37,9 +38,5 @@ class RecoveryViewModel : ViewModel() {
                 }
             }
         }
-    }
-
-    private companion object {
-        val EMAIL_PATTERN = Regex("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")
     }
 }
