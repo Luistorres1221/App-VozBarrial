@@ -18,7 +18,7 @@ import com.vozbarrial.features.dashboard.FramesPage
 import com.vozbarrial.features.dashboard.ReportCreate
 import com.vozbarrial.features.dashboard.StorePage
 import com.vozbarrial.features.map.ReportsMap
-import com.vozbarrial.features.welcome.Welcome
+import com.vozbarrial.features.welcome.ui.WelcomeRoute
 
 @Composable
 fun AppNavGraph() {
@@ -150,6 +150,6 @@ fun AppNavGraph() {
                 }
             },
         )
-        else -> Welcome(onLoginClick = { navigationViewModel.navigate("auth") })
+        else -> WelcomeRoute(onLoginClick = { navigationViewModel.navigate("auth") })
     }
 }
