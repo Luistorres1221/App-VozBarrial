@@ -2,10 +2,10 @@ package com.vozbarrial.features.reports
 
 import android.net.Uri
 import androidx.lifecycle.ViewModel
-import com.vozbarrial.domain.Reporte
-import com.vozbarrial.domain.Usuario
+import com.vozbarrial.domain.model.Reporte
+import com.vozbarrial.domain.model.Usuario
 import com.vozbarrial.domain.repository.ReportsGateway
-import com.vozbarrial.data.reports.ReportsRepository
+import com.vozbarrial.data.repository.ReportsRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

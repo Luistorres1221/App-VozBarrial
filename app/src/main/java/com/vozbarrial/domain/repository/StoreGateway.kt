@@ -1,6 +1,6 @@
 package com.vozbarrial.domain.repository
 
-import com.vozbarrial.domain.Usuario
+import com.vozbarrial.domain.model.Usuario
 
 interface StoreGateway {
     fun equip(frame: String, onResult: (Result<Unit>) -> Unit)

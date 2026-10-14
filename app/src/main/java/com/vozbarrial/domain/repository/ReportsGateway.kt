@@ -1,7 +1,7 @@
 package com.vozbarrial.domain.repository
 
 import android.net.Uri
-import com.vozbarrial.domain.Reporte
+import com.vozbarrial.domain.model.Reporte
 
 interface ReportsGateway {
     fun observeReports(onChange: (List<Reporte>) -> Unit)

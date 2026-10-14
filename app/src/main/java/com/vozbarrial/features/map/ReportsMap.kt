@@ -46,7 +46,7 @@ import org.osmdroid.views.overlay.Marker
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider
 import com.vozbarrial.ui.theme.*
-import com.vozbarrial.domain.Reporte
+import com.vozbarrial.domain.model.Reporte
 import java.util.Locale
 
 private enum class ReportKind(val label: String, val color: Color) {

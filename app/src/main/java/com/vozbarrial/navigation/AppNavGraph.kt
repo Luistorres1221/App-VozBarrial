@@ -5,18 +5,19 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
-import com.vozbarrial.features.auth.ui.AuthRoute
-import com.vozbarrial.features.registerSI.ui.RegisterRoute
-import com.vozbarrial.features.profileSI.ui.CommunityRoute
-import com.vozbarrial.features.profileSI.ui.EditProfileRoute
+import com.vozbarrial.features.auth.loginSI.ui.AuthRoute
+import com.vozbarrial.features.auth.registerSI.ui.RegisterRoute
+import com.vozbarrial.features.profile.profileSI.ui.CommunityRoute
+import com.vozbarrial.features.profile.editProfileSI.ui.EditProfileRoute
 import com.vozbarrial.features.reports.ReportsViewModel
 import com.vozbarrial.features.dashboard.FramesPage
 import com.vozbarrial.features.dashboard.ReportCreate
 import com.vozbarrial.features.dashboard.StorePage
 import com.vozbarrial.features.map.ReportsMap
-import com.vozbarrial.features.welcomeSI.ui.WelcomeRoute
-import com.vozbarrial.domain.auth.AuthOperationResult
-import com.vozbarrial.domain.auth.AuthError
+import com.vozbarrial.features.auth.welcomeSI.ui.WelcomeRoute
+import com.vozbarrial.core.result.AuthOperationResult
+import com.vozbarrial.core.result.AuthError
+import com.vozbarrial.domain.model.Usuario
 
 @Composable
 fun AppNavGraph() {
@@ -52,7 +53,7 @@ fun AppNavGraph() {
         com.google.firebase.auth.FirebaseAuth.getInstance().createUserWithEmailAndPassword(email, password)
             .addOnSuccessListener { authResult ->
                 val uid = authResult.user?.uid ?: ""
-                val usuario = com.vozbarrial.domain.Usuario(uid = uid, name = name, email = email, phone = phone)
+                val usuario = Usuario(uid = uid, name = name, email = email, phone = phone)
                 com.google.firebase.firestore.FirebaseFirestore.getInstance().collection("usuarios").document(uid).set(usuario)
                 onResult(true, null)
             }
@@ -67,7 +68,7 @@ fun AppNavGraph() {
                 .document(currentUser.uid)
                 .get()
                 .addOnSuccessListener { document ->
-                    val usuario = document.toObject(com.vozbarrial.domain.Usuario::class.java)
+                    val usuario = document.toObject(Usuario::class.java)
                     if (usuario != null) {
                         signedInName = usuario.name.ifBlank { email.substringBefore("@") }
                         signedInEmail = email
@@ -193,7 +194,7 @@ fun AppNavGraph() {
             name = signedInName,
             onBack = { navigationViewModel.navigate("map") },
             onPublish = { title, description, category, latitude, longitude, photoUri, done ->
-                val mockProfile = com.vozbarrial.domain.Usuario(name = signedInName, email = signedInEmail)
+                val mockProfile = Usuario(name = signedInName, email = signedInEmail)
                 reportsViewModel.createReport(title, description, category, latitude, longitude, photoUri, mockProfile) { published, message ->
                     if (published) navigationViewModel.navigate("map")
                     done(published, message)

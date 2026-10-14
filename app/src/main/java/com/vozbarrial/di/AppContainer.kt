@@ -3,9 +3,9 @@ package com.vozbarrial.di
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
-import com.vozbarrial.data.profile.ProfileRepository
-import com.vozbarrial.data.reports.ReportsRepository
-import com.vozbarrial.data.store.StoreRepository
+import com.vozbarrial.data.repository.ProfileRepository
+import com.vozbarrial.data.repository.ReportsRepository
+import com.vozbarrial.data.repository.StoreRepository
 import com.vozbarrial.features.reports.ReportsViewModelFactory
 import com.vozbarrial.features.store.StoreViewModelFactory
 

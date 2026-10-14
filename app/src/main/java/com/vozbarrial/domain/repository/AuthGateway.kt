@@ -1,6 +1,6 @@
 package com.vozbarrial.domain.repository
 
-import com.vozbarrial.domain.auth.AuthOperationResult
+import com.vozbarrial.core.result.AuthOperationResult
 
 /** Domain contract for authentication. Firebase is only one possible implementation. */
 interface AuthGateway {
