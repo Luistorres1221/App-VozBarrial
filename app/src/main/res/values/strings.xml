@@ -1,0 +1,67 @@
+<resources>
+    <!-- Nombre de la App -->
+    <string name="app_name">VozBarrial</string>
+
+    <!-- Textos de mensajes para Reportes -->
+    <string name="report_updated_success">Reporte actualizado con éxito.</string>
+    <string name="report_updated_error">No se pudo actualizar el reporte.</string>
+    <string name="report_deleted_success">Reporte eliminado con éxito.</string>
+    <string name="report_deleted_error">No se pudo eliminar el reporte.</string>
+
+    <!-- Textos generales de la UI -->
+    <string name="back">Volver</string>
+    <string name="profile_title">Perfil ciudadano</string>
+    <string name="activity_title">Actividad</string>
+    <string name="badges_title">Insignias y logros</string>
+    <string name="profile_photo">Foto de perfil</string>
+    <string name="default_user_name">Vecino</string>
+    <string name="user_account_subtitle">Cuenta ciudadana</string>
+    <string name="edit_name">Editar nombre</string>
+    <string name="full_name">Nombre completo</string>
+    <string name="points_label">Puntos</string>
+    <string name="reports_label">Reportes</string>
+    <string name="resolved_label">Resueltos</string>
+    <string name="my_frames">Mis marcos</string>
+    <string name="store">Tienda</string>
+    <string name="my_publications_count">Mis publicaciones · %1$d</string>
+    <string name="no_reports_yet">Todavía no has publicado reportes.</string>
+    <string name="sign_out">Cerrar sesión</string>
+    <string name="delete_account_permanently">Eliminar cuenta permanentemente</string>
+    <string name="no_activity_filter">No hay actividad en este filtro.</string>
+    <string name="community_participation">Participación comunitaria</string>
+    <string name="participation_summary">%1$d puntos · %2$d reportes · %3$d resueltos</string>
+    <string name="profile_tab">Perfil</string>
+    <string name="activity_tab">Actividad</string>
+    <string name="badges_tab">Insignias</string>
+    <string name="save">Guardar</string>
+    <string name="cancel">Cancelar</string>
+    <string name="edit_report">Editar reporte</string>
+    <string name="title">Título</string>
+    <string name="description">Descripción</string>
+    <string name="delete_report">Eliminar reporte</string>
+    <string name="delete_report_confirmation">Se eliminará el reporte y su evidencia. Esta acción no se puede deshacer.</string>
+    <string name="delete_account">Eliminar cuenta</string>
+    <string name="delete_account_confirmation">Tu cuenta y tu perfil de VozBarrial se eliminarán permanentemente.</string>
+    <string name="delete">Eliminar</string>
+    <string name="accept">Aceptar</string>
+    <string name="edit">Editar</string>
+
+    <!-- Editar Perfil -->
+    <string name="edit_profile_title">Editar perfil</string>
+    <string name="change_photo">Cambiar foto</string>
+    <string name="photo_upload_instructions">Toca el ícono de cámara para actualizar tu foto (JPG o PNG, máx. 5MB)</string>
+    <string name="personal_data_header">Datos Personales</string>
+    <string name="full_name_label">NOMBRE COMPLETO</string>
+    <string name="full_name_placeholder">Nombre y apellidos</string>
+    <string name="phone_label">TELÉFONO DE ALERTAS CIUDADANAS</string>
+    <string name="phone_placeholder">+57 312 456 7890</string>
+    <string name="save_changes">Guardar Cambios</string>
+    <string name="cancel_changes">Cancelar Cambios</string>
+
+    <!-- Errores y Diálogos -->
+    <string name="error_invalid_full_name">Escribe tu nombre y apellido.</string>
+    <string name="error_invalid_image_format">Selecciona una foto JPG o PNG.</string>
+    <string name="error_image_size_exceeded">La foto debe pesar máximo 5 MB.</string>
+    <string name="dialog_check_data_title">Revisa los datos</string>
+    <string name="dialog_understood">Entendido</string>
+</resources>

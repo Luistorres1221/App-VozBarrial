@@ -1,4 +1,4 @@
-package com.vozbarrial.features.welcome.presentation
+package com.vozbarrial.features.welcomeSI.presentation
 
 data class WelcomeUiState(
     val title: String = "VozBarrial",

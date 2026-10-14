@@ -1,31 +1,23 @@
-package com.vozbarrial.features.auth.presentation.viewmodel
+package com.vozbarrial.features.loginSI.presentation
 
 import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-/** Holds transient sign-in form state across recompositions and configuration changes. */
-data class AuthFormUiState(
-    val email: String = "",
-    val password: String = "",
-    val passwordVisible: Boolean = false,
-    val loading: Boolean = false,
-    val message: String = "",
-    val success: Boolean = false,
-    val dialogMessage: String = "",
-    val showRecovery: Boolean = false,
-)
-
-class AuthFormViewModel : ViewModel() {
-    private val _uiState = MutableStateFlow(AuthFormUiState())
-    val uiState: StateFlow<AuthFormUiState> = _uiState.asStateFlow()
+class LoginViewModel : ViewModel() {
+    private val _uiState = MutableStateFlow(LoginUiState())
+    val uiState: StateFlow<LoginUiState> = _uiState.asStateFlow()
 
     fun updateEmail(value: String) = update { copy(email = value, message = "") }
     fun updatePassword(value: String) = update { copy(password = value, message = "") }
     fun togglePasswordVisibility() = update { copy(passwordVisible = !passwordVisible) }
     fun setLoading(value: Boolean) = update { copy(loading = value) }
-    fun showMessage(value: String, isSuccess: Boolean = false) = update { copy(message = value, success = isSuccess) }
+
+    fun showMessage(value: String, isSuccess: Boolean = false) = update {
+        copy(message = value, success = isSuccess)
+    }
+
     fun clearMessage() = update { copy(message = "", success = false) }
     fun showRecovery(value: Boolean) = update { copy(showRecovery = value) }
     fun showDialog(value: String) = update { copy(dialogMessage = value) }
@@ -62,7 +54,7 @@ class AuthFormViewModel : ViewModel() {
         val EMAIL_PATTERN = Regex("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")
     }
 
-    private inline fun update(transform: AuthFormUiState.() -> AuthFormUiState) {
+    private inline fun update(transform: LoginUiState.() -> LoginUiState) {
         _uiState.value = _uiState.value.transform()
     }
 }

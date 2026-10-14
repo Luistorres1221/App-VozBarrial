@@ -114,8 +114,24 @@ fun ReportsMap(name: String, profilePhoto: String? = null, onSignOut: () -> Unit
                     setTileSource(TileSourceFactory.MAPNIK)
                     setMultiTouchControls(true)
                     setBuiltInZoomControls(false)
-                    controller.setZoom(14.0)
-                    controller.setCenter(GeoPoint(4.60971, -74.08175))
+
+                    val locationManager = ctx.getSystemService(Context.LOCATION_SERVICE) as? android.location.LocationManager
+                    val lastKnown = try {
+                        locationManager?.getLastKnownLocation(android.location.LocationManager.GPS_PROVIDER)
+                            ?: locationManager?.getLastKnownLocation(android.location.LocationManager.NETWORK_PROVIDER)
+                    } catch (_: SecurityException) {
+                        null
+                    } catch (_: Exception) {
+                        null
+                    }
+
+                    if (lastKnown != null) {
+                        controller.setZoom(15.0)
+                        controller.setCenter(GeoPoint(lastKnown.latitude, lastKnown.longitude))
+                    } else {
+                        controller.setZoom(14.0)
+                        controller.setCenter(GeoPoint(4.60971, -74.08175))
+                    }
 
                     val locationOverlay = MyLocationNewOverlay(GpsMyLocationProvider(ctx), this).apply {
                         enableMyLocation()

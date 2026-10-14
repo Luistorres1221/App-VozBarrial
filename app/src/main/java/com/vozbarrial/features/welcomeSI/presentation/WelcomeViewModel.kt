@@ -1,4 +1,4 @@
-package com.vozbarrial.features.welcome.presentation
+package com.vozbarrial.features.welcomeSI.presentation
 
 import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.flow.MutableStateFlow

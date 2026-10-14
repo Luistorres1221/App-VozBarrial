@@ -1,4 +1,4 @@
-package com.vozbarrial.features.auth
+package com.vozbarrial.features.registerSI.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -42,8 +42,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -55,30 +53,61 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.vozbarrial.features.registerSI.presentation.RegisterUiState
+import com.vozbarrial.features.registerSI.presentation.RegisterViewModel
 import com.vozbarrial.ui.theme.*
-import com.vozbarrial.features.auth.presentation.viewmodel.RegisterViewModel
 
+/**
+ * Punto de entrada Stateful para el Registro.
+ */
 @Composable
-fun Register(
+fun RegisterRoute(
     onBack: () -> Unit,
     onLoginClick: () -> Unit,
     onAccountCreated: () -> Unit,
     onCreateAccount: (name: String, email: String, phone: String, password: String, (Boolean, String?) -> Unit) -> Unit,
+    registerViewModel: RegisterViewModel = viewModel()
 ) {
-    val registerViewModel: RegisterViewModel = viewModel()
-    val state by registerViewModel.uiState.collectAsStateWithLifecycle()
-    val name = state.name
-    val email = state.email
-    val phone = state.phone
-    val password = state.password
-    val confirmation = state.confirmation
-    val passwordVisible = state.passwordVisible
-    val acceptedTerms = state.acceptedTerms
-    val receiveAlerts = state.receiveAlerts
-    val error = state.error.orEmpty()
-    val showTerms = state.showTerms
-    val loading = state.loading
+    val uiState by registerViewModel.uiState.collectAsStateWithLifecycle()
 
+    RegisterContent(
+        uiState = uiState,
+        onBack = { registerViewModel.reset(); onBack() },
+        onLoginClick = { registerViewModel.reset(); onLoginClick() },
+        onNameChange = registerViewModel::updateName,
+        onEmailChange = registerViewModel::updateEmail,
+        onPhoneChange = registerViewModel::updatePhone,
+        onPasswordChange = registerViewModel::updatePassword,
+        onConfirmationChange = registerViewModel::updateConfirmation,
+        onTogglePasswordVisibility = registerViewModel::togglePasswordVisibility,
+        onTermsAcceptedChange = registerViewModel::setTermsAccepted,
+        onAlertsEnabledChange = registerViewModel::setAlertsEnabled,
+        onShowTerms = registerViewModel::showTerms,
+        onSubmit = { registerViewModel.submit(onCreateAccount, onAccountCreated) }
+    )
+}
+
+/**
+ * UI Stateless pura para el Registro.
+ */
+@Composable
+fun RegisterContent(
+    uiState: RegisterUiState,
+    onBack: () -> Unit,
+    onLoginClick: () -> Unit,
+    onNameChange: (String) -> Unit,
+    onEmailChange: (String) -> Unit,
+    onPhoneChange: (String) -> Unit,
+    onPasswordChange: (String) -> Unit,
+    onConfirmationChange: (String) -> Unit,
+    onTogglePasswordVisibility: () -> Unit,
+    onTermsAcceptedChange: (Boolean) -> Unit,
+    onAlertsEnabledChange: (Boolean) -> Unit,
+    onShowTerms: (Boolean) -> Unit,
+    onSubmit: () -> Unit,
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -87,13 +116,13 @@ fun Register(
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        RegisterHeader(onBack = { registerViewModel.reset(); onBack() })
+        RegisterHeader(onBack = onBack)
         Text("Únete a tu comunidad", color = VozNavy, fontSize = 26.sp, fontWeight = FontWeight.Bold)
 
         RegisterLabel("Nombre Completo")
         RegisterField(
-            value = name,
-            onValueChange = registerViewModel::updateName,
+            value = uiState.name,
+            onValueChange = onNameChange,
             placeholder = "ej. Carlos Mendoza",
             icon = { Icon(Icons.Default.Person, null, tint = VozMuted, modifier = Modifier.size(19.dp)) },
             keyboardType = KeyboardType.Text,
@@ -101,8 +130,8 @@ fun Register(
 
         RegisterLabel("Correo electrónico")
         RegisterField(
-            value = email,
-            onValueChange = registerViewModel::updateEmail,
+            value = uiState.email,
+            onValueChange = onEmailChange,
             placeholder = "ej. carlos.mendoza@correo.com",
             icon = { Icon(Icons.Default.MailOutline, null, tint = VozMuted, modifier = Modifier.size(19.dp)) },
             keyboardType = KeyboardType.Email,
@@ -111,21 +140,25 @@ fun Register(
 
         Row(verticalAlignment = Alignment.CenterVertically) {
             RegisterLabel("Contraseña segura", Modifier.weight(1f))
-            Text("Fortaleza: ${passwordStrengthLabel(password)}", color = VozMuted, fontSize = 11.sp)
+            Text("Fortaleza: ${passwordStrengthLabel(uiState.password)}", color = VozMuted, fontSize = 11.sp)
         }
         RegisterField(
-            value = password,
-            onValueChange = registerViewModel::updatePassword,
+            value = uiState.password,
+            onValueChange = onPasswordChange,
             placeholder = "Mínimo 8 caracteres",
             icon = { Icon(Icons.Default.Lock, null, tint = VozMuted, modifier = Modifier.size(18.dp)) },
             keyboardType = KeyboardType.Password,
             password = true,
-            visible = passwordVisible,
-            onToggleVisibility = registerViewModel::togglePasswordVisibility,
+            visible = uiState.passwordVisible,
+            onToggleVisibility = onTogglePasswordVisibility,
         )
-        StrengthBar(password)
+        StrengthBar(uiState.password)
         Row(
-            modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)).background(Color(0xFFEDF3FF)).padding(horizontal = 11.dp, vertical = 9.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(8.dp))
+                .background(Color(0xFFEDF3FF))
+                .padding(horizontal = 11.dp, vertical = 9.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(Icons.Default.Security, null, tint = Color(0xFF5783C1), modifier = Modifier.size(16.dp))
@@ -135,41 +168,41 @@ fun Register(
 
         RegisterLabel("Confirmar contraseña")
         RegisterField(
-            value = confirmation,
-            onValueChange = registerViewModel::updateConfirmation,
+            value = uiState.confirmation,
+            onValueChange = onConfirmationChange,
             placeholder = "Escribe de nuevo tu contraseña",
             icon = { Icon(Icons.Default.Lock, null, tint = VozMuted, modifier = Modifier.size(18.dp)) },
             keyboardType = KeyboardType.Password,
             password = true,
-            visible = passwordVisible,
-            onToggleVisibility = registerViewModel::togglePasswordVisibility,
+            visible = uiState.passwordVisible,
+            onToggleVisibility = onTogglePasswordVisibility,
         )
 
         ConsentRow(
-            checked = acceptedTerms,
-            onCheckedChange = registerViewModel::setTermsAccepted,
+            checked = uiState.acceptedTerms,
+            onCheckedChange = onTermsAcceptedChange,
             text = "Acepto los términos cívicos de convivencia y veracidad de reportes.",
-            onTextClick = { registerViewModel.showTerms(true) },
+            onTextClick = { onShowTerms(true) },
         )
         ConsentRow(
-            checked = receiveAlerts,
-            onCheckedChange = registerViewModel::setAlertsEnabled,
+            checked = uiState.receiveAlerts,
+            onCheckedChange = onAlertsEnabledChange,
             text = "Recibir notificaciones sobre alertas de seguridad en mi sector.",
         )
 
-        if (error.isNotBlank()) {
-            Text(error, color = Color(0xFFB42318), fontSize = 11.sp, lineHeight = 15.sp)
+        if (!uiState.error.isNullOrBlank()) {
+            Text(uiState.error, color = Color(0xFFB42318), fontSize = 11.sp, lineHeight = 15.sp)
         }
 
         Button(
-            onClick = { registerViewModel.submit(onCreateAccount, onAccountCreated) },
-            enabled = !loading,
+            onClick = onSubmit,
+            enabled = !uiState.loading,
             modifier = Modifier.fillMaxWidth().height(58.dp),
             shape = RoundedCornerShape(10.dp),
             elevation = ButtonDefaults.buttonElevation(defaultElevation = 2.dp),
             colors = ButtonDefaults.buttonColors(containerColor = VozNavy),
         ) {
-            if (loading) {
+            if (uiState.loading) {
                 CircularProgressIndicator(modifier = Modifier.size(18.dp), color = Color.White, strokeWidth = 2.dp)
             } else {
                 Icon(Icons.Default.PersonAdd, null, modifier = Modifier.size(18.dp))
@@ -187,21 +220,29 @@ fun Register(
             Text(
                 "Inicia sesión",
                 color = VozNavy,
-                fontSize =  15.sp,
+                fontSize = 15.sp,
                 fontWeight = FontWeight.Bold,
                 textDecoration = TextDecoration.Underline,
-                modifier = Modifier.clickable { registerViewModel.reset(); onLoginClick() },
+                modifier = Modifier.clickable(onClick = onLoginClick),
             )
         }
     }
 
-    if (showTerms) {
+    if (uiState.showTerms) {
         AlertDialog(
-            onDismissRequest = { registerViewModel.showTerms(false) },
+            onDismissRequest = { onShowTerms(false) },
             title = { Text("Normas de convivencia", color = VozNavy) },
             text = { Text("Al crear tu cuenta, te comprometes a compartir información veraz, respetar a la comunidad y reportar situaciones de forma responsable.") },
-            confirmButton = { TextButton(onClick = { registerViewModel.setTermsAccepted(true); registerViewModel.showTerms(false) }) { Text("Aceptar") } },
-            dismissButton = { TextButton(onClick = { registerViewModel.showTerms(false) }) { Text("Cerrar") } },
+            confirmButton = {
+                TextButton(onClick = { onTermsAcceptedChange(true); onShowTerms(false) }) {
+                    Text("Aceptar")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { onShowTerms(false) }) {
+                    Text("Cerrar")
+                }
+            },
         )
     }
 }
@@ -337,16 +378,8 @@ private fun ConsentRow(
                 .padding(start = 5.dp, top = 3.dp)
                 .then(if (onTextClick != null) Modifier.clickable(onClick = onTextClick) else Modifier),
             color = VozNavy,
-            fontSize =  14.sp,
-            lineHeight =  20.sp,
+            fontSize = 14.sp,
+            lineHeight = 20.sp,
         )
     }
 }
-
-
-
-
-
-
-
-

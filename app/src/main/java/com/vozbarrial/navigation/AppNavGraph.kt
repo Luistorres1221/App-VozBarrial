@@ -1,95 +1,142 @@
 ﻿package com.vozbarrial.navigation
 
 import androidx.compose.runtime.*
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.vozbarrial.VozBarrialApplication
-import com.vozbarrial.features.auth.Auth
-import com.vozbarrial.features.auth.Register
-import com.vozbarrial.features.auth.presentation.viewmodel.AuthFormViewModel
-import com.vozbarrial.features.auth.presentation.viewmodel.AuthViewModel
-import com.vozbarrial.features.profile.ProfileViewModel
+
+import com.vozbarrial.features.auth.ui.AuthRoute
+import com.vozbarrial.features.registerSI.ui.RegisterRoute
+import com.vozbarrial.features.profileSI.ui.CommunityRoute
+import com.vozbarrial.features.profileSI.ui.EditProfileRoute
 import com.vozbarrial.features.reports.ReportsViewModel
-import com.vozbarrial.features.store.StoreViewModel
-import com.vozbarrial.features.dashboard.CommunityPage
-import com.vozbarrial.features.dashboard.EditProfile
 import com.vozbarrial.features.dashboard.FramesPage
 import com.vozbarrial.features.dashboard.ReportCreate
 import com.vozbarrial.features.dashboard.StorePage
 import com.vozbarrial.features.map.ReportsMap
-import com.vozbarrial.features.welcome.ui.WelcomeRoute
+import com.vozbarrial.features.welcomeSI.ui.WelcomeRoute
+import com.vozbarrial.domain.auth.AuthOperationResult
+import com.vozbarrial.domain.auth.AuthError
 
 @Composable
 fun AppNavGraph() {
-    val app = LocalContext.current.applicationContext as VozBarrialApplication
-    val container = app.appContainer
-    val authViewModel: AuthViewModel = viewModel(factory = container.authViewModelFactory)
-    val authFormViewModel: AuthFormViewModel = viewModel()
-    val profileViewModel: ProfileViewModel = viewModel(factory = container.profileViewModelFactory)
-    val reportsViewModel: ReportsViewModel = viewModel(factory = container.reportsViewModelFactory)
-    val storeViewModel: StoreViewModel = viewModel(factory = container.storeViewModelFactory)
+    val reportsViewModel: ReportsViewModel = viewModel()
     val navigationViewModel: NavigationViewModel = viewModel()
-    val profileState by profileViewModel.uiState.collectAsStateWithLifecycle()
+
     val reportsState by reportsViewModel.uiState.collectAsStateWithLifecycle()
     val screen by navigationViewModel.screen.collectAsStateWithLifecycle()
     val dashboardPage by navigationViewModel.dashboardPage.collectAsStateWithLifecycle()
 
-    val profile = profileState.profile
-    val name = profile?.name.orEmpty()
-    val phone = profile?.phone.orEmpty()
-    val photo = profile?.photoUrl
-    val frame = profile?.equippedFrame ?: "Clásico Cívico"
-    val points = profile?.points ?: 0
-    val ownedFrames = profile?.ownedFrames?.toSet().orEmpty()
-    val myReports = remember(reportsState.reports, profile?.uid, profile?.email) {
-        val profileUid = profile?.uid.orEmpty()
-        val profileEmail = profile?.email.orEmpty()
+    var signedInName by rememberSaveable { mutableStateOf("") }
+    var signedInEmail by rememberSaveable { mutableStateOf("") }
+    var signedInPhone by rememberSaveable { mutableStateOf("") }
+    var signedInPhoto by rememberSaveable { mutableStateOf<String?>(null) }
+    var equippedFrame by rememberSaveable { mutableStateOf("Clásico Cívico") }
+    var signedInPoints by rememberSaveable { mutableIntStateOf(1450) }
+    var ownedFramesText by rememberSaveable { mutableStateOf("Clásico Cívico|Guardián Dorado|Eco Barrio Verde|Escudo Ciudadano") }
+    val ownedFrames = ownedFramesText.split("|").filter { it.isNotBlank() }.toSet()
+
+    val myReports = remember(reportsState.reports, signedInEmail) {
         reportsState.reports.filter { report ->
-            if (profileUid.isNotBlank() && report.authorUid.isNotBlank()) report.authorUid == profileUid
-            else report.authorEmail.equals(profileEmail, ignoreCase = true)
+            report.authorEmail.equals(signedInEmail, ignoreCase = true)
         }
     }
 
-    fun enterApp() { profileViewModel.loadProfile { loaded ->
-        if (loaded) { reportsViewModel.startObserving(); navigationViewModel.navigate("map") }
-    } }
+    fun verifyAccount(email: String, password: String, onResult: (Boolean) -> Unit) {
+        com.google.firebase.auth.FirebaseAuth.getInstance().signInWithEmailAndPassword(email, password)
+            .addOnSuccessListener { onResult(true) }
+            .addOnFailureListener { onResult(false) }
+    }
+
+    fun createAccount(name: String, email: String, phone: String, password: String, onResult: (Boolean, String?) -> Unit) {
+        com.google.firebase.auth.FirebaseAuth.getInstance().createUserWithEmailAndPassword(email, password)
+            .addOnSuccessListener { authResult ->
+                val uid = authResult.user?.uid ?: ""
+                val usuario = com.vozbarrial.domain.Usuario(uid = uid, name = name, email = email, phone = phone)
+                com.google.firebase.firestore.FirebaseFirestore.getInstance().collection("usuarios").document(uid).set(usuario)
+                onResult(true, null)
+            }
+            .addOnFailureListener { e -> onResult(false, e.localizedMessage) }
+    }
+
+    fun enterApp(email: String) {
+        val currentUser = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
+        if (currentUser != null) {
+            com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                .collection("usuarios")
+                .document(currentUser.uid)
+                .get()
+                .addOnSuccessListener { document ->
+                    val usuario = document.toObject(com.vozbarrial.domain.Usuario::class.java)
+                    if (usuario != null) {
+                        signedInName = usuario.name.ifBlank { email.substringBefore("@") }
+                        signedInEmail = email
+                        signedInPhone = usuario.phone
+                        signedInPhoto = usuario.photoUrl
+                        equippedFrame = usuario.equippedFrame
+                        signedInPoints = usuario.points
+                        ownedFramesText = usuario.ownedFrames.joinToString("|")
+                    } else {
+                        signedInName = email.substringBefore("@")
+                        signedInEmail = email
+                    }
+                    reportsViewModel.startObserving()
+                    navigationViewModel.navigate("map")
+                }
+                .addOnFailureListener {
+                    signedInName = email.substringBefore("@")
+                    signedInEmail = email
+                    reportsViewModel.startObserving()
+                    navigationViewModel.navigate("map")
+                }
+        }
+    }
 
     LaunchedEffect(Unit) {
-        if (profileViewModel.hasActiveSession()) enterApp()
+        val currentUser = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
+        if (currentUser != null) {
+            enterApp(currentUser.email.orEmpty())
+        }
     }
 
     when (screen) {
-        "auth" -> Auth(
+        "auth" -> AuthRoute(
             onBack = { navigationViewModel.navigate("welcome") },
             onRegisterClick = { navigationViewModel.navigate("register") },
-            onLogin = authViewModel::signIn,
-            onRequestPasswordReset = authViewModel::requestPasswordReset,
-            onAuthenticated = { enterApp() },
+            onLogin = ::verifyAccount,
+            onRequestPasswordReset = { email, callback ->
+                com.google.firebase.auth.FirebaseAuth.getInstance().sendPasswordResetEmail(email)
+                    .addOnSuccessListener { callback(AuthOperationResult.Success(Unit)) }
+                    .addOnFailureListener { callback(AuthOperationResult.Failure(AuthError.ProviderFailure(null, it.localizedMessage))) }
+            },
+            onAuthenticated = { email: String -> enterApp(email) }
         )
-        "register" -> Register(
+        "register" -> RegisterRoute(
             onBack = { navigationViewModel.navigate("auth") },
             onLoginClick = { navigationViewModel.navigate("auth") },
             onAccountCreated = {
-                authFormViewModel.showMessage("¡Cuenta creada con éxito! Inicia sesión.", true)
                 navigationViewModel.navigate("auth")
             },
-            onCreateAccount = authViewModel::createAccount,
+            onCreateAccount = ::createAccount
         )
         "map" -> ReportsMap(
-            name = name,
-            profilePhoto = photo,
-            points = points,
+            name = signedInName,
+            profilePhoto = signedInPhoto,
+            points = signedInPoints,
             communityReports = reportsState.reports,
-            onSignOut = { reportsViewModel.stopObserving(); profileViewModel.signOut(); navigationViewModel.navigate("welcome") },
+            onSignOut = {
+                reportsViewModel.stopObserving()
+                com.google.firebase.auth.FirebaseAuth.getInstance().signOut()
+                navigationViewModel.navigate("welcome")
+            },
             onNavigate = { page ->
                 if (page == "createReport") navigationViewModel.navigate("createReport")
                 else navigationViewModel.showDashboardPage(page)
-            },
+            }
         )
-        "dashboard" -> CommunityPage(
+        "dashboard" -> CommunityRoute(
             page = dashboardPage,
-            name = name,
+            name = signedInName,
             onBack = { navigationViewModel.navigate("map") },
             onNavigate = { page ->
                 when (page) {
@@ -97,58 +144,73 @@ fun AppNavGraph() {
                     else -> navigationViewModel.showDashboardPage(page)
                 }
             },
-            onSignOut = { reportsViewModel.stopObserving(); profileViewModel.signOut(); navigationViewModel.navigate("welcome") },
-            onSaveName = { newName -> profileViewModel.updateProfile(newName, phone, photo) },
-            onDeleteAccount = { profileViewModel.deleteAccount { deleted ->
-                if (deleted) { reportsViewModel.stopObserving(); navigationViewModel.navigate("welcome") }
-            } },
-            profilePhoto = photo,
-            points = points,
+            onSignOut = {
+                reportsViewModel.stopObserving()
+                com.google.firebase.auth.FirebaseAuth.getInstance().signOut()
+                navigationViewModel.navigate("welcome")
+            },
+            onSaveName = { newName ->
+                signedInName = newName
+            },
+            onDeleteAccount = {
+                reportsViewModel.stopObserving()
+                com.google.firebase.auth.FirebaseAuth.getInstance().signOut()
+                navigationViewModel.navigate("welcome")
+            },
+            profilePhoto = signedInPhoto,
+            points = signedInPoints,
             reports = myReports,
             onEditReport = reportsViewModel::updateReport,
-            onDeleteReport = reportsViewModel::deleteReport,
+            onDeleteReport = reportsViewModel::deleteReport
         )
         "frames" -> FramesPage(
-            name = name,
-            activeFrame = frame,
-            points = points,
+            name = signedInName,
+            activeFrame = equippedFrame,
+            points = signedInPoints,
             owned = ownedFrames,
             onBack = { navigationViewModel.showDashboardPage("profile") },
-            onEquip = { selected -> storeViewModel.equip(selected) { ok, _ -> if (ok) profileViewModel.acceptEquippedFrame(selected) } },
-            onOpenStore = { navigationViewModel.navigate("store") },
+            onEquip = { selected ->
+                equippedFrame = selected
+            },
+            onOpenStore = { navigationViewModel.navigate("store") }
         )
         "store" -> StorePage(
-            name = name,
-            points = points,
+            name = signedInName,
+            points = signedInPoints,
             owned = ownedFrames,
-            activeFrame = frame,
+            activeFrame = equippedFrame,
             onBack = { navigationViewModel.showDashboardPage("profile") },
-            onPurchase = { selected, cost, _, result -> storeViewModel.purchase(selected, cost, profileViewModel::acceptProfile, result) },
-            onEquip = { selected, result -> storeViewModel.equip(selected) { ok, error ->
-                if (ok) profileViewModel.acceptEquippedFrame(selected)
-                result(ok, error)
-            } },
+            onPurchase = { selected, cost, _, result ->
+                signedInPoints -= cost
+                result(true, null)
+            },
+            onEquip = { selected, result ->
+                equippedFrame = selected
+                result(true, null)
+            }
         )
         "createReport" -> ReportCreate(
-            name = name,
+            name = signedInName,
             onBack = { navigationViewModel.navigate("map") },
             onPublish = { title, description, category, latitude, longitude, photoUri, done ->
-                reportsViewModel.createReport(title, description, category, latitude, longitude, photoUri, profile) { published, message ->
+                val mockProfile = com.vozbarrial.domain.Usuario(name = signedInName, email = signedInEmail)
+                reportsViewModel.createReport(title, description, category, latitude, longitude, photoUri, mockProfile) { published, message ->
                     if (published) navigationViewModel.navigate("map")
                     done(published, message)
                 }
-            },
+            }
         )
-        "editProfile" -> EditProfile(
-            name = name,
-            phone = phone,
-            photo = photo,
+        "editProfile" -> EditProfileRoute(
+            name = signedInName,
+            phone = signedInPhone,
+            photo = signedInPhoto,
             onCancel = { navigationViewModel.showDashboardPage("profile") },
-            onSave = { newName, newPhone, newPhoto ->
-                profileViewModel.updateProfile(newName, newPhone, newPhoto) { saved ->
-                    if (saved) navigationViewModel.showDashboardPage("profile")
-                }
-            },
+            onSave = { newName: String, newPhone: String, newPhoto: String? ->
+                signedInName = newName
+                signedInPhone = newPhone
+                signedInPhoto = newPhoto
+                navigationViewModel.showDashboardPage("profile")
+            }
         )
         else -> WelcomeRoute(onLoginClick = { navigationViewModel.navigate("auth") })
     }

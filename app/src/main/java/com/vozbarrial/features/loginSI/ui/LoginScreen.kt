@@ -1,4 +1,4 @@
-package com.vozbarrial.features.auth
+package com.vozbarrial.features.auth.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -23,9 +23,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Fingerprint
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Login
-import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.MailOutline
 import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.Security
@@ -46,8 +46,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -60,34 +58,66 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.vozbarrial.domain.auth.AuthOperationResult
-import com.vozbarrial.features.auth.presentation.viewmodel.AuthFormViewModel
+import com.vozbarrial.features.passwordRecoverySI.ui.PasswordRecoveryRoute
+import com.vozbarrial.features.loginSI.presentation.LoginUiState
+import com.vozbarrial.features.loginSI.presentation.LoginViewModel
 import com.vozbarrial.ui.theme.*
 
+/**
+ * Punto de entrada Stateful para el login, conectado con AuthFormViewModel.
+ */
 @Composable
-fun Auth(
+fun AuthRoute(
     onBack: () -> Unit,
     onRegisterClick: () -> Unit,
     onLogin: (email: String, password: String, (Boolean) -> Unit) -> Unit,
     onAuthenticated: (name: String) -> Unit,
     onRequestPasswordReset: (String, (AuthOperationResult<Unit>) -> Unit) -> Unit,
+    formViewModel: LoginViewModel = viewModel()
 ) {
-    val formViewModel: AuthFormViewModel = viewModel()
     val formState by formViewModel.uiState.collectAsStateWithLifecycle()
-    val email = formState.email
-    val password = formState.password
-    val passwordVisible = formState.passwordVisible
-    val message = formState.message
-    val success = formState.success
-    val loading = formState.loading
-    val dialogMessage = formState.dialogMessage
-    val showRecovery = formState.showRecovery
 
-    if (showRecovery) {
-        PasswordRecovery(onBack = { formViewModel.showRecovery(false) }, onRequestPasswordReset = onRequestPasswordReset)
+    if (formState.showRecovery) {
+        PasswordRecoveryRoute(
+            onBack = { formViewModel.showRecovery(false) },
+            onRequestPasswordReset = onRequestPasswordReset
+        )
         return
     }
 
+    AuthContent(
+        formState = formState,
+        onBack = onBack,
+        onRegisterClick = onRegisterClick,
+        onEmailChange = formViewModel::updateEmail,
+        onPasswordChange = formViewModel::updatePassword,
+        onTogglePasswordVisibility = formViewModel::togglePasswordVisibility,
+        onShowRecovery = { formViewModel.showRecovery(true) },
+        onSubmitLogin = { formViewModel.submitLogin(onLogin, onAuthenticated) },
+        onShowDialog = formViewModel::showDialog,
+        onDismissDialog = { formViewModel.showDialog("") }
+    )
+}
+
+/**
+ * Vista UI Stateless pura para el inicio de sesión.
+ */
+@Composable
+fun AuthContent(
+    formState: LoginUiState,
+    onBack: () -> Unit,
+    onRegisterClick: () -> Unit,
+    onEmailChange: (String) -> Unit,
+    onPasswordChange: (String) -> Unit,
+    onTogglePasswordVisibility: () -> Unit,
+    onShowRecovery: () -> Unit,
+    onSubmitLogin: () -> Unit,
+    onShowDialog: (String) -> Unit,
+    onDismissDialog: () -> Unit,
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -115,8 +145,8 @@ fun Auth(
                     Text("Perfil Ciudadano", color = VozMuted, fontSize = 10.sp)
                 }
                 AuthField(
-                    value = email,
-                    onValueChange = formViewModel::updateEmail,
+                    value = formState.email,
+                    onValueChange = onEmailChange,
                     placeholder = "nombre@correo.com",
                     leading = { Icon(Icons.Default.MailOutline, null, tint = VozMuted, modifier = Modifier.size(17.dp)) },
                     keyboardType = KeyboardType.Email,
@@ -128,18 +158,18 @@ fun Auth(
                         "¿Olvidaste tu contraseña?",
                         color = Color(0xFF45628A),
                         fontSize = 10.sp,
-                        modifier = Modifier.clickable { formViewModel.showRecovery(true) },
+                        modifier = Modifier.clickable(onClick = onShowRecovery),
                     )
                 }
                 AuthField(
-                    value = password,
-                    onValueChange = formViewModel::updatePassword,
+                    value = formState.password,
+                    onValueChange = onPasswordChange,
                     placeholder = "Mínimo 6 caracteres",
                     leading = { Icon(Icons.Default.Lock, null, tint = VozMuted, modifier = Modifier.size(17.dp)) },
                     keyboardType = KeyboardType.Password,
                     password = true,
-                    visible = passwordVisible,
-                    onToggleVisibility = formViewModel::togglePasswordVisibility,
+                    visible = formState.passwordVisible,
+                    onToggleVisibility = onTogglePasswordVisibility,
                 )
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -148,23 +178,23 @@ fun Auth(
                     Text("Te enviaremos un enlace de recuperación seguro si no la recuerdas.", color = VozMuted, fontSize = 10.sp, lineHeight = 13.sp)
                 }
 
-                if (message.isNotBlank()) {
+                if (formState.message.isNotBlank()) {
                     Text(
-                        message,
-                        color = if (success) Color(0xFF087A55) else Color(0xFFB42318),
+                        formState.message,
+                        color = if (formState.success) Color(0xFF087A55) else Color(0xFFB42318),
                         fontSize = 12.sp,
                         lineHeight = 16.sp,
                     )
                 }
 
                 Button(
-                    onClick = { formViewModel.submitLogin(onLogin, onAuthenticated) },
-                    enabled = !loading,
+                    onClick = onSubmitLogin,
+                    enabled = !formState.loading,
                     modifier = Modifier.fillMaxWidth().height(46.dp),
                     shape = RoundedCornerShape(9.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = VozNavy),
                 ) {
-                    if (loading) {
+                    if (formState.loading) {
                         CircularProgressIndicator(modifier = Modifier.size(20.dp), color = Color.White, strokeWidth = 2.dp)
                     } else {
                         Icon(Icons.Default.Login, null, modifier = Modifier.size(17.dp))
@@ -175,24 +205,24 @@ fun Auth(
 
                 DividerLabel("O CONTINÚA CON")
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        OutlinedButton(
-                            onClick = { formViewModel.showDialog("El acceso con Google estará disponible cuando conectemos el proveedor de autenticación.") },
-                            modifier = Modifier.weight(1f).height(42.dp),
-                            shape = RoundedCornerShape(9.dp),
-                        ) {
-                            Text("G", color = Color(0xFF4285F4), fontWeight = FontWeight.Black, fontSize = 19.sp)
-                            Spacer(Modifier.width(6.dp))
-                            Text("Google", color = VozNavy, fontSize = 11.sp)
-                        }
-                        OutlinedButton(
-                            onClick = { formViewModel.showDialog("El acceso biométrico estará disponible cuando configuremos la autenticación segura del dispositivo.") },
-                            modifier = Modifier.weight(1f).height(42.dp),
-                            shape = RoundedCornerShape(9.dp),
-                        ) {
-                            Icon(Icons.Default.Fingerprint, null, tint = Color(0xFF188A79), modifier = Modifier.size(17.dp))
-                            Spacer(Modifier.width(5.dp))
-                            Text("Huella / Face", color = VozNavy, fontSize = 11.sp)
-                        }
+                    OutlinedButton(
+                        onClick = { onShowDialog("El acceso con Google estará disponible cuando conectemos el proveedor de autenticación.") },
+                        modifier = Modifier.weight(1f).height(42.dp),
+                        shape = RoundedCornerShape(9.dp),
+                    ) {
+                        Text("G", color = Color(0xFF4285F4), fontWeight = FontWeight.Black, fontSize = 19.sp)
+                        Spacer(Modifier.width(6.dp))
+                        Text("Google", color = VozNavy, fontSize = 11.sp)
+                    }
+                    OutlinedButton(
+                        onClick = { onShowDialog("El acceso biométrico estará disponible cuando configuremos la autenticación segura del dispositivo.") },
+                        modifier = Modifier.weight(1f).height(42.dp),
+                        shape = RoundedCornerShape(9.dp),
+                    ) {
+                        Icon(Icons.Default.Fingerprint, null, tint = Color(0xFF188A79), modifier = Modifier.size(17.dp))
+                        Spacer(Modifier.width(5.dp))
+                        Text("Huella / Face", color = VozNavy, fontSize = 11.sp)
+                    }
                 }
             }
         }
@@ -250,12 +280,12 @@ fun Auth(
         }
     }
 
-    if (dialogMessage.isNotBlank()) {
+    if (formState.dialogMessage.isNotBlank()) {
         AlertDialog(
-            onDismissRequest = { formViewModel.showDialog("") },
+            onDismissRequest = onDismissDialog,
             title = { Text("VozBarrial", color = VozNavy) },
-            text = { Text(dialogMessage) },
-            confirmButton = { TextButton(onClick = { formViewModel.showDialog("") }) { Text("Entendido") } },
+            text = { Text(formState.dialogMessage) },
+            confirmButton = { TextButton(onClick = onDismissDialog) { Text("Entendido") } },
         )
     }
 }

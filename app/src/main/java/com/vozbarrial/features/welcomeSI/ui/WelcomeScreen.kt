@@ -1,4 +1,4 @@
-package com.vozbarrial.features.welcome.ui
+package com.vozbarrial.features.welcomeSI.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -37,8 +37,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.vozbarrial.features.welcome.presentation.WelcomeUiState
-import com.vozbarrial.features.welcome.presentation.WelcomeViewModel
+import com.vozbarrial.features.welcomeSI.presentation.WelcomeUiState
+import com.vozbarrial.features.welcomeSI.presentation.WelcomeViewModel
 import com.vozbarrial.ui.theme.VozGreen
 import com.vozbarrial.ui.theme.VozNavy
 
