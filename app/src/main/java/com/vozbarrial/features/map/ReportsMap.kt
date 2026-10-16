@@ -46,6 +46,7 @@ import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider
 import com.vozbarrial.ui.theme.*
 import com.vozbarrial.domain.model.Report
+import com.vozbarrial.domain.model.ReportStatus
 import java.util.Locale
 
 private data class CommunityReport(
@@ -56,6 +57,7 @@ private data class CommunityReport(
     val category: String,
     val imageUrl: String?,
     val timestamp: Long,
+    val status: String,
     val latitude: Double,
     val longitude: Double,
 )
@@ -70,7 +72,7 @@ fun ReportsMap(name: String, profilePhoto: String? = null, onSignOut: () -> Unit
 
     val reports = remember(communityReports) {
         communityReports.map { report ->
-            CommunityReport(report.id, report.title, report.description, report.place, report.category, report.imageUrl, report.timestamp, report.latitude, report.longitude)
+            CommunityReport(report.id, report.title, report.description, report.place, report.category, report.imageUrl, report.timestamp, report.status, report.latitude, report.longitude)
         }
     }
 
@@ -135,6 +137,15 @@ fun ReportsMap(name: String, profilePhoto: String? = null, onSignOut: () -> Unit
 
     val distanceFilteredReports = remember(reports, distance, currentUserLocation, myLoc) {
         reports.filter { report ->
+            val statusEnum = ReportStatus.fromString(report.status)
+            if (statusEnum == ReportStatus.RECHAZADO || statusEnum == ReportStatus.ELIMINADO) return@filter false
+
+            if (statusEnum == ReportStatus.RESUELTO) {
+                val fifteenMinutes = 15 * 60 * 1000L
+                val elapsed = System.currentTimeMillis() - report.timestamp
+                if (elapsed > fifteenMinutes) return@filter false
+            }
+
             if (myLoc != null && maxMeters < Double.MAX_VALUE) {
                 val reportPoint = GeoPoint(report.latitude, report.longitude)
                 val distanceMeters = myLoc.distanceToAsDouble(reportPoint)

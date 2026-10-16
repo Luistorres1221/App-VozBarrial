@@ -31,6 +31,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.vozbarrial.domain.model.Report
+import com.vozbarrial.domain.model.ReportStatus
+import androidx.compose.material.icons.filled.Schedule
 import com.vozbarrial.features.reports.detail.presentation.ReportDetailViewModel
 import com.vozbarrial.ui.theme.*
 import java.text.SimpleDateFormat
@@ -161,16 +163,48 @@ private fun ReportDetailScreen(
 
                     Spacer(Modifier.height(14.dp))
 
-                    // Verified Official Badge
+                    val statusEnum = remember(report.status) {
+                        ReportStatus.fromString(report.status)
+                    }
+                    val statusBg = when (statusEnum) {
+                        ReportStatus.POR_VERIFICAR -> Color(0xFFFEF3C7)
+                        ReportStatus.VERIFICADO -> Color(0xFFD1FAE5)
+                        ReportStatus.RESUELTO -> Color(0xFFDBEAFE)
+                        ReportStatus.RECHAZADO -> Color(0xFFFEE2E2)
+                        ReportStatus.ELIMINADO -> Color(0xFFF1F5F9)
+                    }
+                    val statusFg = when (statusEnum) {
+                        ReportStatus.POR_VERIFICAR -> Color(0xFFD97706)
+                        ReportStatus.VERIFICADO -> Color(0xFF059669)
+                        ReportStatus.RESUELTO -> Color(0xFF1D4ED8)
+                        ReportStatus.RECHAZADO -> Color(0xFFDC2626)
+                        ReportStatus.ELIMINADO -> Color(0xFF64748B)
+                    }
+                    val statusLabel = when (statusEnum) {
+                        ReportStatus.POR_VERIFICAR -> "Por verificar"
+                        ReportStatus.VERIFICADO -> "Verificado Oficialmente"
+                        ReportStatus.RESUELTO -> "Resuelto"
+                        ReportStatus.RECHAZADO -> "Rechazado"
+                        ReportStatus.ELIMINADO -> "Eliminado"
+                    }
+                    val statusIcon = when (statusEnum) {
+                        ReportStatus.POR_VERIFICAR -> Icons.Default.Schedule
+                        ReportStatus.VERIFICADO -> Icons.Default.CheckCircle
+                        ReportStatus.RESUELTO -> Icons.Default.CheckCircle
+                        ReportStatus.RECHAZADO -> Icons.Default.Warning
+                        ReportStatus.ELIMINADO -> Icons.Default.Close
+                    }
+
+                    // Status Badge
                     Surface(
                         shape = RoundedCornerShape(50),
-                        color = Color(0xFFD1FAE5),
+                        color = statusBg,
                         modifier = Modifier.wrapContentWidth()
                     ) {
                         Row(modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp), verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Default.CheckCircle, null, tint = Color(0xFF059669), modifier = Modifier.size(14.dp))
+                            Icon(statusIcon, null, tint = statusFg, modifier = Modifier.size(14.dp))
                             Spacer(Modifier.width(5.dp))
-                            Text("Verificado Oficialmente", color = Color(0xFF059669), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                            Text(statusLabel, color = statusFg, fontSize = 11.sp, fontWeight = FontWeight.Bold)
                         }
                     }
 

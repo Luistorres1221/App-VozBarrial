@@ -54,6 +54,7 @@ class ReportsViewModel : ViewModel() {
             imageUrl = null,
             latitude = latitude,
             longitude = longitude,
+            status = "POR_VERIFICAR",
             timestamp = System.currentTimeMillis(),
         )
 
