@@ -129,8 +129,11 @@ fun AppNavGraph() {
                 navigationViewModel.navigate("welcome")
             },
             onNavigate = { page ->
-                if (page == "createReport") navigationViewModel.navigate("createReport")
-                else navigationViewModel.showDashboardPage(page)
+                if (page == "createReport" || page.startsWith("reportDetail/")) {
+                    navigationViewModel.navigate(page)
+                } else {
+                    navigationViewModel.showDashboardPage(page)
+                }
             }
         )
         "dashboard" -> CommunityRoute(
@@ -211,6 +214,21 @@ fun AppNavGraph() {
                 navigationViewModel.showDashboardPage("profile")
             }
         )
-        else -> WelcomeRoute(onLoginClick = { navigationViewModel.navigate("auth") })
+        else -> if (screen.startsWith("reportDetail/")) {
+            val reportId = screen.substringAfter("reportDetail/")
+            val targetReport = reportsViewModel.reports.firstOrNull { it.id == reportId } ?: reportsViewModel.reports.firstOrNull()
+            if (targetReport != null) {
+                com.vozbarrial.features.reports.detail.ui.ReportDetailRoute(
+                    report = targetReport,
+                    userName = signedInName,
+                    userPhoto = signedInPhoto,
+                    onBack = { navigationViewModel.navigate("map") }
+                )
+            } else {
+                LaunchedEffect(Unit) { navigationViewModel.navigate("map") }
+            }
+        } else {
+            WelcomeRoute(onLoginClick = { navigationViewModel.navigate("auth") })
+        }
     }
 }
