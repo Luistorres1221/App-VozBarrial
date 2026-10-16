@@ -8,6 +8,8 @@ data class ProfileUiState(
     val phone: String = "",
     val profilePhoto: String? = null,
     val points: Int = 0,
+    val monedas: Int = 0,
+    val nivel: String = "novato",
     val reports: List<Report> = emptyList(),
     val activityFilter: String = "",
     val availableFilters: List<String> = emptyList(),
@@ -29,9 +31,15 @@ data class ProfileUiState(
     val verifiedCount: Int
         get() = reports.count { it.status.equals("RESUELTO", true) || it.status.equals("VERIFICADO", true) }
 
+    val totalVotes: Int
+        get() = reports.sumOf { it.votes }
+
+    val effectivenessPercentage: Int
+        get() = if (reports.isNotEmpty()) (verifiedCount * 100) / reports.size else 0
+
     val filteredActivityReports: List<Report>
         get() = sortedReports.filter { report ->
-            if (activityFilter.isBlank()) true
+            if (activityFilter.isBlank() || activityFilter.equals("Todas", true)) true
             else report.status.equals(activityFilter, ignoreCase = true)
         }
 }

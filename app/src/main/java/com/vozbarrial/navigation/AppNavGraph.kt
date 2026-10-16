@@ -191,6 +191,8 @@ fun AppNavGraph() {
             },
             profilePhoto = signedInPhoto,
             points = signedInPoints,
+            monedas = signedInMonedas,
+            nivel = signedInNivel,
             reports = myReports,
             onEditReport = reportsViewModel::updateReport,
             onDeleteReport = reportsViewModel::deleteReport

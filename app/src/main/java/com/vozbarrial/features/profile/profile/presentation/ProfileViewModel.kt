@@ -17,6 +17,8 @@ class ProfileViewModel : ViewModel() {
         name: String,
         profilePhoto: String?,
         points: Int,
+        monedas: Int,
+        nivel: String,
         reports: List<Report>,
         filters: List<String>
     ) {
@@ -26,6 +28,8 @@ class ProfileViewModel : ViewModel() {
                 name = name,
                 profilePhoto = profilePhoto,
                 points = points,
+                monedas = monedas,
+                nivel = nivel,
                 reports = reports,
                 availableFilters = filters,
                 activityFilter = if (currentState.activityFilter.isEmpty() && filters.isNotEmpty()) filters.first() else currentState.activityFilter

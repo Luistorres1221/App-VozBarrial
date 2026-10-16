@@ -1,6 +1,7 @@
 package com.vozbarrial.features.profile.profile.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -8,9 +9,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -27,6 +28,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.vozbarrial.R
+import com.vozbarrial.domain.model.Nivel
 import com.vozbarrial.domain.model.Report
 import com.vozbarrial.features.profile.profile.presentation.ProfileUiState
 import com.vozbarrial.features.profile.profile.presentation.ProfileViewModel
@@ -43,6 +45,8 @@ fun CommunityRoute(
     onDeleteAccount: () -> Unit,
     profilePhoto: String?,
     points: Int,
+    monedas: Int,
+    nivel: String,
     reports: List<Report>,
     onEditReport: (String, String, String, (Boolean, String?) -> Unit) -> Unit,
     onDeleteReport: (String, (Boolean, String?) -> Unit) -> Unit,
@@ -56,8 +60,8 @@ fun CommunityRoute(
     val deleteSuccessMsg = stringResource(R.string.report_deleted_success)
     val deleteErrorMsg = stringResource(R.string.report_deleted_error)
 
-    LaunchedEffect(page, name, profilePhoto, points, reports) {
-        viewModel.updateProfileData(page, name, profilePhoto, points, reports, availableFilters)
+    LaunchedEffect(page, name, profilePhoto, points, monedas, nivel, reports) {
+        viewModel.updateProfileData(page, name, profilePhoto, points, monedas, nivel, reports, availableFilters)
     }
 
     CommunityContent(
@@ -128,7 +132,12 @@ fun CommunityContent(
                 Modifier.weight(1f), color = VozNavy, fontWeight = FontWeight.Bold, fontSize = 16.sp,
             )
             IconButton(onClick = { onNavigate("activity") }) {
-                Icon(Icons.Default.Notifications, contentDescription = stringResource(R.string.activity_title), tint = VozNavy)
+                Box(contentAlignment = Alignment.TopEnd) {
+                    Icon(Icons.Default.Notifications, contentDescription = stringResource(R.string.activity_title), tint = VozNavy)
+                    if (uiState.monedas > 0 || uiState.points > 0) {
+                        Box(Modifier.size(7.dp).clip(CircleShape).background(Color(0xFFE35454)))
+                    }
+                }
             }
         }
 
@@ -139,16 +148,41 @@ fun CommunityContent(
         ) {
             when (uiState.currentPage) {
                 "profile" -> {
+                    // 1. Profile Header Card
                     item {
-                        Card(colors = CardDefaults.cardColors(containerColor = Color.White)) {
-                            Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Card(colors = CardDefaults.cardColors(containerColor = Color.White), shape = RoundedCornerShape(16.dp)) {
+                            Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
-                                    AsyncImage(
-                                        model = uiState.profilePhoto,
-                                        contentDescription = stringResource(R.string.profile_photo),
-                                        modifier = Modifier.size(62.dp).clip(CircleShape).background(VozBlueSurface),
-                                    )
-                                    Spacer(Modifier.width(12.dp))
+                                    Box(
+                                        modifier = Modifier.size(64.dp).clip(CircleShape).background(Color(0xFFDCEBE7)),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        if (!uiState.profilePhoto.isNullOrBlank()) {
+                                            AsyncImage(
+                                                model = uiState.profilePhoto,
+                                                contentDescription = stringResource(R.string.profile_photo),
+                                                modifier = Modifier.fillMaxSize(),
+                                                contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                                            )
+                                        } else {
+                                            Text(
+                                                text = uiState.name.take(1).uppercase().ifBlank { "U" },
+                                                color = VozGreen,
+                                                fontWeight = FontWeight.Bold,
+                                                fontSize = 24.sp
+                                            )
+                                        }
+                                        Surface(
+                                            shape = CircleShape,
+                                            color = VozGreen,
+                                            modifier = Modifier.size(20.dp).align(Alignment.BottomEnd)
+                                        ) {
+                                            Box(contentAlignment = Alignment.Center) {
+                                                Icon(Icons.Default.Verified, null, tint = Color.White, modifier = Modifier.size(12.dp))
+                                            }
+                                        }
+                                    }
+                                    Spacer(Modifier.width(14.dp))
                                     Column(Modifier.weight(1f)) {
                                         Text(
                                             uiState.name.ifBlank { stringResource(R.string.default_user_name) },
@@ -156,40 +190,266 @@ fun CommunityContent(
                                             fontWeight = FontWeight.Bold,
                                             fontSize = 18.sp
                                         )
-                                        Text(stringResource(R.string.user_account_subtitle), color = VozMuted, fontSize = 12.sp)
+                                        Spacer(Modifier.height(3.dp))
+                                        val currentLevelName = Nivel.fromValue(uiState.nivel).displayName
+                                        val levelNum = when (Nivel.fromValue(uiState.nivel)) {
+                                            Nivel.NOVATO -> 1
+                                            Nivel.COLABORADOR -> 2
+                                            Nivel.GUARDIAN -> 3
+                                            Nivel.HEROE -> 4
+                                        }
+                                        Surface(
+                                            shape = RoundedCornerShape(50),
+                                            color = Color(0xFFEAF9F5)
+                                        ) {
+                                            Row(
+                                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Icon(Icons.Default.Shield, null, tint = VozGreen, modifier = Modifier.size(12.dp))
+                                                Spacer(Modifier.width(4.dp))
+                                                Text("Nivel $levelNum · $currentLevelName", color = VozGreen, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                            }
+                                        }
                                     }
                                     IconButton(onClick = onOpenNameEditor) {
                                         Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.edit_name), tint = VozNavy)
                                     }
                                 }
-                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    SummaryTile(stringResource(R.string.points_label), uiState.points.toString(), Modifier.weight(1f))
-                                    SummaryTile(stringResource(R.string.reports_label), uiState.reports.size.toString(), Modifier.weight(1f))
-                                    SummaryTile(stringResource(R.string.resolved_label), uiState.verifiedCount.toString(), Modifier.weight(1f))
-                                }
-                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    OutlinedButton(onClick = { onNavigate("frames") }, modifier = Modifier.weight(1f)) {
-                                        Text(stringResource(R.string.my_frames))
+
+                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                                    Button(
+                                        onClick = { onNavigate("editProfile") },
+                                        modifier = Modifier.weight(1f).height(40.dp),
+                                        shape = RoundedCornerShape(12.dp),
+                                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEAF1F8))
+                                    ) {
+                                        Icon(Icons.Default.Edit, null, tint = VozNavy, modifier = Modifier.size(15.dp))
+                                        Spacer(Modifier.width(4.dp))
+                                        Text("Editar", color = VozNavy, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                                     }
-                                    Button(onClick = { onNavigate("store") }, modifier = Modifier.weight(1f)) {
-                                        Text(stringResource(R.string.store))
+                                    Button(
+                                        onClick = { onNavigate("frames") },
+                                        modifier = Modifier.weight(1f).height(40.dp),
+                                        shape = RoundedCornerShape(12.dp),
+                                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEAF1F8))
+                                    ) {
+                                        Icon(Icons.Default.Collections, null, tint = VozNavy, modifier = Modifier.size(15.dp))
+                                        Spacer(Modifier.width(4.dp))
+                                        Text("Mis Marcos", color = VozNavy, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                    }
+                                    Button(
+                                        onClick = { onNavigate("store") },
+                                        modifier = Modifier.weight(1f).height(40.dp),
+                                        shape = RoundedCornerShape(12.dp),
+                                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD3F9E8))
+                                    ) {
+                                        Icon(Icons.Default.Store, null, tint = Color(0xFF0D9488), modifier = Modifier.size(15.dp))
+                                        Spacer(Modifier.width(4.dp))
+                                        Text("Tienda", color = Color(0xFF0D9488), fontSize = 12.sp, fontWeight = FontWeight.Bold)
                                     }
                                 }
                             }
                         }
                     }
+
+                    // 2. Level & Progress Card
                     item {
-                        Text(
-                            stringResource(R.string.my_publications_count, uiState.reports.size),
-                            color = VozNavy,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 15.sp
-                        )
+                        val currentLevelName = Nivel.fromValue(uiState.nivel).displayName
+                        val levelNum = when (Nivel.fromValue(uiState.nivel)) {
+                            Nivel.NOVATO -> 1
+                            Nivel.COLABORADOR -> 2
+                            Nivel.GUARDIAN -> 3
+                            Nivel.HEROE -> 4
+                        }
+
+                        Card(colors = CardDefaults.cardColors(containerColor = Color.White), shape = RoundedCornerShape(16.dp)) {
+                            Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Surface(shape = CircleShape, color = Color(0xFFEAF9F5), modifier = Modifier.size(32.dp)) {
+                                            Box(contentAlignment = Alignment.Center) {
+                                                Icon(Icons.Default.MilitaryTech, null, tint = VozGreen, modifier = Modifier.size(18.dp))
+                                            }
+                                        }
+                                        Spacer(Modifier.width(8.dp))
+                                        Text("Nivel $levelNum: $currentLevelName", color = VozNavy, fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                                    }
+                                    Surface(shape = RoundedCornerShape(50), color = Color(0xFFEAF1F8)) {
+                                        Text("${uiState.points} Pts", modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp), color = VozNavy, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                    }
+                                }
+
+                                val (progress, remainingText) = when {
+                                    uiState.points <= 250 -> Triple(uiState.points / 250f, "${251 - uiState.points} pts para Colaborador", "Colaborador")
+                                    uiState.points <= 800 -> Triple((uiState.points - 251f) / (800f - 251f), "${801 - uiState.points} pts para Guardián", "Guardián")
+                                    uiState.points <= 2000 -> Triple((uiState.points - 801f) / (2000f - 801f), "${2001 - uiState.points} pts para Héroe", "Héroe")
+                                    else -> Triple(1.0f, "¡Nivel máximo alcanzado!", "Nivel Máximo")
+                                }
+
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text("Progreso actual", color = VozMuted, fontSize = 11.sp)
+                                    Text(remainingText, color = VozNavy, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                }
+
+                                LinearProgressIndicator(
+                                    progress = { progress.coerceIn(0f, 1f) },
+                                    modifier = Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(50)),
+                                    color = VozGreen,
+                                    trackColor = Color(0xFFEAF1F8)
+                                )
+
+                                // Levels breakdown
+                                val levelsList = listOf(
+                                    Triple("1. Novato", "0 - 250 pts", 1),
+                                    Triple("2. Colaborador", "251 - 800 pts", 2),
+                                    Triple("3. Guardián", "801 - 2,000 pts", 3),
+                                    Triple("4. Héroe Comunitario", "2,001+ pts", 4),
+                                )
+
+                                levelsList.forEach { (title, range, lNum) ->
+                                    val isCurrent = levelNum == lNum
+                                    val isCompleted = levelNum > lNum
+                                    Surface(
+                                        shape = RoundedCornerShape(12.dp),
+                                        color = if (isCurrent) Color(0xFFEAF1F8) else Color(0xFFF9FAFB),
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.padding(12.dp),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.SpaceBetween
+                                        ) {
+                                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                                Icon(
+                                                    if (isCompleted) Icons.Default.CheckCircle else if (isCurrent) Icons.Default.Shield else Icons.Default.Lock,
+                                                    null,
+                                                    tint = if (isCompleted || isCurrent) VozGreen else VozMuted,
+                                                    modifier = Modifier.size(16.dp)
+                                                )
+                                                Spacer(Modifier.width(10.dp))
+                                                Column {
+                                                    Text(title, color = VozNavy, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                                    Text(range, color = VozMuted, fontSize = 10.sp)
+                                                }
+                                            }
+                                            Surface(
+                                                shape = RoundedCornerShape(50),
+                                                color = if (isCurrent) VozNavy else if (isCompleted) Color(0xFFD3F9E8) else Color(0xFFE5E7EB)
+                                            ) {
+                                                Text(
+                                                    text = if (isCurrent) "Actual" else if (isCompleted) "Completado" else "Próximo",
+                                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                                                    color = if (isCurrent) Color.White else if (isCompleted) VozGreen else VozMuted,
+                                                    fontSize = 10.sp,
+                                                    fontWeight = FontWeight.Bold
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
-                    if (uiState.sortedReports.isEmpty()) {
+
+                    // 3. Summary Tiles (3 cards)
+                    item {
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                            SummaryTile(
+                                label = "Reportes Creados",
+                                value = uiState.reports.size.toString(),
+                                subtitle = "Total publicado",
+                                modifier = Modifier.weight(1f)
+                            )
+                            SummaryTile(
+                                label = "Verificados",
+                                value = uiState.verifiedCount.toString(),
+                                subtitle = "${uiState.effectivenessPercentage}% efectividad",
+                                modifier = Modifier.weight(1f)
+                            )
+                            SummaryTile(
+                                label = "Votos Vecinales",
+                                value = uiState.totalVotes.toString(),
+                                subtitle = "Es importante",
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                    }
+
+                    // 4. Insignias y Logros Cívicos Banner
+                    item {
+                        Card(
+                            colors = CardDefaults.cardColors(containerColor = Color.White),
+                            shape = RoundedCornerShape(16.dp),
+                            modifier = Modifier.fillMaxWidth().clickable { onNavigate("badges") }
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(16.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Surface(shape = CircleShape, color = Color(0xFFFFF2E7), modifier = Modifier.size(46.dp)) {
+                                    Box(contentAlignment = Alignment.Center) {
+                                        Icon(Icons.Default.EmojiEvents, null, tint = Color(0xFFD97706), modifier = Modifier.size(24.dp))
+                                    }
+                                }
+                                Spacer(Modifier.width(12.dp))
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text("Insignias y Logros Cívicos", color = VozNavy, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                                    Spacer(Modifier.height(2.dp))
+                                    Surface(shape = RoundedCornerShape(50), color = Color(0xFFD3F9E8)) {
+                                        Text("4/5 Desbloqueadas", modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp), color = VozGreen, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                                    }
+                                    Spacer(Modifier.height(4.dp))
+                                    Text("Descubre tus medallas ganadas, progreso a Héroe y recompensas.", color = VozMuted, fontSize = 11.sp)
+                                }
+                                Icon(Icons.AutoMirrored.Filled.ArrowForward, null, tint = VozNavy, modifier = Modifier.size(18.dp))
+                            }
+                        }
+                    }
+
+                    // 5. Mis Publicaciones Recientes
+                    item {
+                        Spacer(Modifier.height(4.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                "Mis Publicaciones Recientes",
+                                color = VozNavy,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 15.sp
+                            )
+                            Text(
+                                "${uiState.reports.size} en total",
+                                color = VozMuted,
+                                fontSize = 12.sp
+                            )
+                        }
+                        Spacer(Modifier.height(6.dp))
+                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            listOf("Todas", "ACTIVO", "RESUELTO").forEach { filter ->
+                                FilterChip(
+                                    selected = uiState.activityFilter == filter,
+                                    onClick = { onFilterSelected(filter) },
+                                    label = { Text(filter) },
+                                )
+                            }
+                        }
+                    }
+
+                    if (uiState.filteredActivityReports.isEmpty()) {
                         item { EmptyState(stringResource(R.string.no_reports_yet)) }
                     } else {
-                        items(uiState.sortedReports, key = { it.id }) { report ->
+                        items(uiState.filteredActivityReports, key = { it.id }) { report ->
                             ReportCard(
                                 report = report,
                                 onEdit = { onOpenEditReport(report) },
@@ -197,14 +457,48 @@ fun CommunityContent(
                             )
                         }
                     }
+
+                    // 6. Account Actions (Cerrar sesión & Eliminar cuenta)
                     item {
-                        OutlinedButton(onClick = onSignOut, modifier = Modifier.fillMaxWidth()) {
-                            Text(stringResource(R.string.sign_out))
+                        Spacer(Modifier.height(6.dp))
+                        Card(
+                            colors = CardDefaults.cardColors(containerColor = Color.White),
+                            shape = RoundedCornerShape(16.dp),
+                            modifier = Modifier.fillMaxWidth().clickable(onClick = onSignOut)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(16.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(Icons.AutoMirrored.Filled.Logout, null, tint = VozNavy, modifier = Modifier.size(20.dp))
+                                    Spacer(Modifier.width(12.dp))
+                                    Text("Cerrar sesión", color = VozNavy, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                                }
+                                Icon(Icons.AutoMirrored.Filled.ArrowForward, null, tint = VozMuted, modifier = Modifier.size(18.dp))
+                            }
                         }
-                        Spacer(Modifier.height(4.dp))
-                        TextButton(onClick = { onShowDeleteAccountDialog(true) }, modifier = Modifier.fillMaxWidth()) {
-                            Text(stringResource(R.string.delete_account_permanently), color = MaterialTheme.colorScheme.error)
+                        Spacer(Modifier.height(8.dp))
+                        Card(
+                            colors = CardDefaults.cardColors(containerColor = Color(0xFFFEF2F2)),
+                            shape = RoundedCornerShape(16.dp),
+                            modifier = Modifier.fillMaxWidth().clickable { onShowDeleteAccountDialog(true) }
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(16.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(Icons.Default.DeleteForever, null, tint = Color(0xFFDC2626), modifier = Modifier.size(20.dp))
+                                    Spacer(Modifier.width(12.dp))
+                                    Text("Eliminar cuenta", color = Color(0xFFDC2626), fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                                }
+                                Icon(Icons.AutoMirrored.Filled.ArrowForward, null, tint = Color(0xFFDC2626), modifier = Modifier.size(18.dp))
+                            }
                         }
+                        Spacer(Modifier.height(16.dp))
                     }
                 }
                 "activity" -> {
@@ -259,7 +553,7 @@ fun CommunityContent(
         }
     }
 
-    // --- Diálogos dinámicos con Strings desde recursos ---
+    // --- Diálogos dinámicos ---
     if (uiState.showNameEditor) AlertDialog(
         onDismissRequest = onDismissNameEditor,
         title = { Text(stringResource(R.string.edit_name)) },
@@ -320,18 +614,19 @@ fun CommunityContent(
 }
 
 @Composable
-private fun SummaryTile(label: String, value: String, modifier: Modifier = Modifier) {
+private fun SummaryTile(label: String, value: String, subtitle: String, modifier: Modifier = Modifier) {
     Surface(modifier, color = VozBlueSurface, shape = RoundedCornerShape(12.dp)) {
-        Column(Modifier.padding(horizontal = 8.dp, vertical = 10.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(value, color = VozNavy, fontWeight = FontWeight.Bold, fontSize = 18.sp)
-            Text(label, color = VozMuted, fontSize = 10.sp)
+        Column(Modifier.padding(horizontal = 8.dp, vertical = 12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(value, color = VozNavy, fontWeight = FontWeight.Bold, fontSize = 20.sp)
+            Text(label, color = VozNavy, fontSize = 11.sp, fontWeight = FontWeight.Medium)
+            Text(subtitle, color = VozGreen, fontSize = 9.sp, fontWeight = FontWeight.Bold)
         }
     }
 }
 
 @Composable
 private fun ReportCard(report: Report, onEdit: (() -> Unit)? = null, onDelete: (() -> Unit)? = null) {
-    Card(colors = CardDefaults.cardColors(containerColor = Color.White)) {
+    Card(colors = CardDefaults.cardColors(containerColor = Color.White), shape = RoundedCornerShape(14.dp)) {
         Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(report.title, Modifier.weight(1f), color = VozNavy, fontWeight = FontWeight.Bold)
