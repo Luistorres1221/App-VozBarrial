@@ -2,29 +2,30 @@
 
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
-import com.vozbarrial.features.auth.loginSI.ui.AuthRoute
-import com.vozbarrial.features.auth.registerSI.ui.RegisterRoute
-import com.vozbarrial.features.profile.profileSI.ui.CommunityRoute
-import com.vozbarrial.features.profile.editProfileSI.ui.EditProfileRoute
-import com.vozbarrial.features.reports.ReportsViewModel
+import com.vozbarrial.features.auth.login.ui.AuthRoute
+import com.vozbarrial.features.auth.register.ui.RegisterRoute
+import com.vozbarrial.features.profile.profile.ui.CommunityRoute
+import com.vozbarrial.features.profile.editProfile.ui.EditProfileRoute
+import com.vozbarrial.features.reports.presentation.ReportsViewModel
+import com.vozbarrial.features.reports.ui.ReportCreateRoute
 import com.vozbarrial.features.dashboard.FramesPage
-import com.vozbarrial.features.dashboard.ReportCreate
 import com.vozbarrial.features.dashboard.StorePage
 import com.vozbarrial.features.map.ReportsMap
-import com.vozbarrial.features.auth.welcomeSI.ui.WelcomeRoute
+import com.vozbarrial.features.auth.welcome.ui.WelcomeRoute
 import com.vozbarrial.core.result.AuthOperationResult
 import com.vozbarrial.core.result.AuthError
 import com.vozbarrial.domain.model.Usuario
 
 @Composable
 fun AppNavGraph() {
+    val context = LocalContext.current
     val reportsViewModel: ReportsViewModel = viewModel()
     val navigationViewModel: NavigationViewModel = viewModel()
 
-    val reportsState by reportsViewModel.uiState.collectAsStateWithLifecycle()
     val screen by navigationViewModel.screen.collectAsStateWithLifecycle()
     val dashboardPage by navigationViewModel.dashboardPage.collectAsStateWithLifecycle()
 
@@ -37,8 +38,8 @@ fun AppNavGraph() {
     var ownedFramesText by rememberSaveable { mutableStateOf("Clásico Cívico|Guardián Dorado|Eco Barrio Verde|Escudo Ciudadano") }
     val ownedFrames = ownedFramesText.split("|").filter { it.isNotBlank() }.toSet()
 
-    val myReports = remember(reportsState.reports, signedInEmail) {
-        reportsState.reports.filter { report ->
+    val myReports = remember(reportsViewModel.reports, signedInEmail) {
+        reportsViewModel.reports.filter { report ->
             report.authorEmail.equals(signedInEmail, ignoreCase = true)
         }
     }
@@ -81,13 +82,11 @@ fun AppNavGraph() {
                         signedInName = email.substringBefore("@")
                         signedInEmail = email
                     }
-                    reportsViewModel.startObserving()
                     navigationViewModel.navigate("map")
                 }
                 .addOnFailureListener {
                     signedInName = email.substringBefore("@")
                     signedInEmail = email
-                    reportsViewModel.startObserving()
                     navigationViewModel.navigate("map")
                 }
         }
@@ -124,9 +123,8 @@ fun AppNavGraph() {
             name = signedInName,
             profilePhoto = signedInPhoto,
             points = signedInPoints,
-            communityReports = reportsState.reports,
+            communityReports = reportsViewModel.reports,
             onSignOut = {
-                reportsViewModel.stopObserving()
                 com.google.firebase.auth.FirebaseAuth.getInstance().signOut()
                 navigationViewModel.navigate("welcome")
             },
@@ -146,7 +144,6 @@ fun AppNavGraph() {
                 }
             },
             onSignOut = {
-                reportsViewModel.stopObserving()
                 com.google.firebase.auth.FirebaseAuth.getInstance().signOut()
                 navigationViewModel.navigate("welcome")
             },
@@ -154,7 +151,6 @@ fun AppNavGraph() {
                 signedInName = newName
             },
             onDeleteAccount = {
-                reportsViewModel.stopObserving()
                 com.google.firebase.auth.FirebaseAuth.getInstance().signOut()
                 navigationViewModel.navigate("welcome")
             },
@@ -190,12 +186,12 @@ fun AppNavGraph() {
                 result(true, null)
             }
         )
-        "createReport" -> ReportCreate(
+        "createReport" -> ReportCreateRoute(
             name = signedInName,
             onBack = { navigationViewModel.navigate("map") },
             onPublish = { title, description, category, latitude, longitude, photoUri, done ->
                 val mockProfile = Usuario(name = signedInName, email = signedInEmail)
-                reportsViewModel.createReport(title, description, category, latitude, longitude, photoUri, mockProfile) { published, message ->
+                reportsViewModel.createReport(title, description, category, latitude, longitude, photoUri, mockProfile, context) { published, message ->
                     if (published) navigationViewModel.navigate("map")
                     done(published, message)
                 }

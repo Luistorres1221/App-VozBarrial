@@ -60,6 +60,7 @@ private data class CommunityReport(
     val title: String,
     val description: String,
     val place: String,
+    val category: String,
     val kind: ReportKind,
     val latitude: Double,
     val longitude: Double,
@@ -80,7 +81,7 @@ fun ReportsMap(name: String, profilePhoto: String? = null, onSignOut: () -> Unit
                 report.category.contains("vías", true) || report.category.contains("infraestructura", true) -> ReportKind.ROAD
                 else -> ReportKind.COMMUNITY
             }
-            CommunityReport(report.id, report.title, report.description, report.place, kind, report.latitude, report.longitude)
+            CommunityReport(report.id, report.title, report.description, report.place, report.category, kind, report.latitude, report.longitude)
         }
     }
 
@@ -157,11 +158,51 @@ fun ReportsMap(name: String, profilePhoto: String? = null, onSignOut: () -> Unit
             update = { mapView ->
                 mapView.overlays.removeAll { it is Marker }
                 reports.filter { selectedKind == "TODOS" || it.kind.name == selectedKind }.forEach { report ->
+                    val (iconRes, badgeColor) = when {
+                        report.category.contains("alumbrado", true) -> com.vozbarrial.R.drawable.ic_pin_alumbrado to android.graphics.Color.parseColor("#ca8a04")
+                        report.category.contains("emergencia", true) -> com.vozbarrial.R.drawable.ic_pin_emergencias to android.graphics.Color.parseColor("#dc2626")
+                        report.category.contains("infraestructura", true) -> com.vozbarrial.R.drawable.ic_pin_infraestructura to android.graphics.Color.parseColor("#ea580c")
+                        report.category.contains("mascota", true) -> com.vozbarrial.R.drawable.ic_pin_mascotas to android.graphics.Color.parseColor("#9333ea")
+                        report.category.contains("seguridad", true) -> com.vozbarrial.R.drawable.ic_pin_security to android.graphics.Color.parseColor("#2563eb")
+                        else -> com.vozbarrial.R.drawable.ic_pin_comunidad to android.graphics.Color.parseColor("#16a34a")
+                    }
+
                     val marker = Marker(mapView).apply {
                         position = GeoPoint(report.latitude, report.longitude)
                         title = report.title
                         snippet = report.description
                         setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
+
+                        val size = 96
+                        val bitmap = android.graphics.Bitmap.createBitmap(size, size, android.graphics.Bitmap.Config.ARGB_8888)
+                        val canvas = android.graphics.Canvas(bitmap)
+
+                        val paint = android.graphics.Paint().apply {
+                            color = badgeColor
+                            isAntiAlias = true
+                        }
+                        canvas.drawCircle(size / 2f, size / 2f, size / 2f - 4f, paint)
+
+                        val borderPaint = android.graphics.Paint().apply {
+                            color = android.graphics.Color.WHITE
+                            style = android.graphics.Paint.Style.STROKE
+                            strokeWidth = 4f
+                            isAntiAlias = true
+                        }
+                        canvas.drawCircle(size / 2f, size / 2f, size / 2f - 4f, borderPaint)
+
+                        val drawable = androidx.core.content.ContextCompat.getDrawable(mapView.context, iconRes)
+                        if (drawable != null) {
+                            val iconSize = 48
+                            val left = (size - iconSize) / 2
+                            val top = (size - iconSize) / 2
+                            drawable.setBounds(left, top, left + iconSize, top + iconSize)
+                            drawable.colorFilter = android.graphics.PorterDuffColorFilter(android.graphics.Color.WHITE, android.graphics.PorterDuff.Mode.SRC_IN)
+                            drawable.draw(canvas)
+                        }
+
+                        icon = android.graphics.drawable.BitmapDrawable(mapView.resources, bitmap)
+
                         setOnMarkerClickListener { m, _ ->
                             selectedReportId = report.id
                             m.showInfoWindow()

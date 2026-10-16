@@ -6,8 +6,8 @@
         android:name=".VozBarrialApplication"
         android:allowBackup="true"
         android:label="VozBarrial"
-        android:icon="@mipmap/logo_vozbarrial"
-        android:roundIcon="@mipmap/logo_vozbarrial_round"
+        android:icon="@mipmap/logo"
+        android:roundIcon="@mipmap/logo_round"
         android:supportsRtl="true"
         android:theme="@android:style/Theme.Material.Light.NoActionBar">
 
@@ -21,4 +21,3 @@
         </activity>
     </application>
 </manifest>
-

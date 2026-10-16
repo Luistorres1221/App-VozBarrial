@@ -6,7 +6,6 @@ import com.google.firebase.storage.FirebaseStorage
 import com.vozbarrial.data.repository.ProfileRepository
 import com.vozbarrial.data.repository.ReportsRepository
 import com.vozbarrial.data.repository.StoreRepository
-import com.vozbarrial.features.reports.ReportsViewModelFactory
 import com.vozbarrial.features.store.StoreViewModelFactory
 
 class AppContainer {
@@ -15,9 +14,8 @@ class AppContainer {
     val storage: FirebaseStorage = FirebaseStorage.getInstance()
 
     val profileRepository by lazy { ProfileRepository(auth, firestore, storage) }
-    val reportsRepository by lazy { ReportsRepository(auth, firestore, storage) }
+    val reportsRepository by lazy { ReportsRepository(auth, firestore) }
     val storeRepository by lazy { StoreRepository(auth, firestore) }
 
-    val reportsViewModelFactory by lazy { ReportsViewModelFactory(reportsRepository) }
     val storeViewModelFactory by lazy { StoreViewModelFactory(storeRepository) }
 }
