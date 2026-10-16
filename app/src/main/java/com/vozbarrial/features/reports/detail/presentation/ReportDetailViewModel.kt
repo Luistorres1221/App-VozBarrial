@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.Query
@@ -26,8 +27,24 @@ class ReportDetailViewModel : ViewModel() {
     private var listenerRegistration: ListenerRegistration? = null
 
     fun setReport(report: Report) {
-        _uiState.update { it.copy(report = report) }
+        _uiState.update { it.copy(report = report, supportCount = report.votes) }
         observeContributions(report.id)
+        checkUserSupport(report.id)
+    }
+
+    private fun checkUserSupport(reportId: String) {
+        val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return
+        if (reportId.isBlank()) return
+
+        firestore.collection("reportes")
+            .document(reportId)
+            .collection("supports")
+            .document(uid)
+            .get()
+            .addOnSuccessListener { doc ->
+                val supported = doc.exists()
+                _uiState.update { it.copy(isSupported = supported) }
+            }
     }
 
     private fun observeContributions(reportId: String) {
@@ -117,12 +134,38 @@ class ReportDetailViewModel : ViewModel() {
     }
 
     fun toggleSupport() {
-        _uiState.update {
-            val supported = !it.isSupported
-            it.copy(
-                isSupported = supported,
-                supportCount = if (supported) it.supportCount + 1 else it.supportCount - 1
-            )
+        val uid = FirebaseAuth.getInstance().currentUser?.uid
+        val currentReport = _uiState.value.report
+        val reportId = currentReport.id
+        if (reportId.isBlank() || uid == null) return
+
+        if (_uiState.value.isSupported) {
+            return // User already supported this report once
+        }
+
+        val supportRef = firestore.collection("reportes")
+            .document(reportId)
+            .collection("supports")
+            .document(uid)
+
+        supportRef.get().addOnSuccessListener { doc ->
+            if (!doc.exists()) {
+                val newVotes = currentReport.votes + 1
+                supportRef.set(mapOf("timestamp" to System.currentTimeMillis()))
+                firestore.collection("reportes")
+                    .document(reportId)
+                    .update("votes", newVotes)
+
+                _uiState.update {
+                    it.copy(
+                        isSupported = true,
+                        report = it.report.copy(votes = newVotes),
+                        supportCount = newVotes
+                    )
+                }
+            } else {
+                _uiState.update { it.copy(isSupported = true) }
+            }
         }
     }
 

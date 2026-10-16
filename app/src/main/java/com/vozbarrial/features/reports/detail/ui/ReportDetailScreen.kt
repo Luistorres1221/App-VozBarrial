@@ -14,6 +14,8 @@ import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
@@ -32,12 +34,31 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.vozbarrial.domain.model.Report
 import com.vozbarrial.domain.model.ReportStatus
-import androidx.compose.material.icons.filled.Schedule
 import com.vozbarrial.features.reports.detail.presentation.ReportDetailViewModel
 import com.vozbarrial.ui.theme.*
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+
+private data class RelevanceData(val level: String, val severity: Int, val desc: String, val bars: Int)
+
+private val severityColors = listOf(
+    Color(0xFF10B981), // Green
+    Color(0xFF84CC16), // Light Green
+    Color(0xFFF59E0B), // Yellow
+    Color(0xFFEA580C), // Orange
+    Color(0xFFDC2626)  // Red
+)
+
+private fun getRelevanceInfo(votes: Int): RelevanceData {
+    return when {
+        votes < 20 -> RelevanceData("Menor", 1, "Prioridad menor basada en $votes respaldos comunitarios.", 1)
+        votes < 40 -> RelevanceData("Baja", 2, "Prioridad baja basada en $votes respaldos comunitarios.", 2)
+        votes < 60 -> RelevanceData("Moderado", 3, "Prioridad moderada basada en $votes respaldos comunitarios.", 3)
+        votes < 80 -> RelevanceData("Alto", 4, "Prioridad alta basada en $votes respaldos comunitarios.", 4)
+        else -> RelevanceData("Crítico", 5, "Nivel crítico basado en más de 80 respaldos comunitarios y alta urgencia.", 5)
+    }
+}
 
 @Composable
 fun ReportDetailRoute(
@@ -62,7 +83,8 @@ fun ReportDetailRoute(
         onContributionChange = viewModel::onNewContributionChanged,
         onAddPhoto = viewModel::addContributionPhoto,
         onRemovePhoto = viewModel::removeContributionPhoto,
-        onSubmitContribution = { viewModel.addContribution(context, userName) }
+        onSubmitContribution = { viewModel.addContribution(context, userName) },
+        onToggleSupport = viewModel::toggleSupport
     )
 }
 
@@ -75,7 +97,8 @@ private fun ReportDetailScreen(
     onContributionChange: (String) -> Unit,
     onAddPhoto: (String?) -> Unit,
     onRemovePhoto: (Int) -> Unit,
-    onSubmitContribution: () -> Unit
+    onSubmitContribution: () -> Unit,
+    onToggleSupport: () -> Unit
 ) {
     val report = uiState.report
     val photoPickerLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
@@ -90,6 +113,9 @@ private fun ReportDetailScreen(
             "Hoy, 14:32 hrs"
         }
     }
+
+    val votes = uiState.supportCount
+    val relevanceData = remember(votes) { getRelevanceInfo(votes) }
 
     Column(
         modifier = Modifier
@@ -139,30 +165,6 @@ private fun ReportDetailScreen(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                            Surface(shape = RoundedCornerShape(50), color = Color(0xFFEAF1F8)) {
-                                Text("#REP-${report.id.take(8).uppercase()}", modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp), color = VozNavy, fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                            }
-                            Surface(shape = RoundedCornerShape(50), color = Color(0xFFFEE2E2)) {
-                                Row(modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-                                    Box(Modifier.size(6.dp).clip(CircleShape).background(Color(0xFFDC2626)))
-                                    Spacer(Modifier.width(4.dp))
-                                    Text("Alerta Activa", color = Color(0xFFDC2626), fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                                }
-                            }
-                        }
-                        IconButton(onClick = {}, modifier = Modifier.size(32.dp)) {
-                            Icon(Icons.Default.Share, contentDescription = "Compartir", tint = VozNavy, modifier = Modifier.size(18.dp))
-                        }
-                    }
-
-                    Spacer(Modifier.height(14.dp))
-
                     val statusEnum = remember(report.status) {
                         ReportStatus.fromString(report.status)
                     }
@@ -195,20 +197,34 @@ private fun ReportDetailScreen(
                         ReportStatus.ELIMINADO -> Icons.Default.Close
                     }
 
-                    // Status Badge
-                    Surface(
-                        shape = RoundedCornerShape(50),
-                        color = statusBg,
-                        modifier = Modifier.wrapContentWidth()
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Row(modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp), verticalAlignment = Alignment.CenterVertically) {
-                            Icon(statusIcon, null, tint = statusFg, modifier = Modifier.size(14.dp))
-                            Spacer(Modifier.width(5.dp))
-                            Text(statusLabel, color = statusFg, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Surface(shape = RoundedCornerShape(50), color = Color(0xFFEAF1F8)) {
+                                Text("#REP-${report.id.take(8).uppercase()}", modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp), color = VozNavy, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                            }
+                            // Status Badge next to ID Tag
+                            Surface(
+                                shape = RoundedCornerShape(50),
+                                color = statusBg,
+                                modifier = Modifier.wrapContentWidth()
+                            ) {
+                                Row(modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(statusIcon, null, tint = statusFg, modifier = Modifier.size(12.dp))
+                                    Spacer(Modifier.width(4.dp))
+                                    Text(statusLabel, color = statusFg, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                                }
+                            }
+                        }
+                        IconButton(onClick = {}, modifier = Modifier.size(32.dp)) {
+                            Icon(Icons.Default.Share, contentDescription = "Compartir", tint = VozNavy, modifier = Modifier.size(18.dp))
                         }
                     }
 
-                    Spacer(Modifier.height(12.dp))
+                    Spacer(Modifier.height(14.dp))
 
                     // Relevance Card
                     Surface(
@@ -220,28 +236,66 @@ private fun ReportDetailScreen(
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Icon(Icons.Default.Warning, null, tint = Color(0xFFD97706), modifier = Modifier.size(16.dp))
                                 Spacer(Modifier.width(6.dp))
-                                Text("Nivel de Relevancia: Alta", color = VozNavy, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                Text("Nivel de Relevancia: ${relevanceData.level}", color = VozNavy, fontWeight = FontWeight.Bold, fontSize = 12.sp)
                                 Spacer(Modifier.weight(1f))
-                                Text("Severidad 4/5", color = VozMuted, fontSize = 11.sp, fontWeight = FontWeight.Medium)
+                                Text("Severidad ${relevanceData.severity}/5", color = VozMuted, fontSize = 11.sp, fontWeight = FontWeight.Medium)
                             }
                             Spacer(Modifier.height(8.dp))
                             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                                repeat(4) { Box(Modifier.weight(1f).height(5.dp).clip(RoundedCornerShape(50)).background(Color(0xFFF59E0B))) }
-                                Box(Modifier.weight(1f).height(5.dp).clip(RoundedCornerShape(50)).background(Color(0xFFE2E8F0)))
+                                repeat(5) { i ->
+                                    val barColor = if (i < relevanceData.bars) severityColors[i] else Color(0xFFE2E8F0)
+                                    Box(
+                                        Modifier
+                                            .weight(1f)
+                                            .height(5.dp)
+                                            .clip(RoundedCornerShape(50))
+                                            .background(barColor)
+                                    )
+                                }
                             }
                             Spacer(Modifier.height(8.dp))
-                            Text("Prioridad calculada basada en ${uiState.supportCount} respaldos comunitarios y riesgo reportado.", color = VozMuted, fontSize = 11.sp)
+                            Text(relevanceData.desc, color = VozMuted, fontSize = 11.sp)
                         }
                     }
 
                     Spacer(Modifier.height(14.dp))
 
-                    Text(
-                        text = report.title.ifBlank { "Incidencia vecinal reportada" },
-                        color = VozNavy,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 20.sp
-                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = report.title.ifBlank { "Incidencia vecinal reportada" },
+                            color = VozNavy,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 20.sp,
+                            modifier = Modifier.weight(1f)
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Button(
+                            onClick = onToggleSupport,
+                            shape = RoundedCornerShape(50),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = if (uiState.isSupported) Color(0xFF071C2D) else Color(0xFFEAF1F8)
+                            ),
+                            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp)
+                        ) {
+                            Icon(
+                                Icons.Default.Favorite,
+                                contentDescription = null,
+                                tint = if (uiState.isSupported) Color.White else VozNavy,
+                                modifier = Modifier.size(15.dp)
+                            )
+                            Spacer(Modifier.width(6.dp))
+                            Text(
+                                text = "${uiState.supportCount} Apoyos",
+                                color = if (uiState.isSupported) Color.White else VozNavy,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
                 }
             }
 
@@ -270,20 +324,22 @@ private fun ReportDetailScreen(
                                 contentScale = ContentScale.Crop
                             )
                         }
-                        Surface(
-                            shape = RoundedCornerShape(50),
-                            color = Color.Black.copy(alpha = 0.6f),
-                            modifier = Modifier
-                                .align(Alignment.TopEnd)
-                                .padding(12.dp)
-                        ) {
-                            Text(
-                                text = "${pagerState.currentPage + 1} / ${imageUrls.size} fotos",
-                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-                                color = Color.White,
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Bold
-                            )
+                        if (imageUrls.size > 1) {
+                            Surface(
+                                shape = RoundedCornerShape(50),
+                                color = Color.Black.copy(alpha = 0.6f),
+                                modifier = Modifier
+                                    .align(Alignment.TopEnd)
+                                    .padding(12.dp)
+                            ) {
+                                Text(
+                                    text = "${pagerState.currentPage + 1} / ${imageUrls.size} fotos",
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                                    color = Color.White,
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
                         }
                     }
                 }

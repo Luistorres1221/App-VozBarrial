@@ -422,7 +422,6 @@ fun ReportsMap(name: String, profilePhoto: String? = null, onSignOut: () -> Unit
                     .zIndex(2f),
                 onClose = { selectedReportId = null },
                 onViewReport = { onNavigate("reportDetail/${report.id}") },
-                onSupport = { selectedReportId = null },
             )
         } }
 
@@ -574,9 +573,25 @@ private fun SelectedReportCard(
     myLoc: GeoPoint?,
     modifier: Modifier,
     onClose: () -> Unit,
-    onViewReport: () -> Unit,
-    onSupport: () -> Unit
+    onViewReport: () -> Unit
 ) {
+    val uid = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid
+    var isSupported by remember(report.id, uid) { mutableStateOf(false) }
+
+    LaunchedEffect(report.id, uid) {
+        if (uid != null) {
+            com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                .collection("reportes")
+                .document(report.id)
+                .collection("supports")
+                .document(uid)
+                .get()
+                .addOnSuccessListener { doc ->
+                    isSupported = doc.exists()
+                }
+        }
+    }
+
     Surface(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
@@ -706,14 +721,36 @@ private fun SelectedReportCard(
                 }
 
                 Button(
-                    onClick = onSupport,
+                    onClick = {
+                        if (!isSupported && uid != null) {
+                            isSupported = true
+                            val reportRef = com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                                .collection("reportes")
+                                .document(report.id)
+                            reportRef.collection("supports").document(uid)
+                                .set(mapOf("timestamp" to System.currentTimeMillis()))
+                            reportRef.update("votes", com.google.firebase.firestore.FieldValue.increment(1))
+                        }
+                    },
                     modifier = Modifier.weight(1f).height(42.dp),
                     shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF071C2D))
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (isSupported) Color(0xFF071C2D) else Color(0xFFEAF1F8)
+                    )
                 ) {
-                    Icon(Icons.Default.Favorite, null, tint = Color.White, modifier = Modifier.size(16.dp))
+                    Icon(
+                        Icons.Default.Favorite,
+                        null,
+                        tint = if (isSupported) Color.White else VozNavy,
+                        modifier = Modifier.size(16.dp)
+                    )
                     Spacer(Modifier.width(6.dp))
-                    Text("¡Apoyado! ✓", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    Text(
+                        text = if (isSupported) "¡Apoyado!" else "Apoyar",
+                        color = if (isSupported) Color.White else VozNavy,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
         }

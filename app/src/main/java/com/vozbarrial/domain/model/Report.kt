@@ -12,6 +12,7 @@ data class Report(
     val imageUrl: String? = null,
     val latitude: Double = 0.0,
     val longitude: Double = 0.0,
-    val status: String = "POR_VERIFICAR",
+    val status: String = ReportStatus.POR_VERIFICAR.value,
+    val votes: Int = 0,
     val timestamp: Long = System.currentTimeMillis()
 )
