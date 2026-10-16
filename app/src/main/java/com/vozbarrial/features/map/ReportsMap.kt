@@ -568,6 +568,23 @@ private fun MapFilter(
     }
 }
 
+private fun formatTimeAgo(timestamp: Long): String {
+    val now = System.currentTimeMillis()
+    val diff = maxOf(0L, now - timestamp)
+    val seconds = diff / 1000
+    val minutes = seconds / 60
+    val hours = minutes / 60
+    val days = hours / 24
+
+    return when {
+        seconds < 60 -> "Hace un momento"
+        minutes < 60 -> "Hace $minutes ${if (minutes == 1L) "minuto" else "minutos"}"
+        hours < 24 -> "Hace $hours ${if (hours == 1L) "hora" else "horas"}"
+        days < 30 -> "Hace $days ${if (days == 1L) "día" else "días"}"
+        else -> "Hace más de un mes"
+    }
+}
+
 @Composable
 private fun MapControl(icon: ImageVector, label: String, onClick: () -> Unit) {
     Surface(
@@ -714,7 +731,7 @@ private fun SelectedReportCard(
             ) {
                 Icon(Icons.Default.Schedule, null, tint = VozMuted, modifier = Modifier.size(13.dp))
                 Spacer(Modifier.width(4.dp))
-                val timeAgo = "Hace 15 min"
+                val timeAgo = formatTimeAgo(report.timestamp)
                 Text(timeAgo, color = VozMuted, fontSize = 11.sp, fontWeight = FontWeight.Medium)
             }
 

@@ -1,4 +1,4 @@
-package com.vozbarrial.features.reports.ui
+package com.vozbarrial.features.reports.create.ui
 
 import android.Manifest
 import android.content.Context
@@ -45,8 +45,8 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
-import com.vozbarrial.features.reports.presentation.ReportCreateUiState
-import com.vozbarrial.features.reports.presentation.ReportCreateViewModel
+import com.vozbarrial.features.reports.create.presentation.ReportCreateUiState
+import com.vozbarrial.features.reports.create.presentation.ReportCreateViewModel
 import com.vozbarrial.ui.theme.*
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint

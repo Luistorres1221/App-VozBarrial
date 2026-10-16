@@ -87,7 +87,6 @@ class ReportDetailViewModel : ViewModel() {
         val reportId = _uiState.value.report.id
         if ((currentText.isBlank() && photoUris.isEmpty()) || reportId.isBlank()) return
 
-        // Clear input immediately for instant feedback
         _uiState.update {
             it.copy(
                 newContributionText = "",
@@ -106,21 +105,10 @@ class ReportDetailViewModel : ViewModel() {
                     }
                 }
 
-                val newContrib = Contribution(
-                    id = "",
-                    authorName = authorName.ifBlank { "Vecino" },
-                    authorRole = "Colaborador",
-                    timeAgo = "Hace un momento",
-                    content = currentText,
-                    isOfficial = false,
-                    imageUrls = uploadedUrls,
-                    timestamp = System.currentTimeMillis()
-                )
 
                 firestore.collection("reportes")
                     .document(reportId)
                     .collection("aportes")
-                    .add(newContrib)
 
                 withContext(Dispatchers.Main) {
                     _uiState.update { it.copy(isUploading = false) }
@@ -140,7 +128,7 @@ class ReportDetailViewModel : ViewModel() {
         if (reportId.isBlank() || uid == null) return
 
         if (_uiState.value.isSupported) {
-            return // User already supported this report once
+            return
         }
 
         val supportRef = firestore.collection("reportes")

@@ -10,8 +10,8 @@ import com.vozbarrial.features.auth.login.ui.AuthRoute
 import com.vozbarrial.features.auth.register.ui.RegisterRoute
 import com.vozbarrial.features.profile.profile.ui.CommunityRoute
 import com.vozbarrial.features.profile.editProfile.ui.EditProfileRoute
-import com.vozbarrial.features.reports.presentation.ReportsViewModel
-import com.vozbarrial.features.reports.ui.ReportCreateRoute
+import com.vozbarrial.features.reports.create.presentation.ReportsViewModel
+import com.vozbarrial.features.reports.create.ui.ReportCreateRoute
 import com.vozbarrial.features.dashboard.FramesPage
 import com.vozbarrial.features.dashboard.StorePage
 import com.vozbarrial.features.map.ReportsMap

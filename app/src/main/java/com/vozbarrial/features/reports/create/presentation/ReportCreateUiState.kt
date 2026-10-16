@@ -1,4 +1,4 @@
-package com.vozbarrial.features.reports.presentation
+package com.vozbarrial.features.reports.create.presentation
 
 data class ReportCreateUiState(
     val category: String = "Seguridad",

@@ -43,20 +43,37 @@ import java.util.Locale
 private data class RelevanceData(val level: String, val severity: Int, val desc: String, val bars: Int)
 
 private val severityColors = listOf(
-    Color(0xFF10B981), // Green
-    Color(0xFF84CC16), // Light Green
-    Color(0xFFF59E0B), // Yellow
-    Color(0xFFEA580C), // Orange
-    Color(0xFFDC2626)  // Red
+    Color(0xFF10B981),
+    Color(0xFF84CC16),
+    Color(0xFFF59E0B),
+    Color(0xFFEA580C),
+    Color(0xFFDC2626)
 )
 
 private fun getRelevanceInfo(votes: Int): RelevanceData {
     return when {
-        votes < 20 -> RelevanceData("Menor", 1, "Prioridad menor basada en $votes respaldos comunitarios.", 1)
-        votes < 40 -> RelevanceData("Baja", 2, "Prioridad baja basada en $votes respaldos comunitarios.", 2)
-        votes < 60 -> RelevanceData("Moderado", 3, "Prioridad moderada basada en $votes respaldos comunitarios.", 3)
-        votes < 80 -> RelevanceData("Alto", 4, "Prioridad alta basada en $votes respaldos comunitarios.", 4)
-        else -> RelevanceData("Crítico", 5, "Nivel crítico basado en más de 80 respaldos comunitarios y alta urgencia.", 5)
+        votes < 20 -> RelevanceData("Menor", 1, "Prioridad menor basada en $votes apoyos.", 1)
+        votes < 40 -> RelevanceData("Baja", 2, "Prioridad baja basada en $votes apoyos.", 2)
+        votes < 60 -> RelevanceData("Moderado", 3, "Prioridad moderada basada en $votes apoyos.", 3)
+        votes < 80 -> RelevanceData("Alto", 4, "Prioridad alta basada en $votes apoyos.", 4)
+        else -> RelevanceData("Crítico", 5, "Nivel crítico basado en más de 80 apoyos y alta urgencia.", 5)
+    }
+}
+
+private fun formatTimeAgo(timestamp: Long): String {
+    val now = System.currentTimeMillis()
+    val diff = maxOf(0L, now - timestamp)
+    val seconds = diff / 1000
+    val minutes = seconds / 60
+    val hours = minutes / 60
+    val days = hours / 24
+
+    return when {
+        seconds < 60 -> "Hace un momento"
+        minutes < 60 -> "Hace $minutes ${if (minutes == 1L) "minuto" else "minutos"}"
+        hours < 24 -> "Hace $hours ${if (hours == 1L) "hora" else "horas"}"
+        days < 30 -> "Hace $days ${if (days == 1L) "día" else "días"}"
+        else -> "Hace más de un mes"
     }
 }
 
@@ -122,7 +139,7 @@ private fun ReportDetailScreen(
             .fillMaxSize()
             .background(VozBackground)
     ) {
-        // Top Bar
+
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -149,7 +166,6 @@ private fun ReportDetailScreen(
             }
         }
 
-        // Scrollable content
         Column(
             modifier = Modifier
                 .weight(1f)
@@ -157,7 +173,6 @@ private fun ReportDetailScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            // Header Card
             Surface(
                 shape = RoundedCornerShape(16.dp),
                 color = Color.White,
@@ -206,7 +221,6 @@ private fun ReportDetailScreen(
                             Surface(shape = RoundedCornerShape(50), color = Color(0xFFEAF1F8)) {
                                 Text("#REP-${report.id.take(8).uppercase()}", modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp), color = VozNavy, fontSize = 11.sp, fontWeight = FontWeight.Bold)
                             }
-                            // Status Badge next to ID Tag
                             Surface(
                                 shape = RoundedCornerShape(50),
                                 color = statusBg,
@@ -219,14 +233,10 @@ private fun ReportDetailScreen(
                                 }
                             }
                         }
-                        IconButton(onClick = {}, modifier = Modifier.size(32.dp)) {
-                            Icon(Icons.Default.Share, contentDescription = "Compartir", tint = VozNavy, modifier = Modifier.size(18.dp))
-                        }
                     }
 
                     Spacer(Modifier.height(14.dp))
 
-                    // Relevance Card
                     Surface(
                         shape = RoundedCornerShape(12.dp),
                         color = Color(0xFFF0F6FF),
@@ -299,7 +309,6 @@ private fun ReportDetailScreen(
                 }
             }
 
-            // Image Gallery Card
             val imageUrls = remember(report.imageUrl) {
                 report.imageUrl?.split(",")?.map { it.trim() }?.filter { it.isNotBlank() } ?: emptyList()
             }
@@ -345,7 +354,7 @@ private fun ReportDetailScreen(
                 }
             }
 
-            // Description Card
+
             Surface(
                 shape = RoundedCornerShape(16.dp),
                 color = Color.White,
@@ -368,7 +377,6 @@ private fun ReportDetailScreen(
                 }
             }
 
-            // Author Card
             Surface(
                 shape = RoundedCornerShape(16.dp),
                 color = Color.White,
@@ -398,7 +406,6 @@ private fun ReportDetailScreen(
                 }
             }
 
-            // Citizen Contributions Section
             Surface(
                 shape = RoundedCornerShape(16.dp),
                 color = Color.White,
@@ -430,7 +437,6 @@ private fun ReportDetailScreen(
 
                     Spacer(Modifier.height(8.dp))
 
-                    // Selected photos preview (max 2)
                     if (uiState.contributionPhotoUris.isNotEmpty()) {
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(vertical = 4.dp)) {
                             uiState.contributionPhotoUris.forEachIndexed { index, uriStr ->
@@ -496,7 +502,6 @@ private fun ReportDetailScreen(
 
                     Spacer(Modifier.height(16.dp))
 
-                    // Contributions list
                     uiState.contributions.forEach { contrib ->
                         Surface(
                             shape = RoundedCornerShape(12.dp),
@@ -511,7 +516,7 @@ private fun ReportDetailScreen(
                                         Text(contrib.authorRole, modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp), color = if (contrib.isOfficial) Color(0xFF059669) else VozNavy, fontSize = 9.sp, fontWeight = FontWeight.Bold)
                                     }
                                     Spacer(Modifier.weight(1f))
-                                    Text(contrib.timeAgo, color = VozMuted, fontSize = 10.sp)
+                                    Text(formatTimeAgo(contrib.timestamp), color = VozMuted, fontSize = 10.sp)
                                 }
                                 Spacer(Modifier.height(6.dp))
                                 if (contrib.content.isNotBlank()) {

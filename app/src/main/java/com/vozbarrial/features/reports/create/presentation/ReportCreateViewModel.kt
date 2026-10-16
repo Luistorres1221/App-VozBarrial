@@ -1,4 +1,4 @@
-package com.vozbarrial.features.reports.presentation
+package com.vozbarrial.features.reports.create.presentation
 
 import android.net.Uri
 import androidx.lifecycle.ViewModel
