@@ -65,6 +65,19 @@ class ReportsViewModel : ViewModel() {
         onComplete(true, null)
 
         viewModelScope.launch(Dispatchers.IO) {
+            val firestore = com.google.firebase.firestore.FirebaseFirestore.getInstance()
+            if (profile.uid.isNotBlank()) {
+                firestore.collection("usuarios").document(profile.uid)
+                    .update("monedas", com.google.firebase.firestore.FieldValue.increment(50))
+            } else if (profile.email.isNotBlank()) {
+                firestore.collection("usuarios").whereEqualTo("email", profile.email).get()
+                    .addOnSuccessListener { docs ->
+                        for (doc in docs) {
+                            doc.reference.update("monedas", com.google.firebase.firestore.FieldValue.increment(50))
+                        }
+                    }
+            }
+
             val uploadedUrls = mutableListOf<String>()
             for (photoUri in photos) {
                 val url = repository.uploadToCloudinary(context, photoUri)

@@ -144,6 +144,20 @@ class ReportDetailViewModel : ViewModel() {
                     .document(reportId)
                     .update("votes", newVotes)
 
+                val authorUid = currentReport.authorUid
+                val authorEmail = currentReport.authorEmail
+                if (authorUid.isNotBlank()) {
+                    firestore.collection("usuarios").document(authorUid)
+                        .update("monedas", com.google.firebase.firestore.FieldValue.increment(200))
+                } else if (authorEmail.isNotBlank()) {
+                    firestore.collection("usuarios").whereEqualTo("email", authorEmail).get()
+                        .addOnSuccessListener { docs ->
+                            for (userDoc in docs) {
+                                userDoc.reference.update("monedas", com.google.firebase.firestore.FieldValue.increment(200))
+                            }
+                        }
+                }
+
                 _uiState.update {
                     it.copy(
                         isSupported = true,

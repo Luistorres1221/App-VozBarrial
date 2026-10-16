@@ -60,10 +60,12 @@ private data class CommunityReport(
     val status: String,
     val latitude: Double,
     val longitude: Double,
+    val authorUid: String = "",
+    val authorEmail: String = "",
 )
 
 @Composable
-fun ReportsMap(name: String, profilePhoto: String? = null, onSignOut: () -> Unit, onNavigate: (String) -> Unit = {}, points: Int = 1450, communityReports: List<Report> = emptyList()) {
+fun ReportsMap(name: String, profilePhoto: String? = null, onSignOut: () -> Unit, onNavigate: (String) -> Unit = {}, monedas: Int = 0, communityReports: List<Report> = emptyList()) {
     val context = LocalContext.current
     remember {
         Configuration.getInstance().load(context, context.getSharedPreferences("osm_prefs", Context.MODE_PRIVATE))
@@ -72,7 +74,7 @@ fun ReportsMap(name: String, profilePhoto: String? = null, onSignOut: () -> Unit
 
     val reports = remember(communityReports) {
         communityReports.map { report ->
-            CommunityReport(report.id, report.title, report.description, report.place, report.category, report.imageUrl, report.timestamp, report.status, report.latitude, report.longitude)
+            CommunityReport(report.id, report.title, report.description, report.place, report.category, report.imageUrl, report.timestamp, report.status, report.latitude, report.longitude, report.authorUid, report.authorEmail)
         }
     }
 
@@ -295,8 +297,8 @@ fun ReportsMap(name: String, profilePhoto: String? = null, onSignOut: () -> Unit
                 name = name,
                 profilePhoto = profilePhoto,
                 reportCount = distanceFilteredReports.size,
-                points = points,
-                onPoints = { onNavigate("badges") },
+                monedas = monedas,
+                onPoints = { showPoints = true },
                 onNotifications = { onNavigate("activity") },
                 onSignOut = onSignOut,
                 onProfile = { onNavigate("profile") },
@@ -468,8 +470,8 @@ fun ReportsMap(name: String, profilePhoto: String? = null, onSignOut: () -> Unit
     if (showPoints) {
         AlertDialog(
             onDismissRequest = { showPoints = false },
-            title = { Text("Mis puntos vecinales", color = VozNavy) },
-            text = { Text("Tienes $points puntos. Puedes ganar más reportando situaciones y participando en tu comunidad.") },
+            title = { Text("Mis monedas", color = VozNavy) },
+            text = { Text("Tienes $monedas monedas. Gana 50 monedas al crear un reporte y 200 monedas cuando alguien apoya tus reportes.") },
             confirmButton = { TextButton(onClick = { showPoints = false }) { Text("Entendido") } },
         )
     }
@@ -480,7 +482,7 @@ private fun MapHeader(
     name: String,
     profilePhoto: String? = null,
     reportCount: Int,
-    points: Int,
+    monedas: Int,
     onPoints: () -> Unit,
     onNotifications: () -> Unit,
     onSignOut: () -> Unit,
@@ -514,7 +516,7 @@ private fun MapHeader(
             shape = RoundedCornerShape(50),
             color = Color(0xFFFFF2E7),
         ) {
-            Text("🟠 $points", modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp), color = Color(0xFF8A5723), fontSize = 10.sp, fontWeight = FontWeight.Bold)
+            Text("🟠 $monedas", modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp), color = Color(0xFF8A5723), fontSize = 10.sp, fontWeight = FontWeight.Bold)
         }
         IconButton(onClick = onNotifications, modifier = Modifier.size(34.dp)) {
             Box(contentAlignment = Alignment.TopEnd) {
@@ -762,6 +764,19 @@ private fun SelectedReportCard(
                             reportRef.collection("supports").document(uid)
                                 .set(mapOf("timestamp" to System.currentTimeMillis()))
                             reportRef.update("votes", com.google.firebase.firestore.FieldValue.increment(1))
+
+                            val firestore = com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                            if (report.authorUid.isNotBlank()) {
+                                firestore.collection("usuarios").document(report.authorUid)
+                                    .update("monedas", com.google.firebase.firestore.FieldValue.increment(200))
+                            } else if (report.authorEmail.isNotBlank()) {
+                                firestore.collection("usuarios").whereEqualTo("email", report.authorEmail).get()
+                                    .addOnSuccessListener { docs ->
+                                        for (userDoc in docs) {
+                                            userDoc.reference.update("monedas", com.google.firebase.firestore.FieldValue.increment(200))
+                                        }
+                                    }
+                            }
                         }
                     },
                     modifier = Modifier.weight(1f).height(42.dp),

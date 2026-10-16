@@ -35,12 +35,39 @@ fun AppNavGraph() {
     var signedInPhoto by rememberSaveable { mutableStateOf<String?>(null) }
     var equippedFrame by rememberSaveable { mutableStateOf("Clásico Cívico") }
     var signedInPoints by rememberSaveable { mutableIntStateOf(1450) }
+    var signedInMonedas by rememberSaveable { mutableIntStateOf(0) }
     var ownedFramesText by rememberSaveable { mutableStateOf("Clásico Cívico|Guardián Dorado|Eco Barrio Verde|Escudo Ciudadano") }
     val ownedFrames = ownedFramesText.split("|").filter { it.isNotBlank() }.toSet()
 
     val myReports = remember(reportsViewModel.reports, signedInEmail) {
         reportsViewModel.reports.filter { report ->
             report.authorEmail.equals(signedInEmail, ignoreCase = true)
+        }
+    }
+
+    DisposableEffect(Unit) {
+        val currentUser = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
+        var listener: com.google.firebase.firestore.ListenerRegistration? = null
+        if (currentUser != null) {
+            listener = com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                .collection("usuarios")
+                .document(currentUser.uid)
+                .addSnapshotListener { document, _ ->
+                    val usuario = document?.toObject(Usurious::class.java)
+                    if (usuario != null) {
+                        signedInName = usuario.name.ifBlank { currentUser.email?.substringBefore("@").orEmpty() }
+                        signedInEmail = currentUser.email.orEmpty()
+                        signedInPhone = usuario.phone
+                        signedInPhoto = usuario.photoUrl
+                        equippedFrame = usuario.equippedFrame
+                        signedInPoints = usuario.points
+                        signedInMonedas = usuario.monedas
+                        ownedFramesText = usuario.ownedFrames.joinToString("|")
+                    }
+                }
+        }
+        onDispose {
+            listener?.remove()
         }
     }
 
@@ -77,6 +104,7 @@ fun AppNavGraph() {
                         signedInPhoto = usuario.photoUrl
                         equippedFrame = usuario.equippedFrame
                         signedInPoints = usuario.points
+                        signedInMonedas = usuario.monedas
                         ownedFramesText = usuario.ownedFrames.joinToString("|")
                     } else {
                         signedInName = email.substringBefore("@")
@@ -122,7 +150,7 @@ fun AppNavGraph() {
         "map" -> ReportsMap(
             name = signedInName,
             profilePhoto = signedInPhoto,
-            points = signedInPoints,
+            monedas = signedInMonedas,
             communityReports = reportsViewModel.reports,
             onSignOut = {
                 com.google.firebase.auth.FirebaseAuth.getInstance().signOut()
