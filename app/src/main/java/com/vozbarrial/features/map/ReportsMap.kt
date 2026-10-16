@@ -97,7 +97,22 @@ fun ReportsMap(name: String, profilePhoto: String? = null, onSignOut: () -> Unit
     var showNotifications by rememberSaveable { mutableStateOf(false) }
     var showPoints by rememberSaveable { mutableStateOf(false) }
     var mapViewInstance by remember { mutableStateOf<MapView?>(null) }
-    var currentUserLocation by remember { mutableStateOf<GeoPoint?>(null) }
+    var currentUserLocation by remember {
+        mutableStateOf<GeoPoint?>(
+            try {
+                val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as? android.location.LocationManager
+                val last = try {
+                    locationManager?.getLastKnownLocation(android.location.LocationManager.GPS_PROVIDER)
+                        ?: locationManager?.getLastKnownLocation(android.location.LocationManager.NETWORK_PROVIDER)
+                } catch (_: SecurityException) {
+                    null
+                }
+                if (last != null) GeoPoint(last.latitude, last.longitude) else GeoPoint(4.60971, -74.08175)
+            } catch (_: Exception) {
+                GeoPoint(4.60971, -74.08175)
+            }
+        )
+    }
 
     DisposableEffect(Unit) {
         val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as? android.location.LocationManager
