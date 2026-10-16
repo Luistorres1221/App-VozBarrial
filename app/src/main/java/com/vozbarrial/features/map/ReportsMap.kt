@@ -393,7 +393,6 @@ fun ReportsMap(name: String, profilePhoto: String? = null, onSignOut: () -> Unit
                 .zIndex(2f),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            MapControl(Icons.Default.Layers, "Capas", onClick = { selectedCategory = "TODOS" })
             MapControl(Icons.Default.MyLocation, "Mi ubicación", onClick = {
                 val myLoc = (mapViewInstance?.overlays?.firstOrNull { it is MyLocationNewOverlay } as? MyLocationNewOverlay)?.myLocation
                 if (myLoc != null) {
@@ -403,12 +402,6 @@ fun ReportsMap(name: String, profilePhoto: String? = null, onSignOut: () -> Unit
                     mapViewInstance?.controller?.setCenter(GeoPoint(4.60971, -74.08175))
                     mapViewInstance?.controller?.setZoom(14.0)
                 }
-            })
-            MapControl(Icons.Default.Add, "Acercar", onClick = {
-                mapViewInstance?.controller?.zoomIn()
-            })
-            MapControl(Icons.Default.Remove, "Alejar", onClick = {
-                mapViewInstance?.controller?.zoomOut()
             })
         }
 
