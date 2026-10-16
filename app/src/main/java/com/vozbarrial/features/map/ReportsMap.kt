@@ -17,12 +17,15 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Remove
+import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -57,6 +60,8 @@ private data class CommunityReport(
     val description: String,
     val place: String,
     val category: String,
+    val imageUrl: String?,
+    val timestamp: Long,
     val latitude: Double,
     val longitude: Double,
 )
@@ -71,7 +76,7 @@ fun ReportsMap(name: String, profilePhoto: String? = null, onSignOut: () -> Unit
 
     val reports = remember(communityReports) {
         communityReports.map { report ->
-            CommunityReport(report.id, report.title, report.description, report.place, report.category, report.latitude, report.longitude)
+            CommunityReport(report.id, report.title, report.description, report.place, report.category, report.imageUrl, report.timestamp, report.latitude, report.longitude)
         }
     }
 
@@ -220,8 +225,6 @@ fun ReportsMap(name: String, profilePhoto: String? = null, onSignOut: () -> Unit
 
                     val marker = Marker(mapView).apply {
                         position = GeoPoint(report.latitude, report.longitude)
-                        title = report.title
-                        snippet = report.description
                         setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
 
                         val size = 64
@@ -254,9 +257,8 @@ fun ReportsMap(name: String, profilePhoto: String? = null, onSignOut: () -> Unit
 
                         icon = android.graphics.drawable.BitmapDrawable(mapView.resources, bitmap)
 
-                        setOnMarkerClickListener { m, _ ->
+                        setOnMarkerClickListener { _, _ ->
                             selectedReportId = report.id
-                            m.showInfoWindow()
                             true
                         }
                     }
@@ -408,11 +410,14 @@ fun ReportsMap(name: String, profilePhoto: String? = null, onSignOut: () -> Unit
         selectedReportId?.let { id -> reports.firstOrNull { it.id == id }?.let { report ->
             SelectedReportCard(
                 report = report,
+                myLoc = myLoc,
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .padding(start = 12.dp, end = 12.dp, bottom = 76.dp)
                     .zIndex(2f),
                 onClose = { selectedReportId = null },
+                onViewReport = { onNavigate("reportDetail/${report.id}") },
+                onSupport = { selectedReportId = null },
             )
         } }
 
@@ -559,37 +564,151 @@ private fun MapControl(icon: ImageVector, label: String, onClick: () -> Unit) {
 }
 
 @Composable
-private fun SelectedReportCard(report: CommunityReport, modifier: Modifier, onClose: () -> Unit) {
-    Surface(modifier = modifier.fillMaxWidth(), shape = RoundedCornerShape(15.dp), color = Color.White, shadowElevation = 9.dp) {
-        Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-            val badgeColor = when {
-                report.category.contains("alumbrado", true) || report.category.contains("servicios", true) -> Color(0xFFCA8A04)
-                report.category.contains("emergencia", true) -> Color(0xFFDC2626)
-                report.category.contains("infraestructura", true) || report.category.contains("vías", true) -> Color(0xFFEA580C)
-                report.category.contains("mascota", true) -> Color(0xFF9333EA)
-                report.category.contains("seguridad", true) -> Color(0xFF2563EB)
-                else -> Color(0xFF16A34A)
+private fun SelectedReportCard(
+    report: CommunityReport,
+    myLoc: GeoPoint?,
+    modifier: Modifier,
+    onClose: () -> Unit,
+    onViewReport: () -> Unit,
+    onSupport: () -> Unit
+) {
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        color = Color.White,
+        shadowElevation = 12.dp
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                val badgeColor = when {
+                    report.category.contains("alumbrado", true) || report.category.contains("servicios", true) -> Color(0xFFCA8A04)
+                    report.category.contains("emergencia", true) -> Color(0xFFDC2626)
+                    report.category.contains("infraestructura", true) || report.category.contains("vías", true) -> Color(0xFFEA580C)
+                    report.category.contains("mascota", true) -> Color(0xFF9333EA)
+                    report.category.contains("seguridad", true) -> Color(0xFFE34652)
+                    else -> Color(0xFF159F78)
+                }
+                Surface(
+                    shape = RoundedCornerShape(50),
+                    color = badgeColor.copy(alpha = 0.12f)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(Modifier.size(6.dp).clip(CircleShape).background(badgeColor))
+                        Spacer(Modifier.width(6.dp))
+                        Text(
+                            text = report.category,
+                            color = badgeColor,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    if (myLoc != null) {
+                        val reportPoint = GeoPoint(report.latitude, report.longitude)
+                        val distMeters = myLoc.distanceToAsDouble(reportPoint)
+                        val distText = if (distMeters < 1000) "${distMeters.toInt()} m" else String.format(Locale.US, "%.1f km", distMeters / 1000.0)
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.LocationOn, null, tint = Color(0xFFE34652), modifier = Modifier.size(13.dp))
+                            Spacer(Modifier.width(2.dp))
+                            Text("A $distText", color = Color(0xFFE34652), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                        }
+                        Spacer(Modifier.width(8.dp))
+                    }
+                    IconButton(onClick = onClose, modifier = Modifier.size(28.dp)) {
+                        Icon(Icons.Default.Close, contentDescription = "Cerrar", tint = VozNavy, modifier = Modifier.size(18.dp))
+                    }
+                }
             }
-            Box(Modifier.size(38.dp).clip(CircleShape).background(badgeColor.copy(alpha = .12f)), contentAlignment = Alignment.Center) {
-                Icon(
-                    when {
-                        report.category.contains("seguridad", true) -> Icons.Default.Warning
-                        report.category.contains("infraestructura", true) || report.category.contains("vías", true) || report.category.contains("alumbrado", true) -> Icons.Default.Build
-                        else -> Icons.Default.Groups
-                    },
-                    null,
-                    tint = badgeColor,
-                    modifier = Modifier.size(19.dp),
-                )
+
+            Spacer(Modifier.height(10.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = report.title,
+                        color = VozNavy,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 15.sp,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        text = report.description,
+                        color = VozMuted,
+                        fontSize = 12.sp,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+                if (!report.imageUrl.isNullOrBlank()) {
+                    Spacer(Modifier.width(12.dp))
+                    AsyncImage(
+                        model = report.imageUrl,
+                        contentDescription = "Foto del reporte",
+                        modifier = Modifier
+                            .size(64.dp)
+                            .clip(RoundedCornerShape(12.dp)),
+                        contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                    )
+                }
             }
-            Spacer(Modifier.width(9.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(report.title, color = VozNavy, fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                Text("${report.category} · ${report.place}", color = VozMuted, fontSize = 9.sp)
-                Text(report.description, color = VozNavy, fontSize = 10.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
+
+            Spacer(Modifier.height(12.dp))
+            HorizontalDivider(color = Color(0xFFEAEFF5), thickness = 1.dp)
+            Spacer(Modifier.height(10.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(Icons.Default.Schedule, null, tint = VozMuted, modifier = Modifier.size(13.dp))
+                Spacer(Modifier.width(4.dp))
+                val timeAgo = "Hace 15 min"
+                Text(timeAgo, color = VozMuted, fontSize = 11.sp, fontWeight = FontWeight.Medium)
             }
-            IconButton(onClick = onClose, modifier = Modifier.size(30.dp)) {
-                Icon(Icons.Default.Close, contentDescription = "Cerrar detalle", tint = VozMuted, modifier = Modifier.size(17.dp))
+
+            Spacer(Modifier.height(10.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Button(
+                    onClick = onViewReport,
+                    modifier = Modifier.weight(1f).height(42.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEAF1F8))
+                ) {
+                    Icon(Icons.Default.Visibility, null, tint = VozNavy, modifier = Modifier.size(16.dp))
+                    Spacer(Modifier.width(6.dp))
+                    Text("Ver reporte", color = VozNavy, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                }
+
+                Button(
+                    onClick = onSupport,
+                    modifier = Modifier.weight(1f).height(42.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF071C2D))
+                ) {
+                    Icon(Icons.Default.Favorite, null, tint = Color.White, modifier = Modifier.size(16.dp))
+                    Spacer(Modifier.width(6.dp))
+                    Text("¡Apoyado! ✓", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                }
             }
         }
     }
