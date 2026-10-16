@@ -189,11 +189,13 @@ fun AppNavGraph() {
         "createReport" -> ReportCreateRoute(
             name = signedInName,
             onBack = { navigationViewModel.navigate("map") },
-            onPublish = { title, description, category, latitude, longitude, photoUri, done ->
+            onPublish = { title, description, category, latitude, longitude, photoUris, done ->
                 val mockProfile = Usuario(name = signedInName, email = signedInEmail)
-                reportsViewModel.createReport(title, description, category, latitude, longitude, photoUri, mockProfile, context) { published, message ->
-                    if (published) navigationViewModel.navigate("map")
+                reportsViewModel.createReport(title, description, category, latitude, longitude, photoUris, mockProfile, context) { published, message ->
                     done(published, message)
+                    if (published) {
+                        navigationViewModel.navigate("map")
+                    }
                 }
             }
         )

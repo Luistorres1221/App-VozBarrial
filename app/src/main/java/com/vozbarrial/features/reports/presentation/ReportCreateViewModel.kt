@@ -27,8 +27,16 @@ class ReportCreateViewModel : ViewModel() {
         _uiState.update { it.copy(description = value.take(280), error = null) }
     }
 
-    fun setPhoto(uri: String?) {
-        _uiState.update { it.copy(photoUri = uri, error = null) }
+    fun addPhoto(uri: String?) {
+        if (uri.isNullOrBlank()) return
+        val current = _uiState.value.photoUris
+        if (current.size < 3) {
+            _uiState.update { it.copy(photoUris = current + uri, error = null) }
+        }
+    }
+
+    fun removePhoto(index: Int) {
+        _uiState.update { it.copy(photoUris = it.photoUris.filterIndexed { i, _ -> i != index }, error = null) }
     }
 
     fun updateGpsLocation(latitude: Double, longitude: Double) {
@@ -60,14 +68,14 @@ class ReportCreateViewModel : ViewModel() {
     }
 
     fun publish(
-        submit: (String, String, String, Double, Double, Uri, (Boolean, String?) -> Unit) -> Unit,
+        submit: (String, String, String, Double, Double, List<Uri>, (Boolean, String?) -> Unit) -> Unit,
     ) {
         val form = _uiState.value
         val validationError = when {
             form.title.isBlank() -> "Escribe un título para el reporte."
             form.description.isBlank() -> "Describe brevemente lo sucedido."
             !form.locationSelected -> "Usa el GPS o elige un punto en el mapa."
-            form.photoUri.isNullOrBlank() -> "Adjunta al menos una fotografía como evidencia."
+            form.photoUris.isEmpty() -> "Adjunta al menos una fotografía como evidencia (máximo 3)."
             form.publishing -> return
             else -> null
         }
@@ -82,7 +90,7 @@ class ReportCreateViewModel : ViewModel() {
             form.category,
             form.latitude,
             form.longitude,
-            Uri.parse(form.photoUri),
+            form.photoUris.map { Uri.parse(it) },
         ) { success, error ->
             _uiState.update {
                 if (success) ReportCreateUiState()

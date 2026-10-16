@@ -22,8 +22,11 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.Campaign
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -42,6 +45,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
 import com.vozbarrial.features.reports.presentation.ReportCreateUiState
 import com.vozbarrial.features.reports.presentation.ReportCreateViewModel
 import com.vozbarrial.ui.theme.*
@@ -56,10 +60,10 @@ private data class ReportCategory(val name: String, val description: String, val
 private val reportCategories = listOf(
     ReportCategory("Seguridad", "Robos, vandalismo, actividades sospechosas", "🛡"),
     ReportCategory("Emergencias Médicas", "Accidentes viales, primeros auxilios", "✚"),
-    ReportCategory("Infraestructura y Vías", "Baches, fallas de alumbrado, alcantarillado", "⚒"),
+    ReportCategory("Infraestructura y Vías", "Baches, daños en calles, pavimentos rotos", "🚧"),
     ReportCategory("Mascotas y Animales", "Animales perdidos, encontrados o en peligro", "🐾"),
     ReportCategory("Comunidad y Entorno", "Basuras, polución o ruido excesivo", "♧"),
-    ReportCategory("Alumbrado y Servicios", "Postes sin luz, fugas de agua o gas", "♧"),
+    ReportCategory("Alumbrado y Servicios", "Postes sin luz, fugas de agua o gas", "💡"),
 )
 
 /**
@@ -69,14 +73,14 @@ private val reportCategories = listOf(
 fun ReportCreateRoute(
     name: String,
     onBack: () -> Unit,
-    onPublish: (String, String, String, Double, Double, Uri, (Boolean, String?) -> Unit) -> Unit,
+    onPublish: (String, String, String, Double, Double, List<Uri>, (Boolean, String?) -> Unit) -> Unit,
     viewModel: ReportCreateViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
-        viewModel.setPhoto(uri?.toString())
+        viewModel.addPhoto(uri?.toString())
     }
 
     val locationPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { grants ->
@@ -99,6 +103,7 @@ fun ReportCreateRoute(
         onUpdateTitle = viewModel::updateTitle,
         onUpdateDescription = viewModel::updateDescription,
         onPickPhoto = { picker.launch("image/*") },
+        onRemovePhoto = viewModel::removePhoto,
         onConfirmMapLocation = viewModel::confirmMapLocation,
         onRequestGps = {
             val fine = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
@@ -126,6 +131,7 @@ fun ReportCreateContent(
     onUpdateTitle: (String) -> Unit,
     onUpdateDescription: (String) -> Unit,
     onPickPhoto: () -> Unit,
+    onRemovePhoto: (Int) -> Unit,
     onConfirmMapLocation: (Double, Double) -> Unit,
     onRequestGps: () -> Unit,
     onPublish: () -> Unit,
@@ -150,115 +156,167 @@ fun ReportCreateContent(
             Modifier
                 .weight(1f)
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 10.dp, vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(9.dp)
+                .padding(13.dp),
+            verticalArrangement = Arrangement.spacedBy(11.dp)
         ) {
-            Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                Text(
-                    "✿  Red de Vigilancia Activa",
-                    Modifier.background(Color(0xFFDDF8EF), RoundedCornerShape(30.dp)).padding(horizontal = 9.dp, vertical = 4.dp),
-                    color = VozGreen,
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.Bold
-                )
-                Text("Crear Reporte Ciudadano", color = VozNavy, fontSize = 19.sp, fontWeight = FontWeight.Bold)
-                Text("Ayuda a mejorar la seguridad y convivencia de tu barrio.", color = VozMuted, fontSize = 11.sp)
-                Text("● Paso 1: Categoría     Paso 2: Evidencia     Paso 3: Detalles", color = VozMuted, fontSize = 9.sp)
-                LinearProgressIndicator(
-                    progress = { .38f },
-                    modifier = Modifier.fillMaxWidth().height(4.dp),
-                    color = Color(0xFFFF8138),
-                    trackColor = VozBlueSurface
-                )
-            }
-
-            Section("1", "Selecciona la Categoría", "Requerido") {
-                Box {
-                    val selected = reportCategories.first { it.name == uiState.category }
-                    Column {
-                        Row(
-                            Modifier.fillMaxWidth().background(VozBlueSurface, RoundedCornerShape(10.dp)).clickable { menu = true }.padding(9.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Box(Modifier.size(31.dp).clip(RoundedCornerShape(8.dp)).background(Color(0xFFFFE1E1)), contentAlignment = Alignment.Center) {
-                                Text(selected.icon, fontSize = 16.sp)
-                            }
-                            Spacer(Modifier.width(9.dp))
-                            Column(Modifier.weight(1f)) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Text(selected.name, color = VozNavy, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                                    Spacer(Modifier.width(6.dp))
-                                    Text(
-                                        "Seleccionada",
-                                        Modifier.background(Color(0xFFDDF8EF), RoundedCornerShape(20.dp)).padding(horizontal = 5.dp, vertical = 2.dp),
-                                        color = VozGreen,
-                                        fontSize = 8.sp,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                }
-                                Text(selected.description, color = VozMuted, fontSize = 9.sp, maxLines = 1)
-                            }
-                            Text("⌃", color = VozNavy, fontSize = 16.sp)
-                        }
-                        DropdownMenu(expanded = menu, onDismissRequest = { menu = false }, modifier = Modifier.width(300.dp).background(Color.White)) {
-                            Text("CATEGORÍAS DISPONIBLES", Modifier.fillMaxWidth().padding(horizontal = 13.dp, vertical = 8.dp), color = VozNavy, fontSize = 9.sp, fontWeight = FontWeight.Bold)
-                            reportCategories.forEach { option ->
-                                Row(
-                                    Modifier.fillMaxWidth()
-                                        .background(if (option.name == uiState.category) Color(0xFFE8F1FF) else Color.White)
-                                        .clickable { onSelectCategory(option.name); menu = false }
-                                        .padding(horizontal = 11.dp, vertical = 9.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Box(Modifier.size(29.dp).clip(RoundedCornerShape(7.dp)).background(if (option.name == "Seguridad") Color(0xFFFFE1E1) else Color(0xFFDDEAFF)), contentAlignment = Alignment.Center) {
-                                        Text(option.icon, fontSize = 15.sp)
-                                    }
-                                    Spacer(Modifier.width(9.dp))
-                                    Column(Modifier.weight(1f)) {
-                                        Text(option.name, color = VozNavy, fontSize = 11.sp, fontWeight = if (option.name == uiState.category) FontWeight.Bold else FontWeight.Medium, maxLines = 1)
-                                        Text(option.description, color = VozMuted, fontSize = 8.sp, maxLines = 1)
-                                    }
-                                    if (option.name == uiState.category) Text("✓", color = VozNavy, fontSize = 15.sp, fontWeight = FontWeight.Bold)
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            Section("2", "Evidencia Fotográfica", "Mín. 1 foto") {
-                Column(
-                    Modifier.fillMaxWidth().background(VozBlueSurface, RoundedCornerShape(10.dp)).clickable(onClick = onPickPhoto).padding(14.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(5.dp)
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                color = Color.White,
+                shadowElevation = 1.dp
+            ) {
+                Row(
+                    modifier = Modifier.padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Box(Modifier.size(36.dp).clip(CircleShape).background(Color(0xFFD8E5FF)), contentAlignment = Alignment.Center) {
-                        Icon(Icons.Default.CameraAlt, null, tint = VozNavy)
+                    Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Surface(
+                            shape = RoundedCornerShape(50),
+                            color = Color(0xFFD1FAE5)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(Icons.Default.Security, null, tint = Color(0xFF047857), modifier = Modifier.size(13.dp))
+                                Spacer(Modifier.width(5.dp))
+                                Text("Red de Vigilancia Activa", color = Color(0xFF047857), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                            }
+                        }
+                        Text("Crear Reporte\nCiudadano", color = VozNavy, fontSize = 22.sp, fontWeight = FontWeight.Bold, lineHeight = 26.sp)
+                        Text("Ayuda a mejorar la seguridad y convivencia de tu ciudad para bienestar de todos.", color = VozMuted, fontSize = 11.sp)
                     }
-                    Text(
-                        if (uiState.photoUri == null) "Subir fotografía del incidente" else "Fotografía lista para adjuntar",
-                        color = VozNavy,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                    Text(
-                        if (uiState.photoUri == null) "Captura directa con cámara o galería (JPG, PNG)" else "Toca para cambiar la fotografía seleccionada",
-                        color = VozMuted,
-                        fontSize = 10.sp,
-                        textAlign = TextAlign.Center
-                    )
-                    Text("♧ Almacenamiento seguro y cifrado", color = Color(0xFFE56722), fontSize = 9.sp)
-                }
-                if (uiState.photoUri != null) {
-                    Row(Modifier.fillMaxWidth().background(Color(0xFFDDF8EF), RoundedCornerShape(8.dp)).padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.CheckCircle, null, tint = VozGreen)
-                        Spacer(Modifier.width(6.dp))
-                        Text("Evidencia adjunta", color = VozGreen, fontSize = 10.sp)
+                    Box(
+                        modifier = Modifier.size(46.dp).clip(CircleShape).background(VozNavy),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(Icons.Default.Campaign, null, tint = Color.White, modifier = Modifier.size(24.dp))
                     }
                 }
             }
 
-            Section("3", "Ubicación del Incidente", if (uiState.gpsActive) "GPS Activo" else "Ubicación") {
+            Section(
+                number = "1",
+                title = "Selecciona la Categoría",
+                subtitle = "Elige la más adecuada",
+                badgeText = "Requerido",
+                badgeColor = Color(0xFFFFEDD5),
+                badgeTextColor = Color(0xFFC2410C)
+            ) {
+                Box {
+                    OutlinedButton(
+                        onClick = { menu = true },
+                        modifier = Modifier.fillMaxWidth().height(53.dp),
+                        shape = RoundedCornerShape(10.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(containerColor = Color.White),
+                        border = ButtonDefaults.outlinedButtonBorder
+                    ) {
+                        val current = reportCategories.firstOrNull { it.name == uiState.category } ?: reportCategories[0]
+                        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                            Text(current.icon, fontSize = 17.sp)
+                            Spacer(Modifier.width(9.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(current.name, color = VozNavy, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                Text(current.description, color = VozMuted, fontSize = 10.sp, maxLines = 1)
+                            }
+                            Text("▾", color = VozNavy, fontSize = 16.sp)
+                        }
+                    }
+                    DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
+                        reportCategories.forEach { option ->
+                            DropdownMenuItem(
+                                text = {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Text(option.icon, fontSize = 15.sp)
+                                        Spacer(Modifier.width(8.dp))
+                                        Column {
+                                            Text(option.name, color = VozNavy, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                            Text(option.description, color = VozMuted, fontSize = 10.sp, maxLines = 1)
+                                        }
+                                    }
+                                },
+                                onClick = { onSelectCategory(option.name); menu = false }
+                            )
+                        }
+                    }
+                }
+            }
+
+            Section(
+                number = "2",
+                title = "Evidencia Fotográfica",
+                subtitle = "Mín. 1, Máx. 3 fotos",
+                badgeText = "Mín. 1 foto",
+                badgeColor = Color(0xFFD1FAE5),
+                badgeTextColor = Color(0xFF047857)
+            ) {
+                if (uiState.photoUris.size < 3) {
+                    Column(
+                        Modifier.fillMaxWidth().background(VozBlueSurface, RoundedCornerShape(10.dp)).clickable(onClick = onPickPhoto).padding(14.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(5.dp)
+                    ) {
+                        Box(Modifier.size(36.dp).clip(CircleShape).background(Color(0xFFD8E5FF)), contentAlignment = Alignment.Center) {
+                            Icon(Icons.Default.CameraAlt, null, tint = VozNavy)
+                        }
+                        Text(
+                            "Subir fotografía (${uiState.photoUris.size}/3)",
+                            color = VozNavy,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Text(
+                            "Captura directa con cámara o galería (JPG, PNG)",
+                            color = VozMuted,
+                            fontSize = 10.sp,
+                            textAlign = TextAlign.Center
+                        )
+                        Text("Almacenamiento seguro y cifrado", color = Color(0xFFE56722), fontSize = 9.sp)
+                    }
+                }
+
+                if (uiState.photoUris.isNotEmpty()) {
+                    Spacer(Modifier.height(8.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        uiState.photoUris.forEachIndexed { index, uriStr ->
+                            Box(
+                                modifier = Modifier
+                                    .size(90.dp)
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(Color(0xFFE2EEDD))
+                            ) {
+                                AsyncImage(
+                                    model = uriStr,
+                                    contentDescription = "Evidencia ${index + 1}",
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                                )
+                                IconButton(
+                                    onClick = { onRemovePhoto(index) },
+                                    modifier = Modifier
+                                        .align(Alignment.TopEnd)
+                                        .size(24.dp)
+                                        .background(Color.Black.copy(alpha = 0.6f), CircleShape)
+                                ) {
+                                    Icon(Icons.Default.Close, contentDescription = "Eliminar", tint = Color.White, modifier = Modifier.size(14.dp))
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            Section(
+                number = "3",
+                title = "Ubicación del Incidente",
+                subtitle = if (uiState.gpsActive) "GPS Activo" else "Ubicación",
+                badgeText = if (uiState.gpsActive) "GPS Activo" else "Ubicación",
+                badgeColor = Color(0xFFFFEDD5),
+                badgeTextColor = Color(0xFFC2410C)
+            ) {
                 Column(verticalArrangement = Arrangement.spacedBy(7.dp)) {
                     Box(
                         Modifier.fillMaxWidth().height(116.dp).clip(RoundedCornerShape(10.dp)).background(Color(0xFFE2EEDD)).clickable {
@@ -298,72 +356,80 @@ fun ReportCreateContent(
                             Text("◎  Usar mi GPS", fontSize = 10.sp)
                         }
                     }
-                    Row(Modifier.fillMaxWidth().background(VozBlueSurface, RoundedCornerShape(8.dp)).padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.LocationOn, null, tint = VozNavy, modifier = Modifier.size(18.dp))
-                        Spacer(Modifier.width(6.dp))
-                        Column(Modifier.weight(1f)) {
-                            Text(
-                                if (uiState.gpsActive) "Ubicación GPS actual" else if (uiState.locationSelected) "Punto elegido en el mapa" else "Selecciona la ubicación del incidente",
-                                color = VozNavy,
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Text(
-                                "Lat: ${String.format(Locale.US, "%.5f", uiState.latitude)}, Lon: ${String.format(Locale.US, "%.5f", uiState.longitude)}",
-                                color = VozMuted,
-                                fontSize = 9.sp
-                            )
-                        }
-                        if (uiState.gpsActive) Icon(Icons.Default.CheckCircle, null, tint = VozGreen, modifier = Modifier.size(17.dp))
-                    }
                     if (uiState.locationMessage.isNotBlank()) {
-                        Text(uiState.locationMessage, color = if (uiState.gpsActive) VozGreen else Color(0xFFB42318), fontSize = 9.sp)
+                        Text(uiState.locationMessage, color = if (uiState.locationSelected) VozGreen else VozMuted, fontSize = 10.sp)
                     }
                 }
             }
 
-            Section("4", "Información Detallada", null) {
-                Text("Título del reporte", color = VozNavy, fontSize = 10.sp, fontWeight = FontWeight.SemiBold)
-                OutlinedTextField(
-                    uiState.title,
-                    onUpdateTitle,
-                    Modifier.fillMaxWidth(),
-                    placeholder = { Text("Ej. Luminaria rota en esquina de parque", fontSize = 10.sp) },
-                    supportingText = { Text("${uiState.title.length}/60", Modifier.fillMaxWidth(), textAlign = TextAlign.End) },
-                    singleLine = true,
-                    shape = RoundedCornerShape(9.dp),
-                    colors = OutlinedTextFieldDefaults.colors(unfocusedContainerColor = Color.White, focusedContainerColor = Color.White)
-                )
-                Text("Descripción de lo sucedido", color = VozNavy, fontSize = 10.sp, fontWeight = FontWeight.SemiBold)
-                OutlinedTextField(
-                    uiState.description,
-                    onUpdateDescription,
-                    Modifier.fillMaxWidth().height(104.dp),
-                    placeholder = { Text("Describe detalles relevantes: hora aproximada, puntos de referencia clave o si hay personas vulnerables en riesgo...", fontSize = 10.sp, lineHeight = 13.sp) },
-                    supportingText = { Text("${uiState.description.length}/280", Modifier.fillMaxWidth(), textAlign = TextAlign.End) },
-                    shape = RoundedCornerShape(9.dp),
-                    colors = OutlinedTextFieldDefaults.colors(unfocusedContainerColor = Color.White, focusedContainerColor = Color.White)
-                )
-            }
-            if (!uiState.error.isNullOrBlank()) {
-                Text(uiState.error.orEmpty(), color = Color(0xFFB42318), fontSize = 11.sp)
-            }
-        }
+            Section(
+                number = "4",
+                title = "Información Detallada",
+                subtitle = "Título y descripción"
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(9.dp)) {
+                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                        Text("Título del reporte", color = VozNavy, fontSize = 12.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+                        Text("${uiState.title.length}/60", color = VozMuted, fontSize = 10.sp)
+                    }
+                    OutlinedTextField(
+                        value = uiState.title,
+                        onValueChange = onUpdateTitle,
+                        modifier = Modifier.fillMaxWidth(),
+                        placeholder = { Text("ej: Luminarias rotas en esquina de parque", fontSize = 12.sp, color = VozMuted) },
+                        singleLine = true,
+                        shape = RoundedCornerShape(10.dp),
+                        textStyle = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp, color = VozNavy),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = Color(0xFFF4F7FB),
+                            unfocusedContainerColor = Color(0xFFF4F7FB),
+                            focusedBorderColor = Color(0xFFC5D3E8),
+                            unfocusedBorderColor = Color.Transparent
+                        )
+                    )
 
-        Button(
-            onClick = onPublish,
-            enabled = !uiState.publishing,
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 7.dp).height(49.dp),
-            shape = RoundedCornerShape(9.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = VozNavy)
-        ) {
-            if (uiState.publishing) {
-                CircularProgressIndicator(Modifier.size(19.dp), color = Color.White, strokeWidth = 2.dp)
-            } else {
-                Icon(Icons.Default.Send, null)
+                    Spacer(Modifier.height(4.dp))
+
+                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                        Text("Descripción de lo sucedido", color = VozNavy, fontSize = 12.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+                        Text("${uiState.description.length}/280", color = VozMuted, fontSize = 10.sp)
+                    }
+                    OutlinedTextField(
+                        value = uiState.description,
+                        onValueChange = onUpdateDescription,
+                        modifier = Modifier.fillMaxWidth().height(100.dp),
+                        placeholder = { Text("Describe detalles relevantes: hora aproximada, puntos de referencia clave o si hay personas vulnerables en riesgo...", fontSize = 11.sp, color = VozMuted) },
+                        shape = RoundedCornerShape(10.dp),
+                        textStyle = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp, color = VozNavy),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = Color(0xFFF4F7FB),
+                            unfocusedContainerColor = Color(0xFFF4F7FB),
+                            focusedBorderColor = Color(0xFFC5D3E8),
+                            unfocusedBorderColor = Color.Transparent
+                        )
+                    )
+                }
             }
-            Spacer(Modifier.width(7.dp))
-            Text(if (uiState.publishing) "Publicando…" else "Publicar Reporte Ciudadano", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+
+            if (uiState.error != null) {
+                Text(uiState.error, color = Color(0xFFB42318), fontSize = 11.sp)
+            }
+
+            Button(
+                onClick = onPublish,
+                enabled = !uiState.publishing,
+                modifier = Modifier.fillMaxWidth().height(48.dp),
+                shape = RoundedCornerShape(10.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = VozNavy)
+            ) {
+                if (uiState.publishing) {
+                    CircularProgressIndicator(modifier = Modifier.size(20.dp), color = Color.White, strokeWidth = 2.dp)
+                } else {
+                    Icon(Icons.Default.Send, null)
+                }
+                Spacer(Modifier.width(7.dp))
+                Text(if (uiState.publishing) "Publicando…" else "Publicar Reporte Ciudadano", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+            }
         }
 
         if (showMapPicker) {
@@ -376,6 +442,52 @@ fun ReportCreateContent(
                 },
                 onDismiss = { showMapPicker = false }
             )
+        }
+    }
+}
+
+@Composable
+private fun Section(
+    number: String,
+    title: String,
+    subtitle: String,
+    badgeText: String? = null,
+    badgeColor: Color = Color(0xFFFFEDD5),
+    badgeTextColor: Color = Color(0xFFC2410C),
+    content: @Composable () -> Unit
+) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(14.dp),
+        color = Color.White,
+        shadowElevation = 1.dp
+    ) {
+        Column(Modifier.padding(13.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(Modifier.size(22.dp).clip(CircleShape).background(VozNavy), contentAlignment = Alignment.Center) {
+                    Text(number, color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                }
+                Spacer(Modifier.width(8.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(title, color = VozNavy, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    Text(subtitle, color = VozMuted, fontSize = 9.sp)
+                }
+                if (badgeText != null) {
+                    Surface(
+                        shape = RoundedCornerShape(50),
+                        color = badgeColor
+                    ) {
+                        Text(
+                            text = badgeText,
+                            modifier = Modifier.padding(horizontal = 9.dp, vertical = 4.dp),
+                            color = badgeTextColor,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            }
+            content()
         }
     }
 }
@@ -469,32 +581,10 @@ private fun requestReportLocation(context: Context, onLocation: (Location) -> Un
         } catch (_: SecurityException) {}
     }
     Handler(Looper.getMainLooper()).postDelayed({
-        if (!delivered) try { manager.removeUpdates(listener) } catch (_: SecurityException) {}
-    }, 12_000L)
-}
-
-@Composable
-private fun Section(number: String, title: String, badge: String?, content: @Composable ColumnScope.() -> Unit) {
-    Column(
-        Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(Color.White).padding(10.dp),
-        verticalArrangement = Arrangement.spacedBy(7.dp)
-    ) {
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Box(Modifier.size(20.dp).clip(CircleShape).background(VozNavy), contentAlignment = Alignment.Center) {
-                Text(number, color = Color.White, fontSize = 9.sp, fontWeight = FontWeight.Bold)
-            }
-            Spacer(Modifier.width(7.dp))
-            Text(title, Modifier.weight(1f), color = VozNavy, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-            if (badge != null) {
-                Text(
-                    badge,
-                    Modifier.background(if (badge.contains("GPS")) Color(0xFFFFE4D8) else Color(0xFFDDF8EF), RoundedCornerShape(30.dp)).padding(horizontal = 6.dp, vertical = 3.dp),
-                    color = if (badge.contains("GPS")) Color(0xFFE56722) else VozGreen,
-                    fontSize = 9.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            }
+        if (!delivered) {
+            delivered = true
+            try { manager.removeUpdates(listener) } catch (_: SecurityException) {}
+            cached?.let(onLocation)
         }
-        content()
-    }
+    }, 4000L)
 }

@@ -106,6 +106,34 @@ fun ReportsMap(name: String, profilePhoto: String? = null, onSignOut: () -> Unit
     var showNotifications by rememberSaveable { mutableStateOf(false) }
     var showPoints by rememberSaveable { mutableStateOf(false) }
     var mapViewInstance by remember { mutableStateOf<MapView?>(null) }
+    var currentUserLocation by remember { mutableStateOf<GeoPoint?>(null) }
+
+    DisposableEffect(Unit) {
+        val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as? android.location.LocationManager
+        val listener = android.location.LocationListener { location ->
+            currentUserLocation = GeoPoint(location.latitude, location.longitude)
+        }
+        try {
+            locationManager?.requestLocationUpdates(
+                android.location.LocationManager.GPS_PROVIDER,
+                2000L,
+                2f,
+                listener
+            )
+            locationManager?.requestLocationUpdates(
+                android.location.LocationManager.NETWORK_PROVIDER,
+                2000L,
+                2f,
+                listener
+            )
+        } catch (_: SecurityException) {}
+
+        onDispose {
+            try {
+                locationManager?.removeUpdates(listener)
+            } catch (_: SecurityException) {}
+        }
+    }
 
     Box(modifier = Modifier.fillMaxSize().background(VozBackground)) {
         AndroidView(
@@ -156,8 +184,30 @@ fun ReportsMap(name: String, profilePhoto: String? = null, onSignOut: () -> Unit
                 }
             },
             update = { mapView ->
+                val currentDistance = distance
+                val currentKind = selectedKind
+                val myLoc = currentUserLocation ?: (mapView.overlays.firstOrNull { it is MyLocationNewOverlay } as? MyLocationNewOverlay)?.myLocation
                 mapView.overlays.removeAll { it is Marker }
-                reports.filter { selectedKind == "TODOS" || it.kind.name == selectedKind }.forEach { report ->
+                val maxMeters = when (currentDistance) {
+                    "500 m" -> 500.0
+                    "1.5 km" -> 1500.0
+                    "3 km" -> 3000.0
+                    "5 km" -> 5000.0
+                    else -> Double.MAX_VALUE
+                }
+
+                reports.filter { report ->
+                    val matchesKind = currentKind == "TODOS" || report.kind.name == currentKind
+                    if (!matchesKind) return@filter false
+
+                    if (myLoc != null && maxMeters < Double.MAX_VALUE) {
+                        val reportPoint = GeoPoint(report.latitude, report.longitude)
+                        val distanceMeters = myLoc.distanceToAsDouble(reportPoint)
+                        distanceMeters <= maxMeters
+                    } else {
+                        true
+                    }
+                }.forEach { report ->
                     val (iconRes, badgeColor) = when {
                         report.category.contains("alumbrado", true) -> com.vozbarrial.R.drawable.ic_pin_alumbrado to android.graphics.Color.parseColor("#ca8a04")
                         report.category.contains("emergencia", true) -> com.vozbarrial.R.drawable.ic_pin_emergencias to android.graphics.Color.parseColor("#dc2626")
@@ -173,7 +223,7 @@ fun ReportsMap(name: String, profilePhoto: String? = null, onSignOut: () -> Unit
                         snippet = report.description
                         setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
 
-                        val size = 96
+                        val size = 64
                         val bitmap = android.graphics.Bitmap.createBitmap(size, size, android.graphics.Bitmap.Config.ARGB_8888)
                         val canvas = android.graphics.Canvas(bitmap)
 
@@ -186,14 +236,14 @@ fun ReportsMap(name: String, profilePhoto: String? = null, onSignOut: () -> Unit
                         val borderPaint = android.graphics.Paint().apply {
                             color = android.graphics.Color.WHITE
                             style = android.graphics.Paint.Style.STROKE
-                            strokeWidth = 4f
+                            strokeWidth = 3f
                             isAntiAlias = true
                         }
                         canvas.drawCircle(size / 2f, size / 2f, size / 2f - 4f, borderPaint)
 
                         val drawable = androidx.core.content.ContextCompat.getDrawable(mapView.context, iconRes)
                         if (drawable != null) {
-                            val iconSize = 48
+                            val iconSize = 34
                             val left = (size - iconSize) / 2
                             val top = (size - iconSize) / 2
                             drawable.setBounds(left, top, left + iconSize, top + iconSize)
@@ -241,11 +291,11 @@ fun ReportsMap(name: String, profilePhoto: String? = null, onSignOut: () -> Unit
                         Row(Modifier.padding(horizontal = 10.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
                             Icon(Icons.Default.LocationOn, null, tint = VozNavy, modifier = Modifier.size(14.dp))
                             Spacer(Modifier.width(4.dp))
-                            Text("Distancia ($distance)⌄", fontSize = 10.sp, color = VozNavy, fontWeight = FontWeight.Medium)
+                            Text("Distancia ($distance)", fontSize = 10.sp, color = VozNavy, fontWeight = FontWeight.Medium)
                         }
                     }
                     DropdownMenu(expanded = distanceMenu, onDismissRequest = { distanceMenu = false }) {
-                        listOf("500 m", "1.5 km", "3 km", "5 km").forEach { option ->
+                        listOf("500 m", "1.5 km", "3 km", "5 km", "Todos").forEach { option ->
                             DropdownMenuItem(
                                 text = { Text(option) },
                                 onClick = { distance = option; distanceMenu = false },

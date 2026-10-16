@@ -4,11 +4,10 @@ import android.content.Context
 import android.net.Uri
 import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.ViewModel
-import com.google.firebase.firestore.FirebaseFirestore
+import androidx.lifecycle.viewModelScope
 import com.vozbarrial.data.repository.ReportsRepository
 import com.vozbarrial.domain.model.Reporte
 import com.vozbarrial.domain.model.Usuario
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.util.Locale
@@ -34,7 +33,7 @@ class ReportsViewModel : ViewModel() {
         category: String,
         latitude: Double,
         longitude: Double,
-        photo: Uri,
+        photos: List<Uri>,
         profile: Usuario?,
         context: Context,
         onComplete: (Boolean, String?) -> Unit,
@@ -42,6 +41,7 @@ class ReportsViewModel : ViewModel() {
         if (profile == null) return onComplete(false, "Inicia sesión para publicar un reporte.")
 
         val reportId = UUID.randomUUID().toString()
+
         val report = Reporte(
             id = reportId,
             title = title.trim(),
@@ -56,20 +56,24 @@ class ReportsViewModel : ViewModel() {
             timestamp = System.currentTimeMillis(),
         )
 
-        // 1. Publish immediately so user returns to map instantly (0 wait time)
-        repository.publish(report) { result ->
-            onComplete(result.isSuccess, result.exceptionOrNull()?.localizedMessage)
+        if (!reports.any { it.id == reportId }) {
+            reports.add(0, report)
         }
 
-        // 2. Upload image to Cloudinary in background thread
-        CoroutineScope(Dispatchers.IO).launch {
-            val imageUrl = repository.uploadToCloudinary(context, photo)
-            if (!imageUrl.isNullOrBlank()) {
-                FirebaseFirestore.getInstance()
-                    .collection("reportes")
-                    .document(reportId)
-                    .update("imageUrl", imageUrl)
+        onComplete(true, null)
+
+        viewModelScope.launch(Dispatchers.IO) {
+            val uploadedUrls = mutableListOf<String>()
+            for (photoUri in photos) {
+                val url = repository.uploadToCloudinary(context, photoUri)
+                if (!url.isNullOrBlank()) {
+                    uploadedUrls.add(url)
+                }
             }
+            val combinedImages = if (uploadedUrls.isNotEmpty()) uploadedUrls.joinToString(",") else null
+            val finalReport = if (combinedImages != null) report.copy(imageUrl = combinedImages) else report
+
+            repository.publish(finalReport) { _ -> }
         }
     }
 
