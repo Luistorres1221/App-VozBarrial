@@ -396,7 +396,7 @@ private fun ReportDetailScreen(
                     Spacer(Modifier.width(12.dp))
                     Column(modifier = Modifier.weight(1f)) {
                         Text(authorName, color = VozNavy, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                        Text("Guardián (1,450 pts)", color = VozGreen, fontSize = 11.sp, fontWeight = FontWeight.Medium)
+                        Text("Guardián esta quemado", color = VozGreen, fontSize = 11.sp, fontWeight = FontWeight.Medium)
                         Spacer(Modifier.height(2.dp))
                         Text("Publicado $formattedDate", color = VozMuted, fontSize = 10.sp)
                     }
@@ -420,7 +420,6 @@ private fun ReportDetailScreen(
 
                     Spacer(Modifier.height(12.dp))
 
-                    // Input box
                     OutlinedTextField(
                         value = uiState.newContributionText,
                         onValueChange = onContributionChange,
