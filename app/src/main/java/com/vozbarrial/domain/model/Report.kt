@@ -9,6 +9,7 @@ data class Report(
     val authorEmail: String = "",
     val authorUid: String = "",
     val authorName: String = "",
+    val authorNivel: String = Nivel.NOVATO.value,
     val imageUrl: String? = null,
     val latitude: Double = 0.0,
     val longitude: Double = 0.0,

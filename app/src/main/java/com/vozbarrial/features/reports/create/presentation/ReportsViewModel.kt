@@ -51,6 +51,7 @@ class ReportsViewModel : ViewModel() {
             authorEmail = profile.email,
             authorUid = profile.uid,
             authorName = profile.name.ifBlank { profile.email.substringBefore("@") },
+            authorNivel = profile.nivel,
             imageUrl = null,
             latitude = latitude,
             longitude = longitude,

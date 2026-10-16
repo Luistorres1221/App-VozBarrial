@@ -396,12 +396,12 @@ private fun ReportDetailScreen(
                     Spacer(Modifier.width(12.dp))
                     Column(modifier = Modifier.weight(1f)) {
                         Text(authorName, color = VozNavy, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                        Text("Guardián esta quemado", color = VozGreen, fontSize = 11.sp, fontWeight = FontWeight.Medium)
+                        Text(com.vozbarrial.domain.model.Nivel.fromValue(report.authorNivel).displayName, color = VozGreen, fontSize = 11.sp, fontWeight = FontWeight.Medium)
                         Spacer(Modifier.height(2.dp))
                         Text("Publicado $formattedDate", color = VozMuted, fontSize = 10.sp)
                     }
                     Surface(shape = RoundedCornerShape(50), color = Color(0xFFEAF1F8)) {
-                        Text("Autor del Reporte", modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp), color = VozNavy, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                        Text("Autor", modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp), color = VozNavy, fontSize = 10.sp, fontWeight = FontWeight.Bold)
                     }
                 }
             }

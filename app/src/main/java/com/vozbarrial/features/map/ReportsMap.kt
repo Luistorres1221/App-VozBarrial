@@ -62,10 +62,11 @@ private data class CommunityReport(
     val longitude: Double,
     val authorUid: String = "",
     val authorEmail: String = "",
+    val authorNivel: String = com.vozbarrial.domain.model.Nivel.NOVATO.value,
 )
 
 @Composable
-fun ReportsMap(name: String, profilePhoto: String? = null, onSignOut: () -> Unit, onNavigate: (String) -> Unit = {}, monedas: Int = 0, communityReports: List<Report> = emptyList()) {
+fun ReportsMap(name: String, profilePhoto: String? = null, onSignOut: () -> Unit, onNavigate: (String) -> Unit = {}, monedas: Int = 0, nivel: String = "novato", communityReports: List<Report> = emptyList()) {
     val context = LocalContext.current
     remember {
         Configuration.getInstance().load(context, context.getSharedPreferences("osm_prefs", Context.MODE_PRIVATE))
@@ -74,7 +75,7 @@ fun ReportsMap(name: String, profilePhoto: String? = null, onSignOut: () -> Unit
 
     val reports = remember(communityReports) {
         communityReports.map { report ->
-            CommunityReport(report.id, report.title, report.description, report.place, report.category, report.imageUrl, report.timestamp, report.status, report.latitude, report.longitude, report.authorUid, report.authorEmail)
+            CommunityReport(report.id, report.title, report.description, report.place, report.category, report.imageUrl, report.timestamp, report.status, report.latitude, report.longitude, report.authorUid, report.authorEmail, report.authorNivel)
         }
     }
 
@@ -298,6 +299,7 @@ fun ReportsMap(name: String, profilePhoto: String? = null, onSignOut: () -> Unit
                 profilePhoto = profilePhoto,
                 reportCount = distanceFilteredReports.size,
                 monedas = monedas,
+                nivel = nivel,
                 onPoints = { showPoints = true },
                 onNotifications = { onNavigate("activity") },
                 onSignOut = onSignOut,
@@ -483,6 +485,7 @@ private fun MapHeader(
     profilePhoto: String? = null,
     reportCount: Int,
     monedas: Int,
+    nivel: String,
     onPoints: () -> Unit,
     onNotifications: () -> Unit,
     onSignOut: () -> Unit,
@@ -509,7 +512,7 @@ private fun MapHeader(
         }
         Column(modifier = Modifier.weight(1f).clickable(onClick = onProfile)) {
             Text("¡Hola, ${name.substringBefore('%').substringBefore(' ')}!", color = VozNavy, fontWeight = FontWeight.Bold, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Text("Nivel 3 · Guardián", color = VozGreen, fontSize = 9.sp, fontWeight = FontWeight.Medium)
+            Text(com.vozbarrial.domain.model.Nivel.fromValue(nivel).displayName, color = VozGreen, fontSize = 11.sp, fontWeight = FontWeight.Medium)
         }
         Surface(
             modifier = Modifier.clickable(onClick = onPoints),

@@ -36,6 +36,7 @@ fun AppNavGraph() {
     var equippedFrame by rememberSaveable { mutableStateOf("Clásico Cívico") }
     var signedInPoints by rememberSaveable { mutableIntStateOf(1450) }
     var signedInMonedas by rememberSaveable { mutableIntStateOf(0) }
+    var signedInNivel by rememberSaveable { mutableStateOf("novato") }
     var ownedFramesText by rememberSaveable { mutableStateOf("Clásico Cívico|Guardián Dorado|Eco Barrio Verde|Escudo Ciudadano") }
     val ownedFrames = ownedFramesText.split("|").filter { it.isNotBlank() }.toSet()
 
@@ -62,6 +63,7 @@ fun AppNavGraph() {
                         equippedFrame = usuario.equippedFrame
                         signedInPoints = usuario.points
                         signedInMonedas = usuario.monedas
+                        signedInNivel = usuario.nivel
                         ownedFramesText = usuario.ownedFrames.joinToString("|")
                     }
                 }
@@ -105,6 +107,7 @@ fun AppNavGraph() {
                         equippedFrame = usuario.equippedFrame
                         signedInPoints = usuario.points
                         signedInMonedas = usuario.monedas
+                        signedInNivel = usuario.nivel
                         ownedFramesText = usuario.ownedFrames.joinToString("|")
                     } else {
                         signedInName = email.substringBefore("@")
@@ -151,6 +154,7 @@ fun AppNavGraph() {
             name = signedInName,
             profilePhoto = signedInPhoto,
             monedas = signedInMonedas,
+            nivel = signedInNivel,
             communityReports = reportsViewModel.reports,
             onSignOut = {
                 com.google.firebase.auth.FirebaseAuth.getInstance().signOut()
