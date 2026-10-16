@@ -23,7 +23,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Campaign
-import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Security
@@ -66,9 +65,6 @@ private val reportCategories = listOf(
     ReportCategory("Alumbrado y Servicios", "Postes sin luz, fugas de agua o gas", "💡"),
 )
 
-/**
- * Punto de entrada Stateful para crear un reporte.
- */
 @Composable
 fun ReportCreateRoute(
     name: String,
@@ -120,9 +116,6 @@ fun ReportCreateRoute(
     )
 }
 
-/**
- * Vista UI Stateless pura para crear reportes.
- */
 @Composable
 fun ReportCreateContent(
     uiState: ReportCreateUiState,
@@ -148,7 +141,7 @@ fun ReportCreateContent(
             IconButton(onClick = onBack) {
                 Icon(Icons.Default.ArrowBack, "Volver", tint = VozNavy)
             }
-            Text("▧ VozBarrial", Modifier.weight(1f), color = VozNavy, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+            Text("VozBarrial", Modifier.weight(1f), color = VozNavy, fontWeight = FontWeight.Bold, fontSize = 13.sp)
             Text("Reportar Incidente", color = VozNavy, fontWeight = FontWeight.Bold, fontSize = 10.sp)
         }
 
