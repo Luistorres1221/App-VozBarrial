@@ -7,6 +7,7 @@ import coil.compose.AsyncImage
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -33,6 +34,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -49,19 +51,12 @@ import com.vozbarrial.ui.theme.*
 import com.vozbarrial.domain.model.Reporte
 import java.util.Locale
 
-private enum class ReportKind(val label: String, val color: Color) {
-    SECURITY("Seguridad", Color(0xFFE34652)),
-    ROAD("Vías y baches", Color(0xFFF08A28)),
-    COMMUNITY("Comunidad", Color(0xFF159F78)),
-}
-
 private data class CommunityReport(
     val id: String,
     val title: String,
     val description: String,
     val place: String,
     val category: String,
-    val kind: ReportKind,
     val latitude: Double,
     val longitude: Double,
 )
@@ -76,12 +71,7 @@ fun ReportsMap(name: String, profilePhoto: String? = null, onSignOut: () -> Unit
 
     val reports = remember(communityReports) {
         communityReports.map { report ->
-            val kind = when {
-                report.category.contains("seguridad", true) || report.category.contains("Emergencias", true) -> ReportKind.SECURITY
-                report.category.contains("vías", true) || report.category.contains("infraestructura", true) -> ReportKind.ROAD
-                else -> ReportKind.COMMUNITY
-            }
-            CommunityReport(report.id, report.title, report.description, report.place, report.category, kind, report.latitude, report.longitude)
+            CommunityReport(report.id, report.title, report.description, report.place, report.category, report.latitude, report.longitude)
         }
     }
 
@@ -98,7 +88,7 @@ fun ReportsMap(name: String, profilePhoto: String? = null, onSignOut: () -> Unit
         )
     }
 
-    var selectedKind by rememberSaveable { mutableStateOf("TODOS") }
+    var selectedCategory by rememberSaveable { mutableStateOf("TODOS") }
     var selectedReportId by rememberSaveable { mutableStateOf<String?>(null) }
     var radarActive by rememberSaveable { mutableStateOf(true) }
     var distance by rememberSaveable { mutableStateOf("1.5 km") }
@@ -132,6 +122,27 @@ fun ReportsMap(name: String, profilePhoto: String? = null, onSignOut: () -> Unit
             try {
                 locationManager?.removeUpdates(listener)
             } catch (_: SecurityException) {}
+        }
+    }
+
+    val myLoc = currentUserLocation ?: (mapViewInstance?.overlays?.firstOrNull { it is MyLocationNewOverlay } as? MyLocationNewOverlay)?.myLocation
+    val maxMeters = when (distance) {
+        "500 m" -> 500.0
+        "1.5 km" -> 1500.0
+        "3 km" -> 3000.0
+        "5 km" -> 5000.0
+        else -> Double.MAX_VALUE
+    }
+
+    val distanceFilteredReports = remember(reports, distance, currentUserLocation, myLoc) {
+        reports.filter { report ->
+            if (myLoc != null && maxMeters < Double.MAX_VALUE) {
+                val reportPoint = GeoPoint(report.latitude, report.longitude)
+                val distanceMeters = myLoc.distanceToAsDouble(reportPoint)
+                distanceMeters <= maxMeters
+            } else {
+                true
+            }
         }
     }
 
@@ -184,34 +195,24 @@ fun ReportsMap(name: String, profilePhoto: String? = null, onSignOut: () -> Unit
                 }
             },
             update = { mapView ->
-                val currentDistance = distance
-                val currentKind = selectedKind
-                val myLoc = currentUserLocation ?: (mapView.overlays.firstOrNull { it is MyLocationNewOverlay } as? MyLocationNewOverlay)?.myLocation
+                val currentCategory = selectedCategory
                 mapView.overlays.removeAll { it is Marker }
-                val maxMeters = when (currentDistance) {
-                    "500 m" -> 500.0
-                    "1.5 km" -> 1500.0
-                    "3 km" -> 3000.0
-                    "5 km" -> 5000.0
-                    else -> Double.MAX_VALUE
-                }
 
-                reports.filter { report ->
-                    val matchesKind = currentKind == "TODOS" || report.kind.name == currentKind
-                    if (!matchesKind) return@filter false
-
-                    if (myLoc != null && maxMeters < Double.MAX_VALUE) {
-                        val reportPoint = GeoPoint(report.latitude, report.longitude)
-                        val distanceMeters = myLoc.distanceToAsDouble(reportPoint)
-                        distanceMeters <= maxMeters
-                    } else {
-                        true
+                distanceFilteredReports.filter { report ->
+                    currentCategory == "TODOS" || when (currentCategory) {
+                        "Seguridad" -> report.category.contains("seguridad", true)
+                        "Emergencias Médicas" -> report.category.contains("emergencia", true)
+                        "Infraestructura y Vías" -> report.category.contains("infraestructura", true) || report.category.contains("vías", true)
+                        "Mascotas y Animales" -> report.category.contains("mascota", true) || report.category.contains("animal", true)
+                        "Comunidad y Entorno" -> report.category.contains("comunidad", true) || report.category.contains("entorno", true)
+                        "Alumbrado y Servicios" -> report.category.contains("alumbrado", true) || report.category.contains("servicio", true)
+                        else -> report.category.equals(currentCategory, ignoreCase = true)
                     }
                 }.forEach { report ->
                     val (iconRes, badgeColor) = when {
-                        report.category.contains("alumbrado", true) -> com.vozbarrial.R.drawable.ic_pin_alumbrado to android.graphics.Color.parseColor("#ca8a04")
+                        report.category.contains("alumbrado", true) || report.category.contains("servicios", true) -> com.vozbarrial.R.drawable.ic_pin_alumbrado to android.graphics.Color.parseColor("#ca8a04")
                         report.category.contains("emergencia", true) -> com.vozbarrial.R.drawable.ic_pin_emergencias to android.graphics.Color.parseColor("#dc2626")
-                        report.category.contains("infraestructura", true) -> com.vozbarrial.R.drawable.ic_pin_infraestructura to android.graphics.Color.parseColor("#ea580c")
+                        report.category.contains("infraestructura", true) || report.category.contains("vías", true) -> com.vozbarrial.R.drawable.ic_pin_infraestructura to android.graphics.Color.parseColor("#ea580c")
                         report.category.contains("mascota", true) -> com.vozbarrial.R.drawable.ic_pin_mascotas to android.graphics.Color.parseColor("#9333ea")
                         report.category.contains("seguridad", true) -> com.vozbarrial.R.drawable.ic_pin_security to android.graphics.Color.parseColor("#2563eb")
                         else -> com.vozbarrial.R.drawable.ic_pin_comunidad to android.graphics.Color.parseColor("#16a34a")
@@ -271,7 +272,7 @@ fun ReportsMap(name: String, profilePhoto: String? = null, onSignOut: () -> Unit
             MapHeader(
                 name = name,
                 profilePhoto = profilePhoto,
-                reportCount = reports.size,
+                reportCount = distanceFilteredReports.size,
                 points = points,
                 onPoints = { onNavigate("badges") },
                 onNotifications = { onNavigate("activity") },
@@ -323,12 +324,66 @@ fun ReportsMap(name: String, profilePhoto: String? = null, onSignOut: () -> Unit
                 .fillMaxWidth()
                 .align(Alignment.TopCenter)
                 .padding(top = 118.dp, start = 9.dp, end = 9.dp)
+                .horizontalScroll(rememberScrollState())
                 .zIndex(2f),
             horizontalArrangement = Arrangement.spacedBy(5.dp),
         ) {
-            MapFilter("Todos", reports.size, selectedKind == "TODOS", Modifier.weight(1f)) { selectedKind = "TODOS" }
-            MapFilter("Seguridad", reports.count { it.kind == ReportKind.SECURITY }, selectedKind == "SECURITY", Modifier.weight(1f)) { selectedKind = "SECURITY" }
-            MapFilter("Vías & Baches", reports.count { it.kind == ReportKind.ROAD }, selectedKind == "ROAD", Modifier.weight(1.2f)) { selectedKind = "ROAD" }
+            MapFilter(
+                text = "Todos",
+                count = distanceFilteredReports.size,
+                selected = selectedCategory == "TODOS",
+                iconVector = Icons.Default.Layers,
+                iconTint = Color(0xFF3188E8),
+                onClick = { selectedCategory = "TODOS" }
+            )
+            MapFilter(
+                text = "Seguridad",
+                count = distanceFilteredReports.count { it.category.contains("seguridad", true) },
+                selected = selectedCategory == "Seguridad",
+                iconRes = com.vozbarrial.R.drawable.ic_pin_security,
+                iconTint = Color(0xFF2563EB),
+                onClick = { selectedCategory = if (selectedCategory == "Seguridad") "TODOS" else "Seguridad" }
+            )
+            MapFilter(
+                text = "Emergencias",
+                count = distanceFilteredReports.count { it.category.contains("emergencia", true) },
+                selected = selectedCategory == "Emergencias Médicas",
+                iconRes = com.vozbarrial.R.drawable.ic_pin_emergencias,
+                iconTint = Color(0xFFDC2626),
+                onClick = { selectedCategory = if (selectedCategory == "Emergencias Médicas") "TODOS" else "Emergencias Médicas" }
+            )
+            MapFilter(
+                text = "Infraestructura",
+                count = distanceFilteredReports.count { it.category.contains("infraestructura", true) || it.category.contains("vías", true) },
+                selected = selectedCategory == "Infraestructura y Vías",
+                iconRes = com.vozbarrial.R.drawable.ic_pin_infraestructura,
+                iconTint = Color(0xFFEA580C),
+                onClick = { selectedCategory = if (selectedCategory == "Infraestructura y Vías") "TODOS" else "Infraestructura y Vías" }
+            )
+            MapFilter(
+                text = "Mascotas",
+                count = distanceFilteredReports.count { it.category.contains("mascota", true) || it.category.contains("animal", true) },
+                selected = selectedCategory == "Mascotas y Animales",
+                iconRes = com.vozbarrial.R.drawable.ic_pin_mascotas,
+                iconTint = Color(0xFF9333EA),
+                onClick = { selectedCategory = if (selectedCategory == "Mascotas y Animales") "TODOS" else "Mascotas y Animales" }
+            )
+            MapFilter(
+                text = "Comunidad",
+                count = distanceFilteredReports.count { it.category.contains("comunidad", true) || it.category.contains("entorno", true) },
+                selected = selectedCategory == "Comunidad y Entorno",
+                iconRes = com.vozbarrial.R.drawable.ic_pin_comunidad,
+                iconTint = Color(0xFF16A34A),
+                onClick = { selectedCategory = if (selectedCategory == "Comunidad y Entorno") "TODOS" else "Comunidad y Entorno" }
+            )
+            MapFilter(
+                text = "Alumbrado",
+                count = distanceFilteredReports.count { it.category.contains("alumbrado", true) || it.category.contains("servicio", true) },
+                selected = selectedCategory == "Alumbrado y Servicios",
+                iconRes = com.vozbarrial.R.drawable.ic_pin_alumbrado,
+                iconTint = Color(0xFFCA8A04),
+                onClick = { selectedCategory = if (selectedCategory == "Alumbrado y Servicios") "TODOS" else "Alumbrado y Servicios" }
+            )
         }
 
         Column(
@@ -338,7 +393,7 @@ fun ReportsMap(name: String, profilePhoto: String? = null, onSignOut: () -> Unit
                 .zIndex(2f),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            MapControl(Icons.Default.Layers, "Capas", onClick = { selectedKind = "TODOS" })
+            MapControl(Icons.Default.Layers, "Capas", onClick = { selectedCategory = "TODOS" })
             MapControl(Icons.Default.MyLocation, "Mi ubicación", onClick = {
                 val myLoc = (mapViewInstance?.overlays?.firstOrNull { it is MyLocationNewOverlay } as? MyLocationNewOverlay)?.myLocation
                 if (myLoc != null) {
@@ -389,7 +444,7 @@ fun ReportsMap(name: String, profilePhoto: String? = null, onSignOut: () -> Unit
         AlertDialog(
             onDismissRequest = { showNotifications = false },
             title = { Text("Notificaciones", color = VozNavy) },
-            text = { Text("Tienes ${reports.count { it.kind == ReportKind.SECURITY }} alerta de seguridad en tu zona y ${reports.size} reportes comunitarios activos.") },
+            text = { Text("Tienes ${distanceFilteredReports.count { it.category.contains("seguridad", true) }} alerta de seguridad en tu zona y ${distanceFilteredReports.size} reportes comunitarios activos.") },
             confirmButton = { TextButton(onClick = { showNotifications = false }) { Text("Listo") } },
         )
     }
@@ -454,21 +509,43 @@ private fun MapHeader(
 }
 
 @Composable
-private fun MapFilter(text: String, count: Int, selected: Boolean, modifier: Modifier, onClick: () -> Unit) {
+private fun MapFilter(
+    text: String,
+    count: Int,
+    selected: Boolean,
+    iconRes: Int? = null,
+    iconVector: ImageVector? = null,
+    iconTint: Color = VozNavy,
+    onClick: () -> Unit
+) {
     Surface(
-        modifier = modifier.height(32.dp).clickable(onClick = onClick),
+        modifier = Modifier.height(32.dp).clickable(onClick = onClick),
         shape = RoundedCornerShape(50),
         color = if (selected) Color(0xFF08223A) else Color.White,
         shadowElevation = if (selected) 3.dp else 1.dp,
     ) {
         Row(
-            modifier = Modifier.fillMaxSize().padding(horizontal = 7.dp),
+            modifier = Modifier.fillMaxHeight().padding(horizontal = 10.dp),
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            if (text == "Seguridad") Icon(Icons.Default.Warning, null, tint = if (selected) Color(0xFFFF6B66) else Color(0xFFE34C51), modifier = Modifier.size(12.dp))
-            if (text == "Vías & Baches") Icon(Icons.Default.Build, null, tint = if (selected) Color(0xFFFFBD67) else Color(0xFFF19A42), modifier = Modifier.size(12.dp))
-            if (text != "Todos") Spacer(Modifier.width(3.dp))
+            val resolvedTint = if (selected) Color.White else iconTint
+            if (iconRes != null) {
+                Icon(
+                    painter = painterResource(id = iconRes),
+                    contentDescription = text,
+                    tint = resolvedTint,
+                    modifier = Modifier.size(14.dp)
+                )
+            } else if (iconVector != null) {
+                Icon(
+                    imageVector = iconVector,
+                    contentDescription = text,
+                    tint = resolvedTint,
+                    modifier = Modifier.size(14.dp)
+                )
+            }
+            if (text != "Todos") Spacer(Modifier.width(4.dp))
             Text("$text ($count)", color = if (selected) Color.White else VozNavy, fontSize = 9.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
         }
     }
@@ -492,18 +569,30 @@ private fun MapControl(icon: ImageVector, label: String, onClick: () -> Unit) {
 private fun SelectedReportCard(report: CommunityReport, modifier: Modifier, onClose: () -> Unit) {
     Surface(modifier = modifier.fillMaxWidth(), shape = RoundedCornerShape(15.dp), color = Color.White, shadowElevation = 9.dp) {
         Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-            Box(Modifier.size(38.dp).clip(CircleShape).background(report.kind.color.copy(alpha = .12f)), contentAlignment = Alignment.Center) {
+            val badgeColor = when {
+                report.category.contains("alumbrado", true) || report.category.contains("servicios", true) -> Color(0xFFCA8A04)
+                report.category.contains("emergencia", true) -> Color(0xFFDC2626)
+                report.category.contains("infraestructura", true) || report.category.contains("vías", true) -> Color(0xFFEA580C)
+                report.category.contains("mascota", true) -> Color(0xFF9333EA)
+                report.category.contains("seguridad", true) -> Color(0xFF2563EB)
+                else -> Color(0xFF16A34A)
+            }
+            Box(Modifier.size(38.dp).clip(CircleShape).background(badgeColor.copy(alpha = .12f)), contentAlignment = Alignment.Center) {
                 Icon(
-                    when (report.kind) { ReportKind.SECURITY -> Icons.Default.Warning; ReportKind.ROAD -> Icons.Default.Build; ReportKind.COMMUNITY -> Icons.Default.Groups },
+                    when {
+                        report.category.contains("seguridad", true) -> Icons.Default.Warning
+                        report.category.contains("infraestructura", true) || report.category.contains("vías", true) || report.category.contains("alumbrado", true) -> Icons.Default.Build
+                        else -> Icons.Default.Groups
+                    },
                     null,
-                    tint = report.kind.color,
+                    tint = badgeColor,
                     modifier = Modifier.size(19.dp),
                 )
             }
             Spacer(Modifier.width(9.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(report.title, color = VozNavy, fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                Text("${report.kind.label} · ${report.place}", color = VozMuted, fontSize = 9.sp)
+                Text("${report.category} · ${report.place}", color = VozMuted, fontSize = 9.sp)
                 Text(report.description, color = VozNavy, fontSize = 10.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
             }
             IconButton(onClick = onClose, modifier = Modifier.size(30.dp)) {
