@@ -5,7 +5,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
 import com.google.firebase.storage.FirebaseStorage
-import com.vozbarrial.domain.model.Usuario
+import com.vozbarrial.domain.model.Usurious
 import com.vozbarrial.domain.repository.ProfileGateway
 
 class ProfileRepository(
@@ -15,11 +15,11 @@ class ProfileRepository(
 ) : ProfileGateway {
     override fun hasActiveSession(): Boolean = auth.currentUser != null
 
-    override fun loadProfile(onResult: (Result<Usuario?>) -> Unit) {
+    override fun loadProfile(onResult: (Result<Usurious?>) -> Unit) {
         val user = auth.currentUser ?: return onResult(Result.success(null))
         firestore.collection(USERS).document(user.uid).get()
             .addOnSuccessListener { snapshot ->
-                onResult(Result.success(snapshot.toObject(Usuario::class.java) ?: Usuario(
+                onResult(Result.success(snapshot.toObject(Usurious::class.java) ?: Usurious(
                     uid = user.uid,
                     email = user.email.orEmpty(),
                     name = user.email.orEmpty().substringBefore('@'),
@@ -28,13 +28,13 @@ class ProfileRepository(
             .addOnFailureListener { onResult(Result.failure(it)) }
     }
 
-    override fun updateProfile(name: String, phone: String, photoUrl: String?, onResult: (Result<Usuario>) -> Unit) {
+    override fun updateProfile(name: String, phone: String, photoUrl: String?, onResult: (Result<Usurious>) -> Unit) {
         val user = auth.currentUser ?: return onResult(Result.failure(IllegalStateException("No hay una sesión activa.")))
         fun save(url: String?) {
             val updated = mapOf("name" to name.trim(), "phone" to phone.trim(), "photoUrl" to url)
             firestore.collection(USERS).document(user.uid).set(updated, SetOptions.merge())
                 .addOnSuccessListener {
-                    onResult(Result.success(Usuario(uid = user.uid, name = name.trim(), email = user.email.orEmpty(), phone = phone.trim(), photoUrl = url)))
+                    onResult(Result.success(Usurious(uid = user.uid, name = name.trim(), email = user.email.orEmpty(), phone = phone.trim(), photoUrl = url)))
                 }
                 .addOnFailureListener { onResult(Result.failure(it)) }
         }

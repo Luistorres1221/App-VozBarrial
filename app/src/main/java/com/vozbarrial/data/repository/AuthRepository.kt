@@ -4,7 +4,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthException
 import com.google.firebase.FirebaseNetworkException
 import com.google.firebase.firestore.FirebaseFirestore
-import com.vozbarrial.domain.model.Usuario
+import com.vozbarrial.domain.model.Usurious
 import com.vozbarrial.core.result.AuthError
 import com.vozbarrial.core.result.AuthOperationResult
 import com.vozbarrial.domain.repository.AuthGateway
@@ -30,7 +30,7 @@ class AuthRepository(
                     onResult(Result.failure(IllegalStateException("Firebase no devolvió un usuario.")))
                     return@addOnSuccessListener
                 }
-                val profile = Usuario(uid = user.uid, name = name.trim(), email = email.trim(), phone = phone.trim())
+                val profile = Usurious(uid = user.uid, name = name.trim(), email = email.trim(), phone = phone.trim())
                 firestore.collection("usuarios").document(user.uid).set(profile)
                     .addOnSuccessListener { onResult(Result.success(user.uid)) }
                     .addOnFailureListener { error ->

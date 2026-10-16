@@ -1,6 +1,6 @@
 package com.vozbarrial.domain.model
 
-data class Usuario(
+data class Usurious(
     val uid: String = "",
     val name: String = "",
     val email: String = "",

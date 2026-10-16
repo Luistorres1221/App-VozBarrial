@@ -18,7 +18,7 @@ import com.vozbarrial.features.map.ReportsMap
 import com.vozbarrial.features.auth.welcome.ui.WelcomeRoute
 import com.vozbarrial.core.result.AuthOperationResult
 import com.vozbarrial.core.result.AuthError
-import com.vozbarrial.domain.model.Usuario
+import com.vozbarrial.domain.model.Usurious
 
 @Composable
 fun AppNavGraph() {
@@ -54,7 +54,7 @@ fun AppNavGraph() {
         com.google.firebase.auth.FirebaseAuth.getInstance().createUserWithEmailAndPassword(email, password)
             .addOnSuccessListener { authResult ->
                 val uid = authResult.user?.uid ?: ""
-                val usuario = Usuario(uid = uid, name = name, email = email, phone = phone)
+                val usuario = Usurious(uid = uid, name = name, email = email, phone = phone)
                 com.google.firebase.firestore.FirebaseFirestore.getInstance().collection("usuarios").document(uid).set(usuario)
                 onResult(true, null)
             }
@@ -69,7 +69,7 @@ fun AppNavGraph() {
                 .document(currentUser.uid)
                 .get()
                 .addOnSuccessListener { document ->
-                    val usuario = document.toObject(Usuario::class.java)
+                    val usuario = document.toObject(Usurious::class.java)
                     if (usuario != null) {
                         signedInName = usuario.name.ifBlank { email.substringBefore("@") }
                         signedInEmail = email
@@ -193,7 +193,7 @@ fun AppNavGraph() {
             name = signedInName,
             onBack = { navigationViewModel.navigate("map") },
             onPublish = { title, description, category, latitude, longitude, photoUris, done ->
-                val mockProfile = Usuario(name = signedInName, email = signedInEmail)
+                val mockProfile = Usurious(name = signedInName, email = signedInEmail)
                 reportsViewModel.createReport(title, description, category, latitude, longitude, photoUris, mockProfile, context) { published, message ->
                     done(published, message)
                     if (published) {

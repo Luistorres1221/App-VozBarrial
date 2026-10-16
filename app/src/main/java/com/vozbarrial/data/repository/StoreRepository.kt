@@ -3,7 +3,7 @@ package com.vozbarrial.data.repository
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Transaction
-import com.vozbarrial.domain.model.Usuario
+import com.vozbarrial.domain.model.Usurious
 import com.vozbarrial.domain.repository.StoreGateway
 
 class StoreRepository(
@@ -17,7 +17,7 @@ class StoreRepository(
             .addOnFailureListener { onResult(Result.failure(it)) }
     }
 
-    override fun purchase(frame: String, cost: Int, onResult: (Result<Usuario>) -> Unit) {
+    override fun purchase(frame: String, cost: Int, onResult: (Result<Usurious>) -> Unit) {
         val uid = auth.currentUser?.uid ?: return onResult(Result.failure(IllegalStateException("No hay una sesión activa.")))
         val expectedCost = when {
             frame.startsWith("Guardi") -> 800
@@ -33,7 +33,7 @@ class StoreRepository(
         val ref = firestore.collection(USERS).document(uid)
         firestore.runTransaction { transaction: Transaction ->
             val snapshot = transaction.get(ref)
-            val profile = snapshot.toObject(Usuario::class.java) ?: throw IllegalStateException("No se encontró el perfil ciudadano.")
+            val profile = snapshot.toObject(Usurious::class.java) ?: throw IllegalStateException("No se encontró el perfil ciudadano.")
             require(cost > 0) { "El costo del artículo no es válido." }
             require(frame !in profile.ownedFrames) { "Este marco ya fue adquirido." }
             require(profile.points >= cost) { "No tienes puntos suficientes." }

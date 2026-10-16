@@ -5,28 +5,22 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import coil.compose.AsyncImage
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -51,7 +45,7 @@ import org.osmdroid.views.overlay.Marker
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider
 import com.vozbarrial.ui.theme.*
-import com.vozbarrial.domain.model.Reporte
+import com.vozbarrial.domain.model.Report
 import java.util.Locale
 
 private data class CommunityReport(
@@ -67,7 +61,7 @@ private data class CommunityReport(
 )
 
 @Composable
-fun ReportsMap(name: String, profilePhoto: String? = null, onSignOut: () -> Unit, onNavigate: (String) -> Unit = {}, points: Int = 1450, communityReports: List<Reporte> = emptyList()) {
+fun ReportsMap(name: String, profilePhoto: String? = null, onSignOut: () -> Unit, onNavigate: (String) -> Unit = {}, points: Int = 1450, communityReports: List<Report> = emptyList()) {
     val context = LocalContext.current
     remember {
         Configuration.getInstance().load(context, context.getSharedPreferences("osm_prefs", Context.MODE_PRIVATE))
@@ -657,8 +651,9 @@ private fun SelectedReportCard(
                 }
                 if (!report.imageUrl.isNullOrBlank()) {
                     Spacer(Modifier.width(12.dp))
+                    val firstImage = report.imageUrl.split(",").firstOrNull()?.trim()
                     AsyncImage(
-                        model = report.imageUrl,
+                        model = firstImage,
                         contentDescription = "Foto del reporte",
                         modifier = Modifier
                             .size(64.dp)

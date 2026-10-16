@@ -30,7 +30,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
-import com.vozbarrial.domain.model.Reporte
+import com.vozbarrial.domain.model.Report
 import com.vozbarrial.features.reports.detail.presentation.ReportDetailViewModel
 import com.vozbarrial.ui.theme.*
 import java.text.SimpleDateFormat
@@ -39,7 +39,7 @@ import java.util.Locale
 
 @Composable
 fun ReportDetailRoute(
-    report: Reporte,
+    report: Report,
     userName: String,
     userPhoto: String?,
     onBack: () -> Unit,
@@ -212,7 +212,11 @@ private fun ReportDetailScreen(
             }
 
             // Image Gallery Card
-            if (!report.imageUrl.isNullOrBlank()) {
+            val imageUrls = remember(report.imageUrl) {
+                report.imageUrl?.split(",")?.map { it.trim() }?.filter { it.isNotBlank() } ?: emptyList()
+            }
+
+            if (imageUrls.isNotEmpty()) {
                 Surface(
                     shape = RoundedCornerShape(16.dp),
                     color = Color.White,
@@ -220,12 +224,18 @@ private fun ReportDetailScreen(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Box(modifier = Modifier.fillMaxWidth().height(240.dp)) {
-                        AsyncImage(
-                            model = report.imageUrl,
-                            contentDescription = "Evidencia",
-                            modifier = Modifier.fillMaxSize(),
-                            contentScale = ContentScale.Crop
-                        )
+                        val pagerState = androidx.compose.foundation.pager.rememberPagerState(pageCount = { imageUrls.size })
+                        androidx.compose.foundation.pager.HorizontalPager(
+                            state = pagerState,
+                            modifier = Modifier.fillMaxSize()
+                        ) { page ->
+                            AsyncImage(
+                                model = imageUrls[page],
+                                contentDescription = "Evidencia ${page + 1}",
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = ContentScale.Crop
+                            )
+                        }
                         Surface(
                             shape = RoundedCornerShape(50),
                             color = Color.Black.copy(alpha = 0.6f),
@@ -233,7 +243,13 @@ private fun ReportDetailScreen(
                                 .align(Alignment.TopEnd)
                                 .padding(12.dp)
                         ) {
-                            Text("1 / 1 fotos", modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp), color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                            Text(
+                                text = "${pagerState.currentPage + 1} / ${imageUrls.size} fotos",
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                                color = Color.White,
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold
+                            )
                         }
                     }
                 }

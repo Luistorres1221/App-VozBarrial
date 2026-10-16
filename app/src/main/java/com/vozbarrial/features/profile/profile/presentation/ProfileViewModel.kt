@@ -1,7 +1,7 @@
 package com.vozbarrial.features.profile.profile.presentation
 
 import androidx.lifecycle.ViewModel
-import com.vozbarrial.domain.model.Reporte
+import com.vozbarrial.domain.model.Report
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -17,7 +17,7 @@ class ProfileViewModel : ViewModel() {
         name: String,
         profilePhoto: String?,
         points: Int,
-        reports: List<Reporte>,
+        reports: List<Report>,
         filters: List<String>
     ) {
         _uiState.update { currentState ->
@@ -57,7 +57,7 @@ class ProfileViewModel : ViewModel() {
         onDismissNameEditor()
     }
 
-    fun onOpenEditReport(report: Reporte) {
+    fun onOpenEditReport(report: Report) {
         _uiState.update {
             it.copy(
                 reportToEdit = report,
@@ -98,7 +98,7 @@ class ProfileViewModel : ViewModel() {
         }
     }
 
-    fun onOpenDeleteReport(report: Reporte) {
+    fun onOpenDeleteReport(report: Report) {
         _uiState.update { it.copy(reportToDelete = report) }
     }
 

@@ -8,7 +8,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.Query
 import com.vozbarrial.data.repository.ReportsRepository
-import com.vozbarrial.domain.model.Reporte
+import com.vozbarrial.domain.model.Report
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -25,7 +25,7 @@ class ReportDetailViewModel : ViewModel() {
 
     private var listenerRegistration: ListenerRegistration? = null
 
-    fun setReport(report: Reporte) {
+    fun setReport(report: Report) {
         _uiState.update { it.copy(report = report) }
         observeContributions(report.id)
     }

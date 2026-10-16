@@ -6,7 +6,7 @@ import android.net.Uri
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
-import com.vozbarrial.domain.model.Reporte
+import com.vozbarrial.domain.model.Report
 import com.vozbarrial.domain.repository.ReportsGateway
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -23,11 +23,11 @@ class ReportsRepository(
 ) : ReportsGateway {
     private var listener: ListenerRegistration? = null
 
-    override fun observeReports(onChange: (List<Reporte>) -> Unit) {
+    override fun observeReports(onChange: (List<Report>) -> Unit) {
         if (listener != null) return
         listener = firestore.collection(REPORTS).addSnapshotListener { snapshot, error ->
             if (error != null || snapshot == null) return@addSnapshotListener
-            onChange(snapshot.documents.mapNotNull { it.toObject(Reporte::class.java)?.copy(id = it.id) })
+            onChange(snapshot.documents.mapNotNull { it.toObject(Report::class.java)?.copy(id = it.id) })
         }
     }
 
@@ -99,7 +99,7 @@ class ReportsRepository(
         }
     }
 
-    override fun publish(report: Reporte, onResult: (Result<Unit>) -> Unit) {
+    override fun publish(report: Report, onResult: (Result<Unit>) -> Unit) {
         firestore.collection(REPORTS).document(report.id).set(report)
             .addOnSuccessListener { onResult(Result.success(Unit)) }
             .addOnFailureListener { onResult(Result.failure(it)) }

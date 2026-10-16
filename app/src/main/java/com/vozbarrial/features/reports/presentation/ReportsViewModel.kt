@@ -6,8 +6,8 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.vozbarrial.data.repository.ReportsRepository
-import com.vozbarrial.domain.model.Reporte
-import com.vozbarrial.domain.model.Usuario
+import com.vozbarrial.domain.model.Report
+import com.vozbarrial.domain.model.Usurious
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.util.Locale
@@ -15,7 +15,7 @@ import java.util.UUID
 
 class ReportsViewModel : ViewModel() {
     private val repository = ReportsRepository()
-    val reports = mutableStateListOf<Reporte>()
+    val reports = mutableStateListOf<Report>()
 
     init {
         repository.observeReports { list ->
@@ -34,7 +34,7 @@ class ReportsViewModel : ViewModel() {
         latitude: Double,
         longitude: Double,
         photos: List<Uri>,
-        profile: Usuario?,
+        profile: Usurious?,
         context: Context,
         onComplete: (Boolean, String?) -> Unit,
     ) {
@@ -42,7 +42,7 @@ class ReportsViewModel : ViewModel() {
 
         val reportId = UUID.randomUUID().toString()
 
-        val report = Reporte(
+        val report = Report(
             id = reportId,
             title = title.trim(),
             description = description.trim(),

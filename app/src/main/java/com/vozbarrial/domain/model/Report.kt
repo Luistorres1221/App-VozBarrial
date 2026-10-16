@@ -1,6 +1,6 @@
 package com.vozbarrial.domain.model
 
-data class Reporte(
+data class Report(
     val id: String = "",
     val title: String = "",
     val description: String = "",

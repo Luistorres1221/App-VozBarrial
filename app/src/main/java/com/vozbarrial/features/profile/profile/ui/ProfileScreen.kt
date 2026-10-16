@@ -27,7 +27,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.vozbarrial.R
-import com.vozbarrial.domain.model.Reporte
+import com.vozbarrial.domain.model.Report
 import com.vozbarrial.features.profile.profile.presentation.ProfileUiState
 import com.vozbarrial.features.profile.profile.presentation.ProfileViewModel
 import com.vozbarrial.ui.theme.*
@@ -43,7 +43,7 @@ fun CommunityRoute(
     onDeleteAccount: () -> Unit,
     profilePhoto: String?,
     points: Int,
-    reports: List<Reporte>,
+    reports: List<Report>,
     onEditReport: (String, String, String, (Boolean, String?) -> Unit) -> Unit,
     onDeleteReport: (String, (Boolean, String?) -> Unit) -> Unit,
     viewModel: ProfileViewModel = viewModel()
@@ -100,12 +100,12 @@ fun CommunityContent(
     onNameDraftChange: (String) -> Unit,
     onDismissNameEditor: () -> Unit,
     onSaveName: () -> Unit,
-    onOpenEditReport: (Reporte) -> Unit,
+    onOpenEditReport: (Report) -> Unit,
     onEditTitleChange: (String) -> Unit,
     onEditDescriptionChange: (String) -> Unit,
     onDismissEditReport: () -> Unit,
     onConfirmEditReport: () -> Unit,
-    onOpenDeleteReport: (Reporte) -> Unit,
+    onOpenDeleteReport: (Report) -> Unit,
     onDismissDeleteReport: () -> Unit,
     onConfirmDeleteReport: () -> Unit,
     onShowDeleteAccountDialog: (Boolean) -> Unit,
@@ -330,7 +330,7 @@ private fun SummaryTile(label: String, value: String, modifier: Modifier = Modif
 }
 
 @Composable
-private fun ReportCard(report: Reporte, onEdit: (() -> Unit)? = null, onDelete: (() -> Unit)? = null) {
+private fun ReportCard(report: Report, onEdit: (() -> Unit)? = null, onDelete: (() -> Unit)? = null) {
     Card(colors = CardDefaults.cardColors(containerColor = Color.White)) {
         Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {

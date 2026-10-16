@@ -1,6 +1,6 @@
 package com.vozbarrial.features.reports.detail.presentation
 
-import com.vozbarrial.domain.model.Reporte
+import com.vozbarrial.domain.model.Report
 
 data class Contribution(
     val id: String = "",
@@ -14,7 +14,7 @@ data class Contribution(
 )
 
 data class ReportDetailUiState(
-    val report: Reporte = Reporte(),
+    val report: Report = Report(),
     val contributions: List<Contribution> = emptyList(),
     val newContributionText: String = "",
     val contributionPhotoUris: List<String> = emptyList(),
