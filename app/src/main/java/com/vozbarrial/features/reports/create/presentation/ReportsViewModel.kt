@@ -97,8 +97,7 @@ class ReportsViewModel : ViewModel() {
 
             val firestore = com.google.firebase.firestore.FirebaseFirestore.getInstance()
             val updates = mapOf(
-                "monedas" to com.google.firebase.firestore.FieldValue.increment(50),
-                "points" to com.google.firebase.firestore.FieldValue.increment(50)
+                "monedas" to com.google.firebase.firestore.FieldValue.increment(50)
             )
             if (profile.uid.isNotBlank()) {
                 firestore.collection("usuarios").document(profile.uid).update(updates)

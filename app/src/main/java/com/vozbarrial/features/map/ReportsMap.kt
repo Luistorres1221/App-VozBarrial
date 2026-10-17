@@ -68,7 +68,7 @@ private data class CommunityReport(
 )
 
 @Composable
-fun ReportsMap(name: String, profilePhoto: String? = null, onSignOut: () -> Unit, onNavigate: (String) -> Unit = {}, monedas: Int = 0, points: Int = 0, nivel: String = "novato", communityReports: List<Report> = emptyList(), onEarnRewards: (Int, Int) -> Unit = { _, _ -> }) {
+fun ReportsMap(name: String, profilePhoto: String? = null, onSignOut: () -> Unit, onNavigate: (String) -> Unit = {}, monedas: Int = 0, nivel: String = "novato", communityReports: List<Report> = emptyList(), onEarnRewards: (Int) -> Unit = {}) {
     val context = LocalContext.current
     remember {
         Configuration.getInstance().load(context, context.getSharedPreferences("osm_prefs", Context.MODE_PRIVATE))
@@ -663,7 +663,7 @@ private fun SelectedReportCard(
     modifier: Modifier,
     onClose: () -> Unit,
     onViewReport: () -> Unit,
-    onEarnRewards: (Int, Int) -> Unit
+    onEarnRewards: (Int) -> Unit
 ) {
     val uid = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid
     var isSupported by remember(report.id, uid) { mutableStateOf(false) }
@@ -823,14 +823,13 @@ private fun SelectedReportCard(
 
                             val firestore = com.google.firebase.firestore.FirebaseFirestore.getInstance()
                             val rewardUpdates = mapOf(
-                                "monedas" to com.google.firebase.firestore.FieldValue.increment(200),
-                                "points" to com.google.firebase.firestore.FieldValue.increment(100)
+                                "monedas" to com.google.firebase.firestore.FieldValue.increment(200)
                             )
                             if (report.authorUid.isNotBlank()) {
                                 firestore.collection("usuarios").document(report.authorUid)
                                     .update(rewardUpdates)
                                 if (report.authorUid == uid) {
-                                    onEarnRewards(200, 100)
+                                    onEarnRewards(200)
                                 }
                             } else if (report.authorEmail.isNotBlank()) {
                                 firestore.collection("usuarios").whereEqualTo("email", report.authorEmail).get()
