@@ -3,7 +3,6 @@ package com.vozbarrial.features.auth.register.presentation
 data class RegisterUiState(
     val name: String = "",
     val email: String = "",
-    val phone: String = "",
     val password: String = "",
     val confirmation: String = "",
     val passwordVisible: Boolean = false,

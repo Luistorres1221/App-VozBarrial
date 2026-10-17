@@ -53,8 +53,6 @@
     <string name="personal_data_header">Datos Personales</string>
     <string name="full_name_label">NOMBRE COMPLETO</string>
     <string name="full_name_placeholder">Nombre y apellidos</string>
-    <string name="phone_label">TELÉFONO DE ALERTAS CIUDADANAS</string>
-    <string name="phone_placeholder">+57 312 456 7890</string>
     <string name="save_changes">Guardar Cambios</string>
     <string name="cancel_changes">Cancelar Cambios</string>
 

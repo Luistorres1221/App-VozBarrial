@@ -13,7 +13,6 @@ class RegisterViewModel : ViewModel() {
 
     fun updateName(value: String) = update { copy(name = value, error = null) }
     fun updateEmail(value: String) = update { copy(email = value, error = null) }
-    fun updatePhone(value: String) = update { copy(phone = value, error = null) }
     fun updatePassword(value: String) = update { copy(password = value, error = null) }
     fun updateConfirmation(value: String) = update { copy(confirmation = value, error = null) }
     fun togglePasswordVisibility() = update { copy(passwordVisible = !passwordVisible) }
@@ -22,7 +21,7 @@ class RegisterViewModel : ViewModel() {
     fun showTerms(value: Boolean) = update { copy(showTerms = value) }
 
     fun submit(
-        createAccount: (String, String, String, String, (Boolean, String?) -> Unit) -> Unit,
+        createAccount: (String, String, String, (Boolean, String?) -> Unit) -> Unit,
         onSuccess: () -> Unit,
     ) {
         val form = _uiState.value
@@ -42,7 +41,7 @@ class RegisterViewModel : ViewModel() {
         }
         if (form.loading) return
         _uiState.value = form.copy(error = null, loading = true)
-        createAccount(form.name.trim(), cleanEmail, form.phone.trim(), form.password) { success, error ->
+        createAccount(form.name.trim(), cleanEmail, form.password) { success, error ->
             _uiState.value = _uiState.value.copy(
                 loading = false,
                 error = if (success) null else error ?: "Ya existe una cuenta con ese correo o hubo un error.",

@@ -67,7 +67,7 @@ fun RegisterRoute(
     onBack: () -> Unit,
     onLoginClick: () -> Unit,
     onAccountCreated: () -> Unit,
-    onCreateAccount: (name: String, email: String, phone: String, password: String, (Boolean, String?) -> Unit) -> Unit,
+    onCreateAccount: (name: String, email: String, password: String, (Boolean, String?) -> Unit) -> Unit,
     registerViewModel: RegisterViewModel = viewModel()
 ) {
     val uiState by registerViewModel.uiState.collectAsStateWithLifecycle()
@@ -78,7 +78,6 @@ fun RegisterRoute(
         onLoginClick = { registerViewModel.reset(); onLoginClick() },
         onNameChange = registerViewModel::updateName,
         onEmailChange = registerViewModel::updateEmail,
-        onPhoneChange = registerViewModel::updatePhone,
         onPasswordChange = registerViewModel::updatePassword,
         onConfirmationChange = registerViewModel::updateConfirmation,
         onTogglePasswordVisibility = registerViewModel::togglePasswordVisibility,
@@ -99,7 +98,6 @@ fun RegisterContent(
     onLoginClick: () -> Unit,
     onNameChange: (String) -> Unit,
     onEmailChange: (String) -> Unit,
-    onPhoneChange: (String) -> Unit,
     onPasswordChange: (String) -> Unit,
     onConfirmationChange: (String) -> Unit,
     onTogglePasswordVisibility: () -> Unit,

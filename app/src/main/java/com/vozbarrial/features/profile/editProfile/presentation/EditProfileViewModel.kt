@@ -11,12 +11,11 @@ class EditProfileViewModel : ViewModel() {
     private val _uiState = MutableStateFlow(EditProfileUiState())
     val uiState: StateFlow<EditProfileUiState> = _uiState.asStateFlow()
 
-    fun initialize(name: String, phone: String, photo: String?) {
+    fun initialize(name: String, photo: String?) {
         if (!_uiState.value.isInitialized) {
             _uiState.update {
                 it.copy(
                     name = name,
-                    phone = phone,
                     photoUri = photo,
                     isInitialized = true
                 )
@@ -26,11 +25,6 @@ class EditProfileViewModel : ViewModel() {
 
     fun updateName(value: String) {
         _uiState.update { it.copy(name = value, error = null) }
-    }
-
-    fun updatePhone(value: String, maxLength: Int = 18) {
-        val filtered = value.filter { ch -> ch.isDigit() || ch == '+' || ch == ' ' }.take(maxLength)
-        _uiState.update { it.copy(phone = filtered, error = null) }
     }
 
     fun setPhoto(value: String?) {
@@ -46,7 +40,7 @@ class EditProfileViewModel : ViewModel() {
     }
 
     fun save(
-        onSave: (String, String, String?) -> Unit,
+        onSave: (String, String?) -> Unit,
         invalidNameErrorMessage: String
     ) {
         val state = _uiState.value
@@ -57,6 +51,6 @@ class EditProfileViewModel : ViewModel() {
             return
         }
 
-        onSave(cleanName, state.phone.trim(), state.photoUri)
+        onSave(cleanName, state.photoUri)
     }
 }

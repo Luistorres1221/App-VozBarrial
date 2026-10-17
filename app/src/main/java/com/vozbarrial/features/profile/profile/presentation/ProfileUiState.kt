@@ -5,7 +5,6 @@ import com.vozbarrial.domain.model.Report
 data class ProfileUiState(
     val currentPage: String = "",
     val name: String = "",
-    val phone: String = "",
     val profilePhoto: String? = null,
     val points: Int = 0,
     val monedas: Int = 0,

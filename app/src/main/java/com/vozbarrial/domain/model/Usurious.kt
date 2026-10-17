@@ -4,7 +4,6 @@ data class Usurious(
     val uid: String = "",
     val name: String = "",
     val email: String = "",
-    val phone: String = "",
     val photoUrl: String? = null,
     val equippedFrame: String = FrameType.CLASICO_CIVICO.frameName,
     val points: Int = 0,

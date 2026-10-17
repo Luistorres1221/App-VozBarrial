@@ -31,7 +31,6 @@ fun AppNavGraph() {
 
     var signedInName by rememberSaveable { mutableStateOf("") }
     var signedInEmail by rememberSaveable { mutableStateOf("") }
-    var signedInPhone by rememberSaveable { mutableStateOf("") }
     var signedInPhoto by rememberSaveable { mutableStateOf<String?>(null) }
     var signedInUid by rememberSaveable { mutableStateOf("") }
     var equippedFrame by rememberSaveable { mutableStateOf("Clásico Cívico") }
@@ -61,7 +60,6 @@ fun AppNavGraph() {
                     if (usuario != null) {
                         signedInName = usuario.name.ifBlank { currentUser.email?.substringBefore("@").orEmpty() }
                         signedInEmail = currentUser.email.orEmpty()
-                        signedInPhone = usuario.phone
                         signedInPhoto = usuario.photoUrl
                         equippedFrame = usuario.equippedFrame
                         signedInPoints = usuario.points
@@ -83,11 +81,11 @@ fun AppNavGraph() {
             .addOnFailureListener { onResult(false) }
     }
 
-    fun createAccount(name: String, email: String, phone: String, password: String, onResult: (Boolean, String?) -> Unit) {
+    fun createAccount(name: String, email: String, password: String, onResult: (Boolean, String?) -> Unit) {
         com.google.firebase.auth.FirebaseAuth.getInstance().createUserWithEmailAndPassword(email, password)
             .addOnSuccessListener { authResult ->
                 val uid = authResult.user?.uid ?: ""
-                val usuario = Usurious(uid = uid, name = name, email = email, phone = phone)
+                val usuario = Usurious(uid = uid, name = name, email = email)
                 com.google.firebase.firestore.FirebaseFirestore.getInstance().collection("usuarios").document(uid).set(usuario)
                 onResult(true, null)
             }
@@ -106,7 +104,6 @@ fun AppNavGraph() {
                     if (usuario != null) {
                         signedInName = usuario.name.ifBlank { email.substringBefore("@") }
                         signedInEmail = email
-                        signedInPhone = usuario.phone
                         signedInPhoto = usuario.photoUrl
                         equippedFrame = usuario.equippedFrame
                         signedInPoints = usuario.points
@@ -243,12 +240,10 @@ fun AppNavGraph() {
         )
         "editProfile" -> EditProfileRoute(
             name = signedInName,
-            phone = signedInPhone,
             photo = signedInPhoto,
             onCancel = { navigationViewModel.showDashboardPage("profile") },
-            onSave = { newName: String, newPhone: String, newPhoto: String? ->
+            onSave = { newName: String, newPhoto: String? ->
                 signedInName = newName
-                signedInPhone = newPhone
                 signedInPhoto = newPhoto
                 navigationViewModel.showDashboardPage("profile")
             }

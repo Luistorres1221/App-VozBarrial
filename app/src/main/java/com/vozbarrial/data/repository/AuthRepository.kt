@@ -22,7 +22,7 @@ class AuthRepository(
             .addOnFailureListener { onResult(Result.failure(it)) }
     }
 
-    override fun createAccount(name: String, email: String, phone: String, password: String, onResult: (Result<String>) -> Unit) {
+    override fun createAccount(name: String, email: String, password: String, onResult: (Result<String>) -> Unit) {
         firebaseAuth.createUserWithEmailAndPassword(email.trim(), password)
             .addOnSuccessListener { result ->
                 val user = result.user
@@ -30,7 +30,7 @@ class AuthRepository(
                     onResult(Result.failure(IllegalStateException("Firebase no devolvió un usuario.")))
                     return@addOnSuccessListener
                 }
-                val profile = Usurious(uid = user.uid, name = name.trim(), email = email.trim(), phone = phone.trim())
+                val profile = Usurious(uid = user.uid, name = name.trim(), email = email.trim())
                 firestore.collection("usuarios").document(user.uid).set(profile)
                     .addOnSuccessListener { onResult(Result.success(user.uid)) }
                     .addOnFailureListener { error ->

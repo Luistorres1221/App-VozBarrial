@@ -27,7 +27,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -69,10 +68,9 @@ import com.vozbarrial.ui.theme.VozNavy
 @Composable
 fun EditProfileRoute(
     name: String,
-    phone: String,
     photo: String?,
     onCancel: () -> Unit,
-    onSave: (String, String, String?) -> Unit,
+    onSave: (String, String?) -> Unit,
     viewModel: EditProfileViewModel = viewModel()
 ) {
     val context = LocalContext.current
@@ -82,8 +80,8 @@ fun EditProfileRoute(
     val invalidFormatError = stringResource(R.string.error_invalid_image_format)
     val imageSizeError = stringResource(R.string.error_image_size_exceeded)
 
-    LaunchedEffect(name, phone, photo) {
-        viewModel.initialize(name, phone, photo)
+    LaunchedEffect(name, photo) {
+        viewModel.initialize(name, photo)
     }
 
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
@@ -114,7 +112,6 @@ fun EditProfileRoute(
         onCancel = onCancel,
         onSave = { viewModel.save(onSave, invalidNameError) },
         onNameChange = viewModel::updateName,
-        onPhoneChange = viewModel::updatePhone,
         onPickPhotoClick = { picker.launch(arrayOf("image/jpeg", "image/png")) },
         onDismissError = viewModel::clearError
     )
@@ -129,7 +126,6 @@ fun EditProfileContent(
     onCancel: () -> Unit,
     onSave: () -> Unit,
     onNameChange: (String) -> Unit,
-    onPhoneChange: (String) -> Unit,
     onPickPhotoClick: () -> Unit,
     onDismissError: () -> Unit,
 ) {
@@ -293,29 +289,6 @@ fun EditProfileContent(
                         placeholder = { Text(stringResource(R.string.full_name_placeholder), fontSize = 12.sp) },
                         leadingIcon = {
                             Icon(Icons.Default.Person, contentDescription = null, tint = Color(0xFF68788B))
-                        },
-                        shape = RoundedCornerShape(12.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedContainerColor = VozBlueSurface,
-                            unfocusedContainerColor = VozBlueSurface,
-                            focusedBorderColor = Color.Transparent,
-                            unfocusedBorderColor = Color.Transparent
-                        )
-                    )
-                    Text(
-                        text = stringResource(R.string.phone_label),
-                        color = VozNavy,
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                    OutlinedTextField(
-                        value = uiState.phone,
-                        onValueChange = onPhoneChange,
-                        modifier = Modifier.fillMaxWidth().height(54.dp),
-                        singleLine = true,
-                        placeholder = { Text(stringResource(R.string.phone_placeholder), fontSize = 12.sp) },
-                        leadingIcon = {
-                            Icon(Icons.Default.Phone, contentDescription = null, tint = Color(0xFF68788B))
                         },
                         shape = RoundedCornerShape(12.dp),
                         colors = OutlinedTextFieldDefaults.colors(

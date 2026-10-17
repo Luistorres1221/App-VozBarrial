@@ -28,13 +28,13 @@ class ProfileRepository(
             .addOnFailureListener { onResult(Result.failure(it)) }
     }
 
-    override fun updateProfile(name: String, phone: String, photoUrl: String?, onResult: (Result<Usurious>) -> Unit) {
+    override fun updateProfile(name: String, photoUrl: String?, onResult: (Result<Usurious>) -> Unit) {
         val user = auth.currentUser ?: return onResult(Result.failure(IllegalStateException("No hay una sesión activa.")))
         fun save(url: String?) {
-            val updated = mapOf("name" to name.trim(), "phone" to phone.trim(), "photoUrl" to url)
+            val updated = mapOf("name" to name.trim(), "photoUrl" to url)
             firestore.collection(USERS).document(user.uid).set(updated, SetOptions.merge())
                 .addOnSuccessListener {
-                    onResult(Result.success(Usurious(uid = user.uid, name = name.trim(), email = user.email.orEmpty(), phone = phone.trim(), photoUrl = url)))
+                    onResult(Result.success(Usurious(uid = user.uid, name = name.trim(), email = user.email.orEmpty(), photoUrl = url)))
                 }
                 .addOnFailureListener { onResult(Result.failure(it)) }
         }
