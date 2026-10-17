@@ -36,8 +36,8 @@ class StoreRepository(
             val profile = snapshot.toObject(Usurious::class.java) ?: throw IllegalStateException("No se encontró el perfil ciudadano.")
             require(cost > 0) { "El costo del artículo no es válido." }
             require(frame !in profile.ownedFrames) { "Este marco ya fue adquirido." }
-            require(profile.points >= cost) { "No tienes puntos suficientes." }
-            profile.copy(points = profile.points - cost, ownedFrames = profile.ownedFrames + frame, equippedFrame = frame)
+            require(profile.monedas >= cost) { "No tienes monedas suficientes." }
+            profile.copy(monedas = profile.monedas - cost, ownedFrames = profile.ownedFrames + frame, equippedFrame = frame)
                 .also { transaction.set(ref, it) }
         }.addOnSuccessListener { onResult(Result.success(it)) }
             .addOnFailureListener { onResult(Result.failure(it)) }

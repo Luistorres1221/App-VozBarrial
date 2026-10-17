@@ -6,6 +6,7 @@ import androidx.core.content.ContextCompat
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import coil.compose.AsyncImage
+import com.vozbarrial.ui.components.UserAvatarWithFrame
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -68,7 +69,7 @@ private data class CommunityReport(
 )
 
 @Composable
-fun ReportsMap(name: String, profilePhoto: String? = null, onSignOut: () -> Unit, onNavigate: (String) -> Unit = {}, monedas: Int = 0, nivel: String = "novato", communityReports: List<Report> = emptyList(), onEarnRewards: (Int) -> Unit = {}) {
+fun ReportsMap(name: String, profilePhoto: String? = null, equippedFrame: String = "", onSignOut: () -> Unit, onNavigate: (String) -> Unit = {}, monedas: Int = 0, nivel: String = "novato", communityReports: List<Report> = emptyList(), onEarnRewards: (Int) -> Unit = {}) {
     val context = LocalContext.current
     remember {
         Configuration.getInstance().load(context, context.getSharedPreferences("osm_prefs", Context.MODE_PRIVATE))
@@ -330,6 +331,7 @@ fun ReportsMap(name: String, profilePhoto: String? = null, onSignOut: () -> Unit
             MapHeader(
                 name = name,
                 profilePhoto = profilePhoto,
+                equippedFrame = equippedFrame,
                 reportCount = distanceFilteredReports.size,
                 monedas = monedas,
                 nivel = nivel,
@@ -535,6 +537,7 @@ fun ReportsMap(name: String, profilePhoto: String? = null, onSignOut: () -> Unit
 private fun MapHeader(
     name: String,
     profilePhoto: String? = null,
+    equippedFrame: String = "",
     reportCount: Int,
     monedas: Int,
     nivel: String,
@@ -548,20 +551,13 @@ private fun MapHeader(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Surface(shape = CircleShape, color = Color(0xFFDCEBE7), modifier = Modifier.size(35.dp).clickable(onClick = onProfile)) {
-            Box(contentAlignment = Alignment.Center) {
-                if (!profilePhoto.isNullOrBlank()) {
-                    AsyncImage(
-                        model = profilePhoto,
-                        contentDescription = "Foto de perfil",
-                        modifier = Modifier.fillMaxSize().clip(CircleShape),
-                        contentScale = androidx.compose.ui.layout.ContentScale.Crop
-                    )
-                } else {
-                    Text(name.take(1).uppercase(), color = VozGreen, fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                }
-            }
-        }
+        UserAvatarWithFrame(
+            profilePhoto = profilePhoto,
+            name = name,
+            frameName = equippedFrame,
+            size = 35.dp,
+            modifier = Modifier.clickable(onClick = onProfile)
+        )
         Column(modifier = Modifier.weight(1f).clickable(onClick = onProfile)) {
             Text("¡Hola, ${name.substringBefore('%').substringBefore(' ')}!", color = VozNavy, fontWeight = FontWeight.Bold, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Text(com.vozbarrial.domain.model.Nivel.fromValue(nivel).displayName, color = VozGreen, fontSize = 11.sp, fontWeight = FontWeight.Medium)

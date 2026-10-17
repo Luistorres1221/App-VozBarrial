@@ -25,6 +25,7 @@ fun AppNavGraph() {
     val context = LocalContext.current
     val reportsViewModel: ReportsViewModel = viewModel()
     val navigationViewModel: NavigationViewModel = viewModel()
+    val storeViewModel: com.vozbarrial.features.store.StoreViewModel = viewModel()
 
     androidx.activity.compose.BackHandler(enabled = navigationViewModel.canGoBack) {
         navigationViewModel.goBack()
@@ -174,6 +175,7 @@ fun AppNavGraph() {
         "map" -> ReportsMap(
             name = signedInName,
             profilePhoto = signedInPhoto,
+            equippedFrame = equippedFrame,
             monedas = signedInMonedas,
             nivel = signedInNivel,
             communityReports = reportsViewModel.reports,
@@ -195,6 +197,7 @@ fun AppNavGraph() {
         "dashboard" -> CommunityRoute(
             page = dashboardPage,
             name = signedInName,
+            equippedFrame = equippedFrame,
             onBack = { navigationViewModel.goBack() },
             onNavigate = { page ->
                 when (page) {
@@ -224,27 +227,40 @@ fun AppNavGraph() {
         "frames" -> FramesPage(
             name = signedInName,
             activeFrame = equippedFrame,
-            points = signedInPoints,
+            monedas = signedInMonedas,
+            profilePhoto = signedInPhoto,
             owned = ownedFrames,
             onBack = { navigationViewModel.goBack() },
             onEquip = { selected ->
-                equippedFrame = selected
+                storeViewModel.equip(selected) { success, _ ->
+                    if (success) {
+                        equippedFrame = selected
+                    }
+                }
             },
             onOpenStore = { navigationViewModel.navigate("store") }
         )
         "store" -> StorePage(
             name = signedInName,
-            points = signedInPoints,
+            monedas = signedInMonedas,
+            profilePhoto = signedInPhoto,
             owned = ownedFrames,
             activeFrame = equippedFrame,
             onBack = { navigationViewModel.goBack() },
-            onPurchase = { selected, cost, _, result ->
-                signedInPoints -= cost
-                result(true, null)
+            onPurchase = { selected, cost, result ->
+                storeViewModel.purchase(selected, cost, { updatedUser ->
+                    signedInMonedas = updatedUser.monedas
+                    equippedFrame = updatedUser.equippedFrame
+                    ownedFramesText = updatedUser.ownedFrames.joinToString("|")
+                }, result)
             },
             onEquip = { selected, result ->
-                equippedFrame = selected
-                result(true, null)
+                storeViewModel.equip(selected) { success, error ->
+                    if (success) {
+                        equippedFrame = selected
+                    }
+                    result(success, error)
+                }
             }
         )
         "createReport" -> ReportCreateRoute(

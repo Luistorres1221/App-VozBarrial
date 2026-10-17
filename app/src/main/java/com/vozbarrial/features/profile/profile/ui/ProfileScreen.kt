@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
+import com.vozbarrial.ui.components.UserAvatarWithFrame
 import com.vozbarrial.R
 import com.vozbarrial.domain.model.Nivel
 import com.vozbarrial.domain.model.Report
@@ -41,6 +42,7 @@ import com.vozbarrial.ui.theme.*
 fun CommunityRoute(
     page: String,
     name: String,
+    equippedFrame: String = "",
     onBack: () -> Unit,
     onNavigate: (String) -> Unit,
     onSignOut: () -> Unit,
@@ -69,6 +71,7 @@ fun CommunityRoute(
 
     CommunityContent(
         uiState = uiState,
+        equippedFrame = equippedFrame,
         onBack = onBack,
         onNavigate = onNavigate,
         onSignOut = onSignOut,
@@ -98,6 +101,7 @@ fun CommunityRoute(
 @Composable
 fun CommunityContent(
     uiState: ProfileUiState,
+    equippedFrame: String = "",
     onBack: () -> Unit,
     onNavigate: (String) -> Unit,
     onSignOut: () -> Unit,
@@ -164,26 +168,12 @@ fun CommunityContent(
                         Card(colors = CardDefaults.cardColors(containerColor = Color.White), shape = RoundedCornerShape(16.dp)) {
                             Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Box(
-                                        modifier = Modifier.size(64.dp).clip(CircleShape).background(Color(0xFFDCEBE7)),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        if (!uiState.profilePhoto.isNullOrBlank()) {
-                                            AsyncImage(
-                                                model = uiState.profilePhoto,
-                                                contentDescription = stringResource(R.string.profile_photo),
-                                                modifier = Modifier.fillMaxSize(),
-                                                contentScale = androidx.compose.ui.layout.ContentScale.Crop
-                                            )
-                                        } else {
-                                            Text(
-                                                text = uiState.name.take(1).uppercase().ifBlank { "U" },
-                                                color = VozGreen,
-                                                fontWeight = FontWeight.Bold,
-                                                fontSize = 24.sp
-                                            )
-                                        }
-                                    }
+                                    UserAvatarWithFrame(
+                                        profilePhoto = uiState.profilePhoto,
+                                        name = uiState.name,
+                                        frameName = equippedFrame,
+                                        size = 64.dp
+                                    )
                                     Spacer(Modifier.width(14.dp))
                                     Column(Modifier.weight(1f)) {
                                         Text(
