@@ -6,6 +6,7 @@ import android.content.pm.PackageManager
 import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
+import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
@@ -34,6 +35,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -76,7 +79,15 @@ fun ReportCreateRoute(
     val context = LocalContext.current
 
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
-        viewModel.addPhoto(uri?.toString())
+        if (uri != null) {
+            try {
+                context.contentResolver.takePersistableUriPermission(
+                    uri,
+                    android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION
+                )
+            } catch (_: SecurityException) {}
+            viewModel.addPhoto(uri.toString())
+        }
     }
 
     val locationPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { grants ->
@@ -275,18 +286,34 @@ fun ReportCreateContent(
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         uiState.photoUris.forEachIndexed { index, uriStr ->
+                            val bitmap = remember<androidx.compose.ui.graphics.ImageBitmap?>(uriStr) {
+                                runCatching {
+                                    context.contentResolver.openInputStream(Uri.parse(uriStr))
+                                        ?.use(BitmapFactory::decodeStream)
+                                        ?.asImageBitmap()
+                                }.getOrNull()
+                            }
                             Box(
                                 modifier = Modifier
                                     .size(90.dp)
                                     .clip(RoundedCornerShape(10.dp))
                                     .background(Color(0xFFE2EEDD))
                             ) {
-                                AsyncImage(
-                                    model = uriStr,
-                                    contentDescription = "Evidencia ${index + 1}",
-                                    modifier = Modifier.fillMaxSize(),
-                                    contentScale = androidx.compose.ui.layout.ContentScale.Crop
-                                )
+                                if (bitmap != null) {
+                                    androidx.compose.foundation.Image(
+                                        bitmap = bitmap,
+                                        contentDescription = "Evidencia ${index + 1}",
+                                        modifier = Modifier.fillMaxSize(),
+                                        contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                                    )
+                                } else {
+                                    AsyncImage(
+                                        model = uriStr,
+                                        contentDescription = "Evidencia ${index + 1}",
+                                        modifier = Modifier.fillMaxSize(),
+                                        contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                                    )
+                                }
                                 IconButton(
                                     onClick = { onRemovePhoto(index) },
                                     modifier = Modifier

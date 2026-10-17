@@ -10,6 +10,7 @@ import com.vozbarrial.domain.model.Report
 import com.vozbarrial.domain.model.Usurious
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.Locale
 import java.util.UUID
 
@@ -66,19 +67,6 @@ class ReportsViewModel : ViewModel() {
         onComplete(true, null)
 
         viewModelScope.launch(Dispatchers.IO) {
-            val firestore = com.google.firebase.firestore.FirebaseFirestore.getInstance()
-            if (profile.uid.isNotBlank()) {
-                firestore.collection("usuarios").document(profile.uid)
-                    .update("monedas", com.google.firebase.firestore.FieldValue.increment(50))
-            } else if (profile.email.isNotBlank()) {
-                firestore.collection("usuarios").whereEqualTo("email", profile.email).get()
-                    .addOnSuccessListener { docs ->
-                        for (doc in docs) {
-                            doc.reference.update("monedas", com.google.firebase.firestore.FieldValue.increment(50))
-                        }
-                    }
-            }
-
             val uploadedUrls = mutableListOf<String>()
             for (photoUri in photos) {
                 val url = repository.uploadToCloudinary(context, photoUri)
@@ -87,9 +75,34 @@ class ReportsViewModel : ViewModel() {
                 }
             }
             val combinedImages = if (uploadedUrls.isNotEmpty()) uploadedUrls.joinToString(",") else null
-            val finalReport = if (combinedImages != null) report.copy(imageUrl = combinedImages) else report
+            val finalReport = report.copy(imageUrl = combinedImages)
+
+            withContext(Dispatchers.Main) {
+                val index = reports.indexOfFirst { it.id == reportId }
+                if (index != -1) {
+                    reports[index] = finalReport
+                } else {
+                    reports.add(0, finalReport)
+                }
+            }
 
             repository.publish(finalReport) { _ -> }
+
+            val firestore = com.google.firebase.firestore.FirebaseFirestore.getInstance()
+            val updates = mapOf(
+                "monedas" to com.google.firebase.firestore.FieldValue.increment(50),
+                "points" to com.google.firebase.firestore.FieldValue.increment(50)
+            )
+            if (profile.uid.isNotBlank()) {
+                firestore.collection("usuarios").document(profile.uid).update(updates)
+            } else if (profile.email.isNotBlank()) {
+                firestore.collection("usuarios").whereEqualTo("email", profile.email).get()
+                    .addOnSuccessListener { docs ->
+                        for (doc in docs) {
+                            doc.reference.update(updates)
+                        }
+                    }
+            }
         }
     }
 

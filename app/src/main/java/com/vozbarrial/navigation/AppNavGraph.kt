@@ -156,6 +156,7 @@ fun AppNavGraph() {
             name = signedInName,
             profilePhoto = signedInPhoto,
             monedas = signedInMonedas,
+            points = signedInPoints,
             nivel = signedInNivel,
             communityReports = reportsViewModel.reports,
             onSignOut = {
@@ -168,6 +169,10 @@ fun AppNavGraph() {
                 } else {
                     navigationViewModel.showDashboardPage(page)
                 }
+            },
+            onEarnRewards = { m, p ->
+                signedInMonedas += m
+                signedInPoints += p
             }
         )
         "dashboard" -> CommunityRoute(
@@ -229,7 +234,9 @@ fun AppNavGraph() {
             name = signedInName,
             onBack = { navigationViewModel.navigate("map") },
             onPublish = { title, description, category, latitude, longitude, photoUris, done ->
-                val mockProfile = Usurious(name = signedInName, email = signedInEmail)
+                val mockProfile = Usurious(name = signedInName, email = signedInEmail, uid = signedInUid)
+                signedInMonedas += 50
+                signedInPoints += 50
                 reportsViewModel.createReport(title, description, category, latitude, longitude, photoUris, mockProfile, context) { published, message ->
                     done(published, message)
                     if (published) {

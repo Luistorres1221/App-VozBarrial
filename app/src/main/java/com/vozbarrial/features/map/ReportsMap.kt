@@ -1,6 +1,8 @@
 package com.vozbarrial.features.map
 
 import android.content.Context
+import android.content.pm.PackageManager
+import androidx.core.content.ContextCompat
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import coil.compose.AsyncImage
@@ -66,30 +68,30 @@ private data class CommunityReport(
 )
 
 @Composable
-fun ReportsMap(name: String, profilePhoto: String? = null, onSignOut: () -> Unit, onNavigate: (String) -> Unit = {}, monedas: Int = 0, nivel: String = "novato", communityReports: List<Report> = emptyList()) {
+fun ReportsMap(name: String, profilePhoto: String? = null, onSignOut: () -> Unit, onNavigate: (String) -> Unit = {}, monedas: Int = 0, points: Int = 0, nivel: String = "novato", communityReports: List<Report> = emptyList(), onEarnRewards: (Int, Int) -> Unit = { _, _ -> }) {
     val context = LocalContext.current
     remember {
         Configuration.getInstance().load(context, context.getSharedPreferences("osm_prefs", Context.MODE_PRIVATE))
         true
     }
 
-    val reports = remember(communityReports) {
+    val reports = remember(communityReports, communityReports.size, communityReports.map { it.id to it.imageUrl }.hashCode()) {
         communityReports.map { report ->
             CommunityReport(report.id, report.title, report.description, report.place, report.category, report.imageUrl, report.timestamp, report.status, report.latitude, report.longitude, report.authorUid, report.authorEmail, report.authorNivel)
         }
     }
 
+    var hasLocationPermission by remember {
+        mutableStateOf(
+            ContextCompat.checkSelfPermission(context, android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
+            ContextCompat.checkSelfPermission(context, android.Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
+        )
+    }
+
     val locationPermissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
-    ) { _ -> }
-
-    LaunchedEffect(Unit) {
-        locationPermissionLauncher.launch(
-            arrayOf(
-                android.Manifest.permission.ACCESS_FINE_LOCATION,
-                android.Manifest.permission.ACCESS_COARSE_LOCATION
-            )
-        )
+    ) { permissions ->
+        hasLocationPermission = permissions.values.any { it }
     }
 
     var selectedCategory by rememberSaveable { mutableStateOf("TODOS") }
@@ -99,7 +101,32 @@ fun ReportsMap(name: String, profilePhoto: String? = null, onSignOut: () -> Unit
     var distanceMenu by remember { mutableStateOf(false) }
     var showNotifications by rememberSaveable { mutableStateOf(false) }
     var showPoints by rememberSaveable { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        if (!hasLocationPermission) {
+            locationPermissionLauncher.launch(
+                arrayOf(
+                    android.Manifest.permission.ACCESS_FINE_LOCATION,
+                    android.Manifest.permission.ACCESS_COARSE_LOCATION
+                )
+            )
+        }
+    }
+
     var mapViewInstance by remember { mutableStateOf<MapView?>(null) }
+
+    LaunchedEffect(hasLocationPermission, mapViewInstance) {
+        if (hasLocationPermission && mapViewInstance != null) {
+            val overlay = mapViewInstance?.overlays?.firstOrNull { overlay -> overlay is MyLocationNewOverlay } as? MyLocationNewOverlay
+            overlay?.enableMyLocation()
+            overlay?.enableFollowLocation()
+            mapViewInstance?.invalidate()
+        }
+    }
+
+    LaunchedEffect(reports) {
+        mapViewInstance?.invalidate()
+    }
     var currentUserLocation by remember {
         mutableStateOf<GeoPoint?>(
             try {
@@ -117,7 +144,7 @@ fun ReportsMap(name: String, profilePhoto: String? = null, onSignOut: () -> Unit
         )
     }
 
-    DisposableEffect(Unit) {
+    DisposableEffect(hasLocationPermission) {
         val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as? android.location.LocationManager
         val listener = android.location.LocationListener { location ->
             currentUserLocation = GeoPoint(location.latitude, location.longitude)
@@ -135,6 +162,12 @@ fun ReportsMap(name: String, profilePhoto: String? = null, onSignOut: () -> Unit
                 2f,
                 listener
             )
+            val last = locationManager?.getLastKnownLocation(android.location.LocationManager.GPS_PROVIDER)
+                ?: locationManager?.getLastKnownLocation(android.location.LocationManager.NETWORK_PROVIDER)
+            if (last != null) {
+                currentUserLocation = GeoPoint(last.latitude, last.longitude)
+                mapViewInstance?.controller?.setCenter(GeoPoint(last.latitude, last.longitude))
+            }
         } catch (_: SecurityException) {}
 
         onDispose {
@@ -424,9 +457,27 @@ fun ReportsMap(name: String, profilePhoto: String? = null, onSignOut: () -> Unit
                 if (myLoc != null) {
                     mapViewInstance?.controller?.setCenter(myLoc)
                     mapViewInstance?.controller?.setZoom(16.0)
+                } else if (currentUserLocation != null) {
+                    mapViewInstance?.controller?.setCenter(currentUserLocation)
+                    mapViewInstance?.controller?.setZoom(16.0)
                 } else {
-                    mapViewInstance?.controller?.setCenter(GeoPoint(4.60971, -74.08175))
-                    mapViewInstance?.controller?.setZoom(14.0)
+                    try {
+                        val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as? android.location.LocationManager
+                        val last = locationManager?.getLastKnownLocation(android.location.LocationManager.GPS_PROVIDER)
+                            ?: locationManager?.getLastKnownLocation(android.location.LocationManager.NETWORK_PROVIDER)
+                        if (last != null) {
+                            val p = GeoPoint(last.latitude, last.longitude)
+                            currentUserLocation = p
+                            mapViewInstance?.controller?.setCenter(p)
+                            mapViewInstance?.controller?.setZoom(16.0)
+                        } else {
+                            mapViewInstance?.controller?.setCenter(GeoPoint(4.60971, -74.08175))
+                            mapViewInstance?.controller?.setZoom(14.0)
+                        }
+                    } catch (_: Exception) {
+                        mapViewInstance?.controller?.setCenter(GeoPoint(4.60971, -74.08175))
+                        mapViewInstance?.controller?.setZoom(14.0)
+                    }
                 }
             })
         }
@@ -441,6 +492,7 @@ fun ReportsMap(name: String, profilePhoto: String? = null, onSignOut: () -> Unit
                     .zIndex(2f),
                 onClose = { selectedReportId = null },
                 onViewReport = { onNavigate("reportDetail/${report.id}") },
+                onEarnRewards = onEarnRewards
             )
         } }
 
@@ -610,7 +662,8 @@ private fun SelectedReportCard(
     myLoc: GeoPoint?,
     modifier: Modifier,
     onClose: () -> Unit,
-    onViewReport: () -> Unit
+    onViewReport: () -> Unit,
+    onEarnRewards: (Int, Int) -> Unit
 ) {
     val uid = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid
     var isSupported by remember(report.id, uid) { mutableStateOf(false) }
@@ -769,14 +822,21 @@ private fun SelectedReportCard(
                             reportRef.update("votes", com.google.firebase.firestore.FieldValue.increment(1))
 
                             val firestore = com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                            val rewardUpdates = mapOf(
+                                "monedas" to com.google.firebase.firestore.FieldValue.increment(200),
+                                "points" to com.google.firebase.firestore.FieldValue.increment(100)
+                            )
                             if (report.authorUid.isNotBlank()) {
                                 firestore.collection("usuarios").document(report.authorUid)
-                                    .update("monedas", com.google.firebase.firestore.FieldValue.increment(200))
+                                    .update(rewardUpdates)
+                                if (report.authorUid == uid) {
+                                    onEarnRewards(200, 100)
+                                }
                             } else if (report.authorEmail.isNotBlank()) {
                                 firestore.collection("usuarios").whereEqualTo("email", report.authorEmail).get()
                                     .addOnSuccessListener { docs ->
                                         for (userDoc in docs) {
-                                            userDoc.reference.update("monedas", com.google.firebase.firestore.FieldValue.increment(200))
+                                            userDoc.reference.update(rewardUpdates)
                                         }
                                     }
                             }
