@@ -76,7 +76,6 @@ fun FramesPage(
     Text("Marcos Adquiridos",Modifier.weight(1f),color=VozNavy,fontSize=15.sp,fontWeight=FontWeight.Bold)
     Text("${visibleFrames.size} en tu inventario",color=Color(0xFF68788B),fontSize=9.sp)
     Spacer(Modifier.width(5.dp))
-    Surface(shape=RoundedCornerShape(50.dp),color=Color(0xFF90F3C2)){Text("✓ En tu inventario",Modifier.padding(horizontal=7.dp,vertical=4.dp),color=VozGreen,fontSize=8.sp,fontWeight=FontWeight.Bold)}
    }
    if (visibleFrames.isEmpty()) {
     Surface(Modifier.fillMaxWidth(), color = Color.White, shape = RoundedCornerShape(12.dp)) {

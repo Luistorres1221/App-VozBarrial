@@ -41,9 +41,9 @@ fun StorePage(
         CatalogFrame("Líder Platino", "Mítico", 1800, Color(0xFF8996A5), Color(0xFFE9EDF2), true),
         CatalogFrame("Escudo Ciudadano", "Común", 500, Color(0xFFE84A12), Color(0xFFFFE4DA))
     )
-    var preview by remember(activeFrame) { mutableStateOf(activeFrame.ifBlank { "Guardián Dorado" }) }
+    var preview by remember(activeFrame) { mutableStateOf(activeFrame) }
     var message by remember { mutableStateOf("") }
-    val chosen = items.firstOrNull { it.name == preview } ?: items.first()
+    val chosen = items.firstOrNull { it.name == preview }
 
     Column(Modifier.fillMaxSize().background(VozBackground)) {
         Row(Modifier.fillMaxWidth().background(Color.White).padding(10.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -65,8 +65,19 @@ fun StorePage(
                         size = 72.dp
                     )
                     Text(name, color = VozNavy, fontSize = 13.sp, fontWeight = FontWeight.Bold)
-                    Text("◉ Probando: " + preview, Modifier.background(chosen.pale, RoundedCornerShape(50.dp)).padding(horizontal = 8.dp, vertical = 3.dp), fontSize = 9.sp, color = chosen.color, fontWeight = FontWeight.Bold)
+                    if (preview.isNotBlank() && chosen != null) {
+                        Text("Probando: " + preview, Modifier.background(chosen.pale, RoundedCornerShape(50.dp)).padding(horizontal = 8.dp, vertical = 3.dp), fontSize = 9.sp, color = chosen.color, fontWeight = FontWeight.Bold)
+                    } else {
+                        Text("Vista: Perfil normal", Modifier.background(VozBlueSurface, RoundedCornerShape(50.dp)).padding(horizontal = 8.dp, vertical = 3.dp), fontSize = 9.sp, color = VozNavy, fontWeight = FontWeight.Bold)
+                    }
                     Text("Toca Probar para ver el marco en directo antes de canjear tus monedas.", color = Color(0xFF43474D), fontSize = 9.sp, textAlign = TextAlign.Center)
+                    Row(Modifier.fillMaxWidth().padding(top = 3.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        StoreAction("×  Desequipar", Modifier.weight(1f)) {
+                            onEquip("") { ok, error ->
+                                if (ok) preview = ""
+                            }
+                        }
+                    }
                 }
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -87,10 +98,12 @@ fun StorePage(
                                 if (item.name in owned) {
                                     onEquip(item.name) { ok, error ->
                                         message = if (ok) item.name + " equipado." else error ?: "No se pudo equipar el marco."
+                                        if (ok) preview = item.name
                                     }
                                 } else if (monedas >= item.cost) {
                                     onPurchase(item.name, item.cost) { ok, error ->
                                         message = if (ok) item.name + " canjeado y equipado." else error ?: "No se pudo completar el canje."
+                                        if (ok) preview = item.name
                                     }
                                 } else {
                                     message = "Te faltan " + (item.cost - monedas) + " monedas para " + item.name + "."
@@ -159,6 +172,19 @@ private fun CatalogCard(item: CatalogFrame, monedas: Int, owned: Boolean, previe
                     )
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun StoreAction(label: String, modifier: Modifier, onClick: () -> Unit) {
+    Surface(
+        modifier.height(31.dp).clickable(onClick = onClick),
+        shape = RoundedCornerShape(7.dp),
+        color = VozBlueSurface
+    ) {
+        Box(contentAlignment = Alignment.Center) {
+            Text(label, color = VozNavy, fontSize = 8.sp, fontWeight = FontWeight.SemiBold)
         }
     }
 }
