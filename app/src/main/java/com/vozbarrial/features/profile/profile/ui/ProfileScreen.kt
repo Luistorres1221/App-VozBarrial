@@ -401,7 +401,7 @@ fun CommunityContent(
                         }
                     }
 
-                    // 5. Mis Publicaciones Recientes (Carrusel de 4 en 4)
+                    // Carrusel de 4 en 4
                     item {
                         Spacer(Modifier.height(4.dp))
                         Row(
@@ -410,7 +410,7 @@ fun CommunityContent(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                "Mis Publicaciones Recientes",
+                                "Mis Publicaciones",
                                 color = VozNavy,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 15.sp
@@ -425,9 +425,8 @@ fun CommunityContent(
                         val filterOptions = listOf(
                             "Todas" to uiState.reports.size,
                             "Por verificar" to uiState.reports.count { it.status.equals("POR_VERIFICAR", true) },
-                            "Verificado" to uiState.reports.count { it.status.equals("VERIFICADO", true) },
-                            "Resuelto" to uiState.reports.count { it.status.equals("RESUELTO", true) },
-                            "Rechazado" to uiState.reports.count { it.status.equals("RECHAZADO", true) }
+                            "Verificados" to uiState.reports.count { it.status.equals("VERIFICADO", true) || it.status.equals("RESUELTO", true) },
+                            "Rechazados" to uiState.reports.count { it.status.equals("RECHAZADO", true) }
                         )
                         androidx.compose.foundation.lazy.LazyRow(
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -452,7 +451,7 @@ fun CommunityContent(
                         Spacer(Modifier.height(8.dp))
                     }
 
-                    val reportChunks = uiState.filteredActivityReports.chunked(4)
+                    val reportChunks = uiState.filteredActivityReports.chunked(3)
                     if (reportChunks.isEmpty()) {
                         item { EmptyState(stringResource(R.string.no_reports_yet)) }
                     } else {
@@ -469,9 +468,10 @@ fun CommunityContent(
                                         verticalArrangement = Arrangement.spacedBy(8.dp)
                                     ) {
                                         chunk.forEach { report ->
+                                            val isRejected = report.status.equals("RECHAZADO", true)
                                             ReportCard(
                                                 report = report,
-                                                onEdit = { onOpenEditReport(report) },
+                                                onEdit = if (isRejected) { { onOpenEditReport(report) } } else null,
                                                 onDelete = { onOpenDeleteReport(report) }
                                             )
                                         }
@@ -644,11 +644,32 @@ fun CommunityContent(
 
 @Composable
 private fun SummaryTile(label: String, value: String, subtitle: String, modifier: Modifier = Modifier) {
-    Surface(modifier, color = VozBlueSurface, shape = RoundedCornerShape(12.dp)) {
-        Column(Modifier.padding(horizontal = 8.dp, vertical = 12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(value, color = VozNavy, fontWeight = FontWeight.Bold, fontSize = 20.sp)
-            Text(label, color = VozNavy, fontSize = 11.sp, fontWeight = FontWeight.Medium)
-            Text(subtitle, color = VozGreen, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+    Surface(modifier.height(92.dp), color = VozBlueSurface, shape = RoundedCornerShape(12.dp)) {
+        Column(
+            Modifier.fillMaxSize().padding(horizontal = 6.dp, vertical = 6.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Text(value, color = VozNavy, fontWeight = FontWeight.Bold, fontSize = 18.sp, maxLines = 1)
+            Spacer(Modifier.height(2.dp))
+            Text(
+                label,
+                color = VozNavy,
+                fontSize = 10.sp,
+                fontWeight = FontWeight.Medium,
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                maxLines = 2,
+                lineHeight = 12.sp
+            )
+            Spacer(Modifier.height(2.dp))
+            Text(
+                subtitle,
+                color = VozGreen,
+                fontSize = 9.sp,
+                fontWeight = FontWeight.Bold,
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                maxLines = 1
+            )
         }
     }
 }
@@ -669,13 +690,43 @@ private fun ReportCard(report: Report, onEdit: (() -> Unit)? = null, onDelete: (
             }
             Text(report.category, color = VozGreen, fontSize = 12.sp)
             Text(report.description, color = VozMuted, fontSize = 13.sp)
-            Text(report.place, color = VozMuted, fontSize = 11.sp)
-            if (onEdit != null || onDelete != null) {
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                    if (onEdit != null) TextButton(onClick = onEdit) { Text(stringResource(R.string.edit)) }
-                    if (onDelete != null) TextButton(onClick = onDelete) {
-                        Icon(Icons.Default.Delete, null, tint = MaterialTheme.colorScheme.error)
-                        Text(stringResource(R.string.delete), color = MaterialTheme.colorScheme.error)
+            Row(
+                Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(report.place, color = VozMuted, fontSize = 11.sp, modifier = Modifier.weight(1f))
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    if (onEdit != null) {
+                        TextButton(
+                            onClick = onEdit,
+                            contentPadding = PaddingValues(horizontal = 6.dp, vertical = 2.dp)
+                        ) {
+                            Text(stringResource(R.string.edit), color = VozNavy, fontSize = 11.sp)
+                        }
+                    }
+                    if (onDelete != null) {
+                        Row(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(50))
+                                .clickable(onClick = onDelete)
+                                .padding(horizontal = 6.dp, vertical = 2.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(3.dp)
+                        ) {
+                            Icon(
+                                Icons.Default.DeleteForever,
+                                contentDescription = null,
+                                tint = Color(0xFFDC2626),
+                                modifier = Modifier.size(13.dp)
+                            )
+                            Text(
+                                stringResource(R.string.delete),
+                                color = Color(0xFFDC2626),
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
                     }
                 }
             }
