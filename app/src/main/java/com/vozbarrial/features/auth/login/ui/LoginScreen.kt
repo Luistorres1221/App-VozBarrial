@@ -81,6 +81,9 @@ fun AuthRoute(
     val formState by formViewModel.uiState.collectAsStateWithLifecycle()
 
     if (formState.showRecovery) {
+        androidx.activity.compose.BackHandler {
+            formViewModel.showRecovery(false)
+        }
         PasswordRecoveryRoute(
             onBack = { formViewModel.showRecovery(false) },
             onRequestPasswordReset = onRequestPasswordReset

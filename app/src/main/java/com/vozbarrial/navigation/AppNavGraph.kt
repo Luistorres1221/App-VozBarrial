@@ -26,6 +26,10 @@ fun AppNavGraph() {
     val reportsViewModel: ReportsViewModel = viewModel()
     val navigationViewModel: NavigationViewModel = viewModel()
 
+    androidx.activity.compose.BackHandler(enabled = navigationViewModel.canGoBack) {
+        navigationViewModel.goBack()
+    }
+
     val screen by navigationViewModel.screen.collectAsStateWithLifecycle()
     val dashboardPage by navigationViewModel.dashboardPage.collectAsStateWithLifecycle()
 
@@ -130,12 +134,12 @@ fun AppNavGraph() {
                         signedInName = email.substringBefore("@")
                         signedInEmail = email
                     }
-                    navigationViewModel.navigate("map")
+                    navigationViewModel.navigate("map", clearStack = true)
                 }
                 .addOnFailureListener {
                     signedInName = email.substringBefore("@")
                     signedInEmail = email
-                    navigationViewModel.navigate("map")
+                    navigationViewModel.navigate("map", clearStack = true)
                 }
         }
     }
@@ -149,7 +153,7 @@ fun AppNavGraph() {
 
     when (screen) {
         "auth" -> AuthRoute(
-            onBack = { navigationViewModel.navigate("welcome") },
+            onBack = { navigationViewModel.goBack() },
             onRegisterClick = { navigationViewModel.navigate("register") },
             onLogin = ::verifyAccount,
             onRequestPasswordReset = { email, callback ->
@@ -160,10 +164,10 @@ fun AppNavGraph() {
             onAuthenticated = { email: String -> enterApp(email) }
         )
         "register" -> RegisterRoute(
-            onBack = { navigationViewModel.navigate("auth") },
-            onLoginClick = { navigationViewModel.navigate("auth") },
+            onBack = { navigationViewModel.goBack() },
+            onLoginClick = { navigationViewModel.goBack() },
             onAccountCreated = {
-                navigationViewModel.navigate("auth")
+                navigationViewModel.goBack()
             },
             onCreateAccount = ::createAccount
         )
@@ -175,7 +179,7 @@ fun AppNavGraph() {
             communityReports = reportsViewModel.reports,
             onSignOut = {
                 com.google.firebase.auth.FirebaseAuth.getInstance().signOut()
-                navigationViewModel.navigate("welcome")
+                navigationViewModel.navigate("welcome", clearStack = true)
             },
             onNavigate = { page ->
                 if (page == "createReport" || page.startsWith("reportDetail/")) {
@@ -191,7 +195,7 @@ fun AppNavGraph() {
         "dashboard" -> CommunityRoute(
             page = dashboardPage,
             name = signedInName,
-            onBack = { navigationViewModel.navigate("map") },
+            onBack = { navigationViewModel.goBack() },
             onNavigate = { page ->
                 when (page) {
                     "editProfile", "frames", "store" -> navigationViewModel.navigate(page)
@@ -200,14 +204,14 @@ fun AppNavGraph() {
             },
             onSignOut = {
                 com.google.firebase.auth.FirebaseAuth.getInstance().signOut()
-                navigationViewModel.navigate("welcome")
+                navigationViewModel.navigate("welcome", clearStack = true)
             },
             onSaveName = { newName ->
                 signedInName = newName
             },
             onDeleteAccount = {
                 com.google.firebase.auth.FirebaseAuth.getInstance().signOut()
-                navigationViewModel.navigate("welcome")
+                navigationViewModel.navigate("welcome", clearStack = true)
             },
             profilePhoto = signedInPhoto,
             points = signedInPoints,
@@ -222,7 +226,7 @@ fun AppNavGraph() {
             activeFrame = equippedFrame,
             points = signedInPoints,
             owned = ownedFrames,
-            onBack = { navigationViewModel.showDashboardPage("profile") },
+            onBack = { navigationViewModel.goBack() },
             onEquip = { selected ->
                 equippedFrame = selected
             },
@@ -233,7 +237,7 @@ fun AppNavGraph() {
             points = signedInPoints,
             owned = ownedFrames,
             activeFrame = equippedFrame,
-            onBack = { navigationViewModel.showDashboardPage("profile") },
+            onBack = { navigationViewModel.goBack() },
             onPurchase = { selected, cost, _, result ->
                 signedInPoints -= cost
                 result(true, null)
@@ -245,7 +249,7 @@ fun AppNavGraph() {
         )
         "createReport" -> ReportCreateRoute(
             name = signedInName,
-            onBack = { navigationViewModel.navigate("map") },
+            onBack = { navigationViewModel.goBack() },
             onPublish = { title, description, category, latitude, longitude, photoUris, done ->
                 val authUser = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
                 val mockProfile = Usurious(
@@ -257,7 +261,7 @@ fun AppNavGraph() {
                 reportsViewModel.createReport(title, description, category, latitude, longitude, photoUris, mockProfile, context) { published, message ->
                     done(published, message)
                     if (published) {
-                        navigationViewModel.navigate("map")
+                        navigationViewModel.goBack()
                     }
                 }
             }
@@ -265,11 +269,11 @@ fun AppNavGraph() {
         "editProfile" -> EditProfileRoute(
             name = signedInName,
             photo = signedInPhoto,
-            onCancel = { navigationViewModel.showDashboardPage("profile") },
+            onCancel = { navigationViewModel.goBack() },
             onSave = { newName: String, newPhoto: String? ->
                 signedInName = newName
                 signedInPhoto = newPhoto
-                navigationViewModel.showDashboardPage("profile")
+                navigationViewModel.goBack()
             }
         )
         else -> if (screen.startsWith("reportDetail/")) {
@@ -280,10 +284,10 @@ fun AppNavGraph() {
                     report = targetReport,
                     userName = signedInName,
                     userPhoto = signedInPhoto,
-                    onBack = { navigationViewModel.navigate("map") }
+                    onBack = { navigationViewModel.goBack() }
                 )
             } else {
-                LaunchedEffect(Unit) { navigationViewModel.navigate("map") }
+                LaunchedEffect(Unit) { navigationViewModel.goBack() }
             }
         } else {
             WelcomeRoute(onLoginClick = { navigationViewModel.navigate("auth") })
