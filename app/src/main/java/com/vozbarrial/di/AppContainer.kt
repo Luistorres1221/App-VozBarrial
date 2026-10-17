@@ -13,7 +13,7 @@ class AppContainer {
     val firestore: FirebaseFirestore = FirebaseFirestore.getInstance()
     val storage: FirebaseStorage = FirebaseStorage.getInstance()
 
-    val profileRepository by lazy { ProfileRepository(auth, firestore, storage) }
+    val profileRepository by lazy { ProfileRepository(auth, firestore) }
     val reportsRepository by lazy { ReportsRepository(auth, firestore) }
     val storeRepository by lazy { StoreRepository(auth, firestore) }
 

@@ -270,9 +270,7 @@ fun AppNavGraph() {
             name = signedInName,
             photo = signedInPhoto,
             onCancel = { navigationViewModel.goBack() },
-            onSave = { newName: String, newPhoto: String? ->
-                signedInName = newName
-                signedInPhoto = newPhoto
+            onSave = {
                 navigationViewModel.goBack()
             }
         )

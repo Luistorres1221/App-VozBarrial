@@ -1,19 +1,19 @@
 package com.vozbarrial.features.profile.editProfile.ui
 
 import android.content.Intent
-import android.graphics.BitmapFactory
 import android.net.Uri
 import android.provider.OpenableColumns
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -26,6 +26,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -47,7 +48,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -57,6 +57,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
 import com.vozbarrial.R
 import com.vozbarrial.features.profile.editProfile.presentation.EditProfileUiState
 import com.vozbarrial.features.profile.editProfile.presentation.EditProfileViewModel
@@ -70,7 +71,7 @@ fun EditProfileRoute(
     name: String,
     photo: String?,
     onCancel: () -> Unit,
-    onSave: (String, String?) -> Unit,
+    onSave: () -> Unit,
     viewModel: EditProfileViewModel = viewModel()
 ) {
     val context = LocalContext.current
@@ -110,9 +111,10 @@ fun EditProfileRoute(
     EditProfileContent(
         uiState = uiState,
         onCancel = onCancel,
-        onSave = { viewModel.save(onSave, invalidNameError) },
+        onSave = { viewModel.save(context, onSave, invalidNameError) },
         onNameChange = viewModel::updateName,
         onPickPhotoClick = { picker.launch(arrayOf("image/jpeg", "image/png")) },
+        onRemovePhoto = { viewModel.setPhoto(null) },
         onDismissError = viewModel::clearError
     )
 }
@@ -127,20 +129,9 @@ fun EditProfileContent(
     onSave: () -> Unit,
     onNameChange: (String) -> Unit,
     onPickPhotoClick: () -> Unit,
+    onRemovePhoto: () -> Unit,
     onDismissError: () -> Unit,
 ) {
-    val context = LocalContext.current
-
-    val bitmap = remember(uiState.photoUri) {
-        runCatching {
-            uiState.photoUri?.let { uriStr ->
-                context.contentResolver.openInputStream(Uri.parse(uriStr))
-                    ?.use(BitmapFactory::decodeStream)
-                    ?.asImageBitmap()
-            }
-        }.getOrNull()
-    }
-
     Column(Modifier.fillMaxSize().background(VozBackground)) {
         // TopBar
         Row(
@@ -198,9 +189,9 @@ fun EditProfileContent(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Box(Modifier.size(104.dp), contentAlignment = Alignment.BottomEnd) {
-                        if (bitmap != null) {
-                            Image(
-                                bitmap = bitmap,
+                        if (!uiState.photoUri.isNullOrBlank()) {
+                            AsyncImage(
+                                model = uiState.photoUri,
                                 contentDescription = stringResource(R.string.profile_photo),
                                 modifier = Modifier.fillMaxSize().clip(CircleShape),
                                 contentScale = ContentScale.Crop
@@ -209,17 +200,15 @@ fun EditProfileContent(
                             Surface(
                                 modifier = Modifier.fillMaxSize(),
                                 shape = CircleShape,
-                                color = VozBackground,
+                                color = Color(0xFFDCEBE7),
                                 shadowElevation = 2.dp
                             ) {
                                 Box(contentAlignment = Alignment.Center) {
                                     Text(
-                                        text = uiState.name,
-                                        modifier = Modifier.padding(12.dp),
-                                        textAlign = TextAlign.Center,
-                                        color = VozNavy,
-                                        fontSize = 14.sp,
-                                        fontWeight = FontWeight.Medium
+                                        text = uiState.name.take(1).uppercase().ifBlank { "U" },
+                                        color = VozGreen,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 32.sp
                                     )
                                 }
                             }
@@ -257,6 +246,27 @@ fun EditProfileContent(
                         fontSize = 10.sp,
                         lineHeight = 13.sp
                     )
+                    if (!uiState.photoUri.isNullOrBlank()) {
+                        Spacer(Modifier.height(4.dp))
+                        TextButton(
+                            onClick = onRemovePhoto,
+                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Delete,
+                                contentDescription = null,
+                                tint = Color(0xFFDC2626),
+                                modifier = Modifier.size(14.dp)
+                            )
+                            Spacer(Modifier.width(4.dp))
+                            Text(
+                                "Quitar foto",
+                                color = Color(0xFFDC2626),
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
                 }
             }
 
@@ -304,17 +314,26 @@ fun EditProfileContent(
             // Botones de acción
             Button(
                 onClick = onSave,
+                enabled = !uiState.isLoading,
                 modifier = Modifier.fillMaxWidth().height(48.dp),
                 shape = RoundedCornerShape(11.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = VozNavy),
                 elevation = ButtonDefaults.buttonElevation(defaultElevation = 3.dp)
             ) {
-                Text(
-                    text = stringResource(R.string.save_changes),
-                    color = Color.White,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 14.sp
-                )
+                if (uiState.isLoading) {
+                    androidx.compose.material3.CircularProgressIndicator(
+                        modifier = Modifier.size(22.dp),
+                        color = Color.White,
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Text(
+                        text = stringResource(R.string.save_changes),
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp
+                    )
+                }
             }
 
             Surface(

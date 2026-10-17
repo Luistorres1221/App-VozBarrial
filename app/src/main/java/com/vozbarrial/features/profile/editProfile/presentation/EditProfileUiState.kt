@@ -4,5 +4,6 @@ data class EditProfileUiState(
     val name: String = "",
     val photoUri: String? = null,
     val error: String? = null,
+    val isLoading: Boolean = false,
     val isInitialized: Boolean = false
 )
