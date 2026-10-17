@@ -29,10 +29,11 @@ fun AppNavGraph() {
     val screen by navigationViewModel.screen.collectAsStateWithLifecycle()
     val dashboardPage by navigationViewModel.dashboardPage.collectAsStateWithLifecycle()
 
-    var signedInName by rememberSaveable { mutableStateOf("") }
-    var signedInEmail by rememberSaveable { mutableStateOf("") }
+    val initialUser = remember { com.google.firebase.auth.FirebaseAuth.getInstance().currentUser }
+    var signedInName by rememberSaveable { mutableStateOf(initialUser?.email?.substringBefore("@").orEmpty()) }
+    var signedInEmail by rememberSaveable { mutableStateOf(initialUser?.email.orEmpty()) }
     var signedInPhoto by rememberSaveable { mutableStateOf<String?>(null) }
-    var signedInUid by rememberSaveable { mutableStateOf("") }
+    var signedInUid by rememberSaveable { mutableStateOf(initialUser?.uid.orEmpty()) }
     var equippedFrame by rememberSaveable { mutableStateOf("Clásico Cívico") }
     var signedInPoints by rememberSaveable { mutableIntStateOf(1450) }
     var signedInMonedas by rememberSaveable { mutableIntStateOf(0) }
@@ -40,10 +41,18 @@ fun AppNavGraph() {
     var ownedFramesText by rememberSaveable { mutableStateOf("Clásico Cívico|Guardián Dorado|Eco Barrio Verde|Escudo Ciudadano") }
     val ownedFrames = ownedFramesText.split("|").filter { it.isNotBlank() }.toSet()
 
-    val myReports = remember(reportsViewModel.reports, signedInEmail, signedInUid) {
-        reportsViewModel.reports.filter { report ->
-            (signedInUid.isNotBlank() && report.authorUid == signedInUid) ||
-            (signedInEmail.isNotBlank() && report.authorEmail.equals(signedInEmail, ignoreCase = true))
+    val reportList = reportsViewModel.reports
+    val myReports = remember(reportList.toList(), signedInEmail, signedInUid, signedInName) {
+        val authUser = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
+        val currentUid = signedInUid.ifBlank { authUser?.uid.orEmpty() }
+        val currentEmail = signedInEmail.ifBlank { authUser?.email.orEmpty() }
+        val currentName = signedInName.ifBlank { authUser?.email?.substringBefore("@").orEmpty() }
+
+        reportList.filter { report ->
+            (currentUid.isNotBlank() && report.authorUid == currentUid) ||
+            (currentEmail.isNotBlank() && report.authorEmail.equals(currentEmail, ignoreCase = true)) ||
+            (authUser?.email != null && report.authorEmail.equals(authUser.email, true)) ||
+            (currentName.isNotBlank() && report.authorName.equals(currentName, true))
         }
     }
 
@@ -234,7 +243,12 @@ fun AppNavGraph() {
             name = signedInName,
             onBack = { navigationViewModel.navigate("map") },
             onPublish = { title, description, category, latitude, longitude, photoUris, done ->
-                val mockProfile = Usurious(name = signedInName, email = signedInEmail, uid = signedInUid)
+                val authUser = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
+                val mockProfile = Usurious(
+                    name = signedInName.ifBlank { authUser?.email?.substringBefore("@").orEmpty() },
+                    email = signedInEmail.ifBlank { authUser?.email.orEmpty() },
+                    uid = signedInUid.ifBlank { authUser?.uid.orEmpty() }
+                )
                 signedInMonedas += 50
                 signedInPoints += 50
                 reportsViewModel.createReport(title, description, category, latitude, longitude, photoUris, mockProfile, context) { published, message ->
