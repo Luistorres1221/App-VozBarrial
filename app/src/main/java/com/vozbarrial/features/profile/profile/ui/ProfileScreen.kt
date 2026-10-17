@@ -5,6 +5,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -30,6 +32,7 @@ import coil.compose.AsyncImage
 import com.vozbarrial.R
 import com.vozbarrial.domain.model.Nivel
 import com.vozbarrial.domain.model.Report
+import com.vozbarrial.domain.model.ReportStatus
 import com.vozbarrial.features.profile.profile.presentation.ProfileUiState
 import com.vozbarrial.features.profile.profile.presentation.ProfileViewModel
 import com.vozbarrial.ui.theme.*
@@ -148,6 +151,14 @@ fun CommunityContent(
         ) {
             when (uiState.currentPage) {
                 "profile" -> {
+                    val currentLevelName = Nivel.fromValue(uiState.nivel).displayName
+                    val levelNum = when (Nivel.fromValue(uiState.nivel)) {
+                        Nivel.NOVATO -> 1
+                        Nivel.COLABORADOR -> 2
+                        Nivel.GUARDIAN -> 3
+                        Nivel.HEROE -> 4
+                    }
+
                     // 1. Profile Header Card
                     item {
                         Card(colors = CardDefaults.cardColors(containerColor = Color.White), shape = RoundedCornerShape(16.dp)) {
@@ -172,15 +183,6 @@ fun CommunityContent(
                                                 fontSize = 24.sp
                                             )
                                         }
-                                        Surface(
-                                            shape = CircleShape,
-                                            color = VozGreen,
-                                            modifier = Modifier.size(20.dp).align(Alignment.BottomEnd)
-                                        ) {
-                                            Box(contentAlignment = Alignment.Center) {
-                                                Icon(Icons.Default.Verified, null, tint = Color.White, modifier = Modifier.size(12.dp))
-                                            }
-                                        }
                                     }
                                     Spacer(Modifier.width(14.dp))
                                     Column(Modifier.weight(1f)) {
@@ -191,13 +193,6 @@ fun CommunityContent(
                                             fontSize = 18.sp
                                         )
                                         Spacer(Modifier.height(3.dp))
-                                        val currentLevelName = Nivel.fromValue(uiState.nivel).displayName
-                                        val levelNum = when (Nivel.fromValue(uiState.nivel)) {
-                                            Nivel.NOVATO -> 1
-                                            Nivel.COLABORADOR -> 2
-                                            Nivel.GUARDIAN -> 3
-                                            Nivel.HEROE -> 4
-                                        }
                                         Surface(
                                             shape = RoundedCornerShape(50),
                                             color = Color(0xFFEAF9F5)
@@ -208,45 +203,45 @@ fun CommunityContent(
                                             ) {
                                                 Icon(Icons.Default.Shield, null, tint = VozGreen, modifier = Modifier.size(12.dp))
                                                 Spacer(Modifier.width(4.dp))
-                                                Text("Nivel $levelNum · $currentLevelName", color = VozGreen, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                                Text(currentLevelName, color = VozGreen, fontSize = 11.sp, fontWeight = FontWeight.Bold)
                                             }
                                         }
                                     }
-                                    IconButton(onClick = onOpenNameEditor) {
-                                        Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.edit_name), tint = VozNavy)
-                                    }
                                 }
 
-                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                                Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxWidth()) {
                                     Button(
                                         onClick = { onNavigate("editProfile") },
                                         modifier = Modifier.weight(1f).height(40.dp),
                                         shape = RoundedCornerShape(12.dp),
+                                        contentPadding = PaddingValues(horizontal = 2.dp),
                                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEAF1F8))
                                     ) {
-                                        Icon(Icons.Default.Edit, null, tint = VozNavy, modifier = Modifier.size(15.dp))
-                                        Spacer(Modifier.width(4.dp))
-                                        Text("Editar", color = VozNavy, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                        Icon(Icons.Default.Edit, null, tint = VozNavy, modifier = Modifier.size(14.dp))
+                                        Spacer(Modifier.width(2.dp))
+                                        Text("Editar", color = VozNavy, fontSize = 11.sp, fontWeight = FontWeight.Bold, maxLines = 1)
                                     }
                                     Button(
                                         onClick = { onNavigate("frames") },
                                         modifier = Modifier.weight(1f).height(40.dp),
                                         shape = RoundedCornerShape(12.dp),
+                                        contentPadding = PaddingValues(horizontal = 2.dp),
                                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEAF1F8))
                                     ) {
-                                        Icon(Icons.Default.Collections, null, tint = VozNavy, modifier = Modifier.size(15.dp))
-                                        Spacer(Modifier.width(4.dp))
-                                        Text("Mis Marcos", color = VozNavy, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                        Icon(Icons.Default.Collections, null, tint = VozNavy, modifier = Modifier.size(14.dp))
+                                        Spacer(Modifier.width(2.dp))
+                                        Text("Marcos", color = VozNavy, fontSize = 11.sp, fontWeight = FontWeight.Bold, maxLines = 1)
                                     }
                                     Button(
                                         onClick = { onNavigate("store") },
                                         modifier = Modifier.weight(1f).height(40.dp),
                                         shape = RoundedCornerShape(12.dp),
+                                        contentPadding = PaddingValues(horizontal = 2.dp),
                                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD3F9E8))
                                     ) {
-                                        Icon(Icons.Default.Store, null, tint = Color(0xFF0D9488), modifier = Modifier.size(15.dp))
-                                        Spacer(Modifier.width(4.dp))
-                                        Text("Tienda", color = Color(0xFF0D9488), fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                        Icon(Icons.Default.Store, null, tint = Color(0xFF0D9488), modifier = Modifier.size(14.dp))
+                                        Spacer(Modifier.width(2.dp))
+                                        Text("Tienda", color = Color(0xFF0D9488), fontSize = 11.sp, fontWeight = FontWeight.Bold, maxLines = 1)
                                     }
                                 }
                             }
@@ -255,14 +250,6 @@ fun CommunityContent(
 
                     // 2. Level & Progress Card
                     item {
-                        val currentLevelName = Nivel.fromValue(uiState.nivel).displayName
-                        val levelNum = when (Nivel.fromValue(uiState.nivel)) {
-                            Nivel.NOVATO -> 1
-                            Nivel.COLABORADOR -> 2
-                            Nivel.GUARDIAN -> 3
-                            Nivel.HEROE -> 4
-                        }
-
                         Card(colors = CardDefaults.cardColors(containerColor = Color.White), shape = RoundedCornerShape(16.dp)) {
                             Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                                 Row(
@@ -277,7 +264,7 @@ fun CommunityContent(
                                             }
                                         }
                                         Spacer(Modifier.width(8.dp))
-                                        Text("Nivel $levelNum: $currentLevelName", color = VozNavy, fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                                        Text(currentLevelName, color = VozNavy, fontWeight = FontWeight.Bold, fontSize = 15.sp)
                                     }
                                     Surface(shape = RoundedCornerShape(50), color = Color(0xFFEAF1F8)) {
                                         Text("${uiState.points} Pts", modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp), color = VozNavy, fontSize = 12.sp, fontWeight = FontWeight.Bold)
@@ -308,10 +295,10 @@ fun CommunityContent(
 
                                 // Levels breakdown
                                 val levelsList = listOf(
-                                    Triple("1. Novato", "0 - 250 pts", 1),
-                                    Triple("2. Colaborador", "251 - 800 pts", 2),
-                                    Triple("3. Guardián", "801 - 2,000 pts", 3),
-                                    Triple("4. Héroe Comunitario", "2,001+ pts", 4),
+                                    Triple("Novato", "0 - 250 pts", 1),
+                                    Triple("Colaborador", "251 - 800 pts", 2),
+                                    Triple("Guardián", "801 - 2,000 pts", 3),
+                                    Triple("Héroe", "2,001+ pts", 4),
                                 )
 
                                 levelsList.forEach { (title, range, lNum) ->
@@ -414,7 +401,7 @@ fun CommunityContent(
                         }
                     }
 
-                    // 5. Mis Publicaciones Recientes
+                    // 5. Mis Publicaciones Recientes (Carrusel de 4 en 4)
                     item {
                         Spacer(Modifier.height(4.dp))
                         Row(
@@ -435,26 +422,79 @@ fun CommunityContent(
                             )
                         }
                         Spacer(Modifier.height(6.dp))
-                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                            listOf("Todas", "ACTIVO", "RESUELTO").forEach { filter ->
-                                FilterChip(
-                                    selected = uiState.activityFilter == filter,
-                                    onClick = { onFilterSelected(filter) },
-                                    label = { Text(filter) },
-                                )
+                        val filterOptions = listOf(
+                            "Todas" to uiState.reports.size,
+                            "Por verificar" to uiState.reports.count { it.status.equals("POR_VERIFICAR", true) },
+                            "Verificado" to uiState.reports.count { it.status.equals("VERIFICADO", true) },
+                            "Resuelto" to uiState.reports.count { it.status.equals("RESUELTO", true) },
+                            "Rechazado" to uiState.reports.count { it.status.equals("RECHAZADO", true) }
+                        )
+                        androidx.compose.foundation.lazy.LazyRow(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            items(filterOptions) { (filterName, count) ->
+                                val isSelected = uiState.activityFilter == filterName || (uiState.activityFilter.isBlank() && filterName == "Todas")
+                                Surface(
+                                    modifier = Modifier.clickable { onFilterSelected(filterName) },
+                                    shape = RoundedCornerShape(50),
+                                    color = if (isSelected) Color(0xFF071C2D) else Color(0xFFEAF1F8)
+                                ) {
+                                    Text(
+                                        text = "$filterName ($count)",
+                                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+                                        color = if (isSelected) Color.White else VozNavy,
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
                             }
                         }
+                        Spacer(Modifier.height(8.dp))
                     }
 
-                    if (uiState.filteredActivityReports.isEmpty()) {
+                    val reportChunks = uiState.filteredActivityReports.chunked(4)
+                    if (reportChunks.isEmpty()) {
                         item { EmptyState(stringResource(R.string.no_reports_yet)) }
                     } else {
-                        items(uiState.filteredActivityReports, key = { it.id }) { report ->
-                            ReportCard(
-                                report = report,
-                                onEdit = { onOpenEditReport(report) },
-                                onDelete = { onOpenDeleteReport(report) },
-                            )
+                        item {
+                            val pagerState = rememberPagerState(pageCount = { reportChunks.size })
+                            Column(Modifier.fillMaxWidth()) {
+                                HorizontalPager(
+                                    state = pagerState,
+                                    modifier = Modifier.fillMaxWidth()
+                                ) { pageIndex ->
+                                    val chunk = reportChunks[pageIndex]
+                                    Column(
+                                        Modifier.fillMaxWidth(),
+                                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        chunk.forEach { report ->
+                                            ReportCard(
+                                                report = report,
+                                                onEdit = { onOpenEditReport(report) },
+                                                onDelete = { onOpenDeleteReport(report) }
+                                            )
+                                        }
+                                    }
+                                }
+                                if (reportChunks.size > 1) {
+                                    Spacer(Modifier.height(10.dp))
+                                    Row(
+                                        Modifier.align(Alignment.CenterHorizontally),
+                                        horizontalArrangement = Arrangement.spacedBy(5.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        repeat(reportChunks.size) { index ->
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(if (pagerState.currentPage == index) 8.dp else 6.dp)
+                                                    .clip(CircleShape)
+                                                    .background(if (pagerState.currentPage == index) VozGreen else Color(0xFFD1D5DB))
+                                            )
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
 
@@ -540,17 +580,6 @@ fun CommunityContent(
                 }
             }
         }
-
-        NavigationBar(containerColor = Color.White) {
-            listOf("profile" to stringResource(R.string.profile_tab), "activity" to stringResource(R.string.activity_tab), "badges" to stringResource(R.string.badges_tab)).forEach { (route, label) ->
-                NavigationBarItem(
-                    selected = uiState.currentPage == route || (route == "badges" && uiState.currentPage !in setOf("profile", "activity")),
-                    onClick = { onNavigate(route) },
-                    icon = { Text(when (route) { "profile" -> "●"; "activity" -> "◷"; else -> "★" }) },
-                    label = { Text(label) },
-                )
-            }
-        }
     }
 
     // --- Diálogos dinámicos ---
@@ -630,8 +659,9 @@ private fun ReportCard(report: Report, onEdit: (() -> Unit)? = null, onDelete: (
         Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(report.title, Modifier.weight(1f), color = VozNavy, fontWeight = FontWeight.Bold)
+                val statusLabel = ReportStatus.fromString(report.status).label
                 Text(
-                    report.status,
+                    statusLabel,
                     Modifier.background(VozBlueSurface, RoundedCornerShape(50.dp)).padding(horizontal = 8.dp, vertical = 4.dp),
                     color = VozNavy,
                     fontSize = 10.sp,

@@ -11,10 +11,8 @@ data class ProfileUiState(
     val monedas: Int = 0,
     val nivel: String = "novato",
     val reports: List<Report> = emptyList(),
-    val activityFilter: String = "",
+    val activityFilter: String = "Todas",
     val availableFilters: List<String> = emptyList(),
-
-    // Estados para control de modales/diálogos
     val showNameEditor: Boolean = false,
     val nameDraft: String = "",
     val showAccountDelete: Boolean = false,
@@ -39,7 +37,12 @@ data class ProfileUiState(
 
     val filteredActivityReports: List<Report>
         get() = sortedReports.filter { report ->
-            if (activityFilter.isBlank() || activityFilter.equals("Todas", true)) true
-            else report.status.equals(activityFilter, ignoreCase = true)
+            when (activityFilter) {
+                "Por verificar" -> report.status.equals("POR_VERIFICAR", true)
+                "Verificado" -> report.status.equals("VERIFICADO", true)
+                "Resuelto" -> report.status.equals("RESUELTO", true)
+                "Rechazado" -> report.status.equals("RECHAZADO", true)
+                else -> true
+            }
         }
 }

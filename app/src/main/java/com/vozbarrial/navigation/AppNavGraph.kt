@@ -33,6 +33,7 @@ fun AppNavGraph() {
     var signedInEmail by rememberSaveable { mutableStateOf("") }
     var signedInPhone by rememberSaveable { mutableStateOf("") }
     var signedInPhoto by rememberSaveable { mutableStateOf<String?>(null) }
+    var signedInUid by rememberSaveable { mutableStateOf("") }
     var equippedFrame by rememberSaveable { mutableStateOf("Clásico Cívico") }
     var signedInPoints by rememberSaveable { mutableIntStateOf(1450) }
     var signedInMonedas by rememberSaveable { mutableIntStateOf(0) }
@@ -40,9 +41,10 @@ fun AppNavGraph() {
     var ownedFramesText by rememberSaveable { mutableStateOf("Clásico Cívico|Guardián Dorado|Eco Barrio Verde|Escudo Ciudadano") }
     val ownedFrames = ownedFramesText.split("|").filter { it.isNotBlank() }.toSet()
 
-    val myReports = remember(reportsViewModel.reports, signedInEmail) {
+    val myReports = remember(reportsViewModel.reports, signedInEmail, signedInUid) {
         reportsViewModel.reports.filter { report ->
-            report.authorEmail.equals(signedInEmail, ignoreCase = true)
+            (signedInUid.isNotBlank() && report.authorUid == signedInUid) ||
+            (signedInEmail.isNotBlank() && report.authorEmail.equals(signedInEmail, ignoreCase = true))
         }
     }
 
@@ -50,6 +52,7 @@ fun AppNavGraph() {
         val currentUser = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
         var listener: com.google.firebase.firestore.ListenerRegistration? = null
         if (currentUser != null) {
+            signedInUid = currentUser.uid
             listener = com.google.firebase.firestore.FirebaseFirestore.getInstance()
                 .collection("usuarios")
                 .document(currentUser.uid)
@@ -64,6 +67,7 @@ fun AppNavGraph() {
                         signedInPoints = usuario.points
                         signedInMonedas = usuario.monedas
                         signedInNivel = usuario.nivel
+                        signedInUid = currentUser.uid
                         ownedFramesText = usuario.ownedFrames.joinToString("|")
                     }
                 }
@@ -108,6 +112,7 @@ fun AppNavGraph() {
                         signedInPoints = usuario.points
                         signedInMonedas = usuario.monedas
                         signedInNivel = usuario.nivel
+                        signedInUid = currentUser.uid
                         ownedFramesText = usuario.ownedFrames.joinToString("|")
                     } else {
                         signedInName = email.substringBefore("@")
