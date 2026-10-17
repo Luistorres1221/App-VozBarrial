@@ -29,30 +29,35 @@ fun AppNavGraph() {
     val screen by navigationViewModel.screen.collectAsStateWithLifecycle()
     val dashboardPage by navigationViewModel.dashboardPage.collectAsStateWithLifecycle()
 
-    val initialUser = remember { com.google.firebase.auth.FirebaseAuth.getInstance().currentUser }
-    var signedInName by rememberSaveable { mutableStateOf(initialUser?.email?.substringBefore("@").orEmpty()) }
-    var signedInEmail by rememberSaveable { mutableStateOf(initialUser?.email.orEmpty()) }
-    var signedInPhoto by rememberSaveable { mutableStateOf<String?>(null) }
-    var signedInUid by rememberSaveable { mutableStateOf(initialUser?.uid.orEmpty()) }
-    var equippedFrame by rememberSaveable { mutableStateOf("Clásico Cívico") }
-    var signedInPoints by rememberSaveable { mutableIntStateOf(1450) }
-    var signedInMonedas by rememberSaveable { mutableIntStateOf(0) }
-    var signedInNivel by rememberSaveable { mutableStateOf("novato") }
-    var ownedFramesText by rememberSaveable { mutableStateOf("Clásico Cívico|Guardián Dorado|Eco Barrio Verde|Escudo Ciudadano") }
+    val authUser = remember { com.google.firebase.auth.FirebaseAuth.getInstance().currentUser }
+    var signedInName by remember { mutableStateOf(authUser?.email?.substringBefore("@").orEmpty()) }
+    var signedInEmail by remember { mutableStateOf(authUser?.email.orEmpty()) }
+    var signedInPhoto by remember { mutableStateOf<String?>(null) }
+    var signedInUid by remember { mutableStateOf(authUser?.uid.orEmpty()) }
+    var equippedFrame by remember { mutableStateOf("Clásico Cívico") }
+    var signedInPoints by remember { mutableIntStateOf(1450) }
+    var signedInMonedas by remember { mutableIntStateOf(0) }
+    var signedInNivel by remember { mutableStateOf("novato") }
+    var ownedFramesText by remember { mutableStateOf("Clásico Cívico|Guardián Dorado|Eco Barrio Verde|Escudo Ciudadano") }
     val ownedFrames = ownedFramesText.split("|").filter { it.isNotBlank() }.toSet()
 
     val reportList = reportsViewModel.reports
     val myReports = remember(reportList.toList(), signedInEmail, signedInUid, signedInName) {
-        val authUser = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
-        val currentUid = signedInUid.ifBlank { authUser?.uid.orEmpty() }
-        val currentEmail = signedInEmail.ifBlank { authUser?.email.orEmpty() }
-        val currentName = signedInName.ifBlank { authUser?.email?.substringBefore("@").orEmpty() }
+        val currentAuthUser = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
+        val currentUid = signedInUid.ifBlank { currentAuthUser?.uid.orEmpty() }.trim()
+        val currentEmail = signedInEmail.ifBlank { currentAuthUser?.email.orEmpty() }.trim()
 
         reportList.filter { report ->
-            (currentUid.isNotBlank() && report.authorUid == currentUid) ||
-            (currentEmail.isNotBlank() && report.authorEmail.equals(currentEmail, ignoreCase = true)) ||
-            (authUser?.email != null && report.authorEmail.equals(authUser.email, true)) ||
-            (currentName.isNotBlank() && report.authorName.equals(currentName, true))
+            val rEmail = report.authorEmail.trim()
+            val rUid = report.authorUid.trim()
+            val authEmail = currentAuthUser?.email?.trim().orEmpty()
+            val authUid = currentAuthUser?.uid?.trim().orEmpty()
+
+            (currentUid.isNotBlank() && rUid == currentUid) ||
+            (currentEmail.isNotBlank() && rEmail.equals(currentEmail, true)) ||
+            (authUid.isNotBlank() && rUid == authUid) ||
+            (authEmail.isNotBlank() && rEmail.equals(authEmail, true)) ||
+            rEmail.isBlank() || rUid.isBlank()
         }
     }
 
@@ -104,6 +109,7 @@ fun AppNavGraph() {
     fun enterApp(email: String) {
         val currentUser = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
         if (currentUser != null) {
+            reportsViewModel.startObserving()
             com.google.firebase.firestore.FirebaseFirestore.getInstance()
                 .collection("usuarios")
                 .document(currentUser.uid)

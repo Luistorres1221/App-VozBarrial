@@ -19,14 +19,21 @@ class ReportsViewModel : ViewModel() {
     val reports = mutableStateListOf<Report>()
 
     init {
+        if (com.google.firebase.auth.FirebaseAuth.getInstance().currentUser != null) {
+            startObserving()
+        }
+    }
+
+    fun startObserving() {
         repository.observeReports { list ->
             reports.clear()
             reports.addAll(list)
         }
     }
 
-    fun startObserving() {}
-    fun stopObserving() {}
+    fun stopObserving() {
+        repository.stopObserving()
+    }
 
     fun createReport(
         title: String,

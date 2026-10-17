@@ -25,9 +25,10 @@ class ReportsRepository(
 
     override fun observeReports(onChange: (List<Report>) -> Unit) {
         if (listener != null) return
-        listener = firestore.collection(REPORTS).addSnapshotListener { snapshot, error ->
-            if (error != null || snapshot == null) return@addSnapshotListener
-            onChange(snapshot.documents.mapNotNull { it.toObject(Report::class.java)?.copy(id = it.id) })
+
+        listener = firestore.collection(REPORTS).addSnapshotListener { snapshot, _ ->
+            val documents = snapshot?.documents ?: return@addSnapshotListener
+            onChange(documents.mapNotNull { it.toObject(Report::class.java)?.copy(id = it.id) })
         }
     }
 
@@ -102,7 +103,10 @@ class ReportsRepository(
     override fun publish(report: Report, onResult: (Result<Unit>) -> Unit) {
         firestore.collection(REPORTS).document(report.id).set(report)
             .addOnSuccessListener { onResult(Result.success(Unit)) }
-            .addOnFailureListener { onResult(Result.failure(it)) }
+            .addOnFailureListener {
+                android.util.Log.e("ReportsRepository", "Error publishing report: ${it.message}", it)
+                onResult(Result.failure(it))
+            }
     }
 
     override fun update(reportId: String, title: String, description: String, onResult: (Result<Unit>) -> Unit) {
