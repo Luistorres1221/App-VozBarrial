@@ -1,10 +1,11 @@
 ﻿package com.vozbarrial.navigation
 
 import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 
 import com.vozbarrial.features.auth.login.ui.AuthRoute
 import com.vozbarrial.features.auth.register.ui.RegisterRoute
@@ -15,10 +16,15 @@ import com.vozbarrial.features.reports.create.ui.ReportCreateRoute
 import com.vozbarrial.features.dashboard.FramesPage
 import com.vozbarrial.features.dashboard.StorePage
 import com.vozbarrial.features.map.ReportsMap
+import com.vozbarrial.features.moderation.AdminReportsMap
+import com.vozbarrial.features.moderation.AdminModerationScreen
+import com.vozbarrial.features.moderation.AdminResolutionScreen
+import com.vozbarrial.features.moderation.AdminRejectReasonScreen
 import com.vozbarrial.features.auth.welcome.ui.WelcomeRoute
 import com.vozbarrial.core.result.AuthOperationResult
 import com.vozbarrial.core.result.AuthError
 import com.vozbarrial.domain.model.Usurious
+import com.vozbarrial.domain.model.UserRole
 
 @Composable
 fun AppNavGraph() {
@@ -131,11 +137,14 @@ fun AppNavGraph() {
                         signedInNivel = usuario.nivel
                         signedInUid = currentUser.uid
                         ownedFramesText = usuario.ownedFrames.joinToString("|")
+
+                        val destination = if (usuario.role == UserRole.ADMIN) "adminMap" else "map"
+                        navigationViewModel.navigate(destination, clearStack = true)
                     } else {
                         signedInName = email.substringBefore("@")
                         signedInEmail = email
+                        navigationViewModel.navigate("map", clearStack = true)
                     }
-                    navigationViewModel.navigate("map", clearStack = true)
                 }
                 .addOnFailureListener {
                     signedInName = email.substringBefore("@")
@@ -192,6 +201,68 @@ fun AppNavGraph() {
             },
             onEarnRewards = { m ->
                 signedInMonedas += m
+            }
+        )
+        "adminMap" -> AdminReportsMap(
+            name = signedInName,
+            profilePhoto = signedInPhoto,
+            equippedFrame = equippedFrame,
+            monedas = signedInMonedas,
+            nivel = signedInNivel,
+            communityReports = reportsViewModel.reports,
+            onSignOut = {
+                FirebaseAuth.getInstance().signOut()
+                navigationViewModel.navigate("welcome", clearStack = true)
+            },
+            onNavigate = { page ->
+                if (page == "createReport" || page.startsWith("reportDetail/") || page == "adminModeration" || page == "adminResolution") {
+                    navigationViewModel.navigate(page)
+                } else {
+                    navigationViewModel.showDashboardPage(page)
+                }
+            },
+            onEarnRewards = { m ->
+                signedInMonedas += m
+            }
+        )
+        "adminModeration" -> AdminModerationScreen(
+            name = signedInName,
+            profilePhoto = signedInPhoto,
+            equippedFrame = equippedFrame,
+            reports = reportsViewModel.reports,
+            onBack = { navigationViewModel.goBack() },
+            onNavigate = { page ->
+                if (page == "createReport" || page.startsWith("reportDetail/") || page.startsWith("adminRejectReason/")) {
+                    navigationViewModel.navigate(page)
+                } else {
+                    navigationViewModel.showDashboardPage(page)
+                }
+            },
+            onUpdateStatus = { reportId, newStatus ->
+                FirebaseFirestore.getInstance()
+                    .collection("reportes")
+                    .document(reportId)
+                    .update("status", newStatus)
+            }
+        )
+        "adminResolution" -> AdminResolutionScreen(
+            name = signedInName,
+            profilePhoto = signedInPhoto,
+            equippedFrame = equippedFrame,
+            reports = reportsViewModel.reports,
+            onBack = { navigationViewModel.goBack() },
+            onNavigate = { page ->
+                if (page == "createReport" || page.startsWith("reportDetail/") || page.startsWith("adminRejectReason/")) {
+                    navigationViewModel.navigate(page)
+                } else {
+                    navigationViewModel.showDashboardPage(page)
+                }
+            },
+            onUpdateStatus = { reportId, newStatus ->
+                FirebaseFirestore.getInstance()
+                    .collection("reportes")
+                    .document(reportId)
+                    .update("status", newStatus)
             }
         )
         "dashboard" -> CommunityRoute(
@@ -290,21 +361,51 @@ fun AppNavGraph() {
                 navigationViewModel.goBack()
             }
         )
-        else -> if (screen.startsWith("reportDetail/")) {
-            val reportId = screen.substringAfter("reportDetail/")
-            val targetReport = reportsViewModel.reports.firstOrNull { it.id == reportId } ?: reportsViewModel.reports.firstOrNull()
-            if (targetReport != null) {
-                com.vozbarrial.features.reports.detail.ui.ReportDetailRoute(
-                    report = targetReport,
-                    userName = signedInName,
-                    userPhoto = signedInPhoto,
-                    onBack = { navigationViewModel.goBack() }
-                )
-            } else {
-                LaunchedEffect(Unit) { navigationViewModel.goBack() }
+        else -> when {
+            screen.startsWith("reportDetail/") -> {
+                val reportId = screen.substringAfter("reportDetail/")
+                val targetReport = reportsViewModel.reports.firstOrNull { it.id == reportId } ?: reportsViewModel.reports.firstOrNull()
+                if (targetReport != null) {
+                    com.vozbarrial.features.reports.detail.ui.ReportDetailRoute(
+                        report = targetReport,
+                        userName = signedInName,
+                        userPhoto = signedInPhoto,
+                        onBack = { navigationViewModel.goBack() }
+                    )
+                } else {
+                    LaunchedEffect(Unit) { navigationViewModel.goBack() }
+                }
             }
-        } else {
-            WelcomeRoute(onLoginClick = { navigationViewModel.navigate("auth") })
+            screen.startsWith("adminRejectReason/") -> {
+                val reportId = screen.substringAfter("adminRejectReason/")
+                val targetReport = reportsViewModel.reports.firstOrNull { it.id == reportId }
+                AdminRejectReasonScreen(
+                    report = targetReport,
+                    name = signedInName,
+                    profilePhoto = signedInPhoto,
+                    equippedFrame = equippedFrame,
+                    onBack = { navigationViewModel.goBack() },
+                    onConfirm = { reason, explanation, allowResubmit ->
+                        FirebaseFirestore.getInstance()
+                            .collection("reportes")
+                            .document(reportId)
+                            .update(
+                                mapOf(
+                                    "status" to "RECHAZADO",
+                                    "rejectionReason" to reason,
+                                    "rejectionExplanation" to explanation,
+                                    "allowResubmit" to allowResubmit
+                                )
+                            )
+                            .addOnSuccessListener {
+                                navigationViewModel.goBack()
+                            }
+                    }
+                )
+            }
+            else -> {
+                WelcomeRoute(onLoginClick = { navigationViewModel.navigate("auth") })
+            }
         }
     }
 }

@@ -52,7 +52,7 @@ import com.vozbarrial.domain.model.Report
 import com.vozbarrial.domain.model.ReportStatus
 import java.util.Locale
 
-private data class CommunityReport(
+data class CommunityReport(
     val id: String,
     val title: String,
     val description: String,
@@ -579,7 +579,7 @@ private fun MapHeader(
 }
 
 @Composable
-private fun MapFilter(
+internal fun MapFilter(
     text: String,
     count: Int,
     selected: Boolean,
@@ -621,7 +621,7 @@ private fun MapFilter(
     }
 }
 
-private fun formatTimeAgo(timestamp: Long): String {
+internal fun formatTimeAgo(timestamp: Long): String {
     val now = System.currentTimeMillis()
     val diff = maxOf(0L, now - timestamp)
     val seconds = diff / 1000
@@ -653,7 +653,7 @@ private fun MapControl(icon: ImageVector, label: String, onClick: () -> Unit) {
 }
 
 @Composable
-private fun SelectedReportCard(
+internal fun SelectedReportCard(
     report: CommunityReport,
     myLoc: GeoPoint?,
     modifier: Modifier,
