@@ -1,102 +1,97 @@
-package com.vozbarrial.navigation
+﻿package com.vozbarrial.navigation
 
-import android.content.Context
-import android.util.Base64
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.platform.LocalContext
-import com.vozbarrial.features.auth.Auth
-import com.vozbarrial.features.dashboard.CommunityPage
-import com.vozbarrial.features.dashboard.EditProfile
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+
+import com.vozbarrial.features.auth.login.ui.AuthRoute
+import com.vozbarrial.features.auth.register.ui.RegisterRoute
+import com.vozbarrial.features.profile.profile.ui.CommunityRoute
+import com.vozbarrial.features.profile.editProfile.ui.EditProfileRoute
+import com.vozbarrial.features.reports.create.presentation.ReportsViewModel
+import com.vozbarrial.features.reports.create.ui.ReportCreateRoute
 import com.vozbarrial.features.dashboard.FramesPage
 import com.vozbarrial.features.dashboard.StorePage
-import com.vozbarrial.features.dashboard.ReportCreate
 import com.vozbarrial.features.map.ReportsMap
-import com.vozbarrial.features.welcome.Welcome
-import java.security.MessageDigest
-import java.security.SecureRandom
+import com.vozbarrial.features.auth.welcome.ui.WelcomeRoute
+import com.vozbarrial.core.result.AuthOperationResult
+import com.vozbarrial.core.result.AuthError
+import com.vozbarrial.domain.model.Usurious
 
 @Composable
 fun AppNavGraph() {
     val context = LocalContext.current
-    val accounts by lazy { context.getSharedPreferences("voz_barrial_accounts", Context.MODE_PRIVATE) }
+    val reportsViewModel: ReportsViewModel = viewModel()
+    val navigationViewModel: NavigationViewModel = viewModel()
+    val storeViewModel: com.vozbarrial.features.store.StoreViewModel = viewModel()
 
-    var screen by rememberSaveable { mutableStateOf("com/vozbarrial/features/welcome") }
-    var signedInName by rememberSaveable { mutableStateOf("") }
-    var signedInEmail by rememberSaveable { mutableStateOf("") }
-    var signedInPhone by rememberSaveable { mutableStateOf("") }
-    var signedInPhoto by rememberSaveable { mutableStateOf<String?>(null) }
-    var equippedFrame by rememberSaveable { mutableStateOf("Clásico Cívico") }
-    var signedInPoints by rememberSaveable { mutableIntStateOf(1450) }
-    var ownedFramesText by rememberSaveable { mutableStateOf("Clásico Cívico|Guardián Dorado|Eco Barrio Verde|Escudo Ciudadano") }
-    var dashboardPage by rememberSaveable { mutableStateOf("profile") }
+    androidx.activity.compose.BackHandler(enabled = navigationViewModel.canGoBack) {
+        navigationViewModel.goBack()
+    }
 
-    LaunchedEffect(Unit) {
-        val currentUser = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
-        if (currentUser != null) {
-            val email = currentUser.email.orEmpty()
-            com.google.firebase.firestore.FirebaseFirestore.getInstance()
-                .collection("usuarios")
-                .document(currentUser.uid)
-                .get()
-                .addOnSuccessListener { document ->
-                    val usuario = document.toObject(com.vozbarrial.domain.Usuario::class.java)
-                    if (usuario != null) {
-                        signedInName = usuario.name.ifBlank { email.substringBefore("@") }
-                        signedInEmail = email
-                        signedInPhone = usuario.phone
-                        signedInPhoto = usuario.photoUrl
-                        equippedFrame = usuario.equippedFrame
-                        signedInPoints = usuario.points
-                        ownedFramesText = usuario.ownedFrames.joinToString("|")
-                    } else {
-                        signedInName = email.substringBefore("@")
-                        signedInEmail = email
-                    }
-                    screen = "com/vozbarrial/features/map"
-                }
-                .addOnFailureListener {
-                    signedInName = email.substringBefore("@")
-                    signedInEmail = email
-                    screen = "com/vozbarrial/features/map"
-                }
+    val screen by navigationViewModel.screen.collectAsStateWithLifecycle()
+    val dashboardPage by navigationViewModel.dashboardPage.collectAsStateWithLifecycle()
+
+    val authUser = remember { com.google.firebase.auth.FirebaseAuth.getInstance().currentUser }
+    var signedInName by remember { mutableStateOf(authUser?.email?.substringBefore("@").orEmpty()) }
+    var signedInEmail by remember { mutableStateOf(authUser?.email.orEmpty()) }
+    var signedInPhoto by remember { mutableStateOf<String?>(null) }
+    var signedInUid by remember { mutableStateOf(authUser?.uid.orEmpty()) }
+    var equippedFrame by remember { mutableStateOf("Clásico Cívico") }
+    var signedInPoints by remember { mutableIntStateOf(1450) }
+    var signedInMonedas by remember { mutableIntStateOf(0) }
+    var signedInNivel by remember { mutableStateOf("novato") }
+    var ownedFramesText by remember { mutableStateOf("Clásico Cívico|Guardián Dorado|Eco Barrio Verde|Escudo Ciudadano") }
+    val ownedFrames = ownedFramesText.split("|").filter { it.isNotBlank() }.toSet()
+
+    val reportList = reportsViewModel.reports
+    val myReports = remember(reportList.toList(), signedInEmail, signedInUid, signedInName) {
+        val currentAuthUser = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
+        val currentUid = signedInUid.ifBlank { currentAuthUser?.uid.orEmpty() }.trim()
+        val currentEmail = signedInEmail.ifBlank { currentAuthUser?.email.orEmpty() }.trim()
+
+        reportList.filter { report ->
+            val rEmail = report.authorEmail.trim()
+            val rUid = report.authorUid.trim()
+            val authEmail = currentAuthUser?.email?.trim().orEmpty()
+            val authUid = currentAuthUser?.uid?.trim().orEmpty()
+
+            (currentUid.isNotBlank() && rUid == currentUid) ||
+            (currentEmail.isNotBlank() && rEmail.equals(currentEmail, true)) ||
+            (authUid.isNotBlank() && rUid == authUid) ||
+            (authEmail.isNotBlank() && rEmail.equals(authEmail, true)) ||
+            rEmail.isBlank() || rUid.isBlank()
         }
     }
 
-    fun accountKey(email: String): String = "account_${email.trim().lowercase()}"
-
-    fun passwordHash(salt: ByteArray, password: String): String {
-        val digest = MessageDigest.getInstance("SHA-256").digest(salt + password.toByteArray(Charsets.UTF_8))
-        return digest.joinToString("") { byte -> "%02x".format(byte.toInt() and 0xff) }
-    }
-
-    fun displayName(email: String): String {
-        val key = accountKey(email)
-        val saved = accounts.getString("${key}_name", null)?.trim().orEmpty()
-        val malformed = saved.contains("%") || saved.equals(email.substringBefore("@"), ignoreCase = true)
-        if (saved.isNotBlank() && !malformed) return saved
-        val repaired = if (email.equals("torresluisalberto95@gmail.com", ignoreCase = true)) "Luis Alberto Torres Berrio" else email.substringBefore("@").replace(Regex("[0-9]+$"), "")
-        accounts.edit().putString("${key}_name", repaired).apply()
-        return repaired
-    }
-
-    fun resetPassword(email: String, password: String): Boolean {
-        val key = accountKey(email)
-        if (!accounts.contains(key + "_hash")) return false
-        val salt = ByteArray(16).also { SecureRandom().nextBytes(it) }
-        accounts.edit().putString(key + "_salt", Base64.encodeToString(salt, Base64.NO_WRAP)).putString(key + "_hash", passwordHash(salt, password)).apply()
-        return true
-    }
-
-    fun createAccount(name: String, email: String, phone: String, password: String, onResult: (Boolean, String?) -> Unit) {
-        com.google.firebase.auth.FirebaseAuth.getInstance().createUserWithEmailAndPassword(email, password)
-            .addOnSuccessListener { authResult ->
-                val uid = authResult.user?.uid ?: ""
-                val usuario = com.vozbarrial.domain.Usuario(uid = uid, name = name, email = email, phone = phone)
-                com.google.firebase.firestore.FirebaseFirestore.getInstance().collection("usuarios").document(uid).set(usuario)
-                onResult(true, null)
-            }
-            .addOnFailureListener { e -> onResult(false, e.localizedMessage) }
+    DisposableEffect(Unit) {
+        val currentUser = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
+        var listener: com.google.firebase.firestore.ListenerRegistration? = null
+        if (currentUser != null) {
+            signedInUid = currentUser.uid
+            listener = com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                .collection("usuarios")
+                .document(currentUser.uid)
+                .addSnapshotListener { document, _ ->
+                    val usuario = document?.toObject(Usurious::class.java)
+                    if (usuario != null) {
+                        signedInName = usuario.name.ifBlank { currentUser.email?.substringBefore("@").orEmpty() }
+                        signedInEmail = currentUser.email.orEmpty()
+                        signedInPhoto = usuario.photoUrl
+                        equippedFrame = usuario.equippedFrame
+                        signedInPoints = usuario.points
+                        signedInMonedas = usuario.monedas
+                        signedInNivel = usuario.nivel
+                        signedInUid = currentUser.uid
+                        ownedFramesText = usuario.ownedFrames.joinToString("|")
+                    }
+                }
+        }
+        onDispose {
+            listener?.remove()
+        }
     }
 
     fun verifyAccount(email: String, password: String, onResult: (Boolean) -> Unit) {
@@ -105,105 +100,211 @@ fun AppNavGraph() {
             .addOnFailureListener { onResult(false) }
     }
 
-    when (screen) {
-        "com/vozbarrial/features/auth" -> Auth(
-            onBack = { screen = "com/vozbarrial/features/welcome" },
-            onLogin = ::verifyAccount,
-            onRegister = ::createAccount,
-            onAccountExists = { email -> accounts.contains(accountKey(email) + "_hash") },
-            onResetPassword = ::resetPassword,
-            onResolveName = ::displayName,
-            onAuthenticated = { email -> 
-                val currentUser = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
-                if (currentUser != null) {
-                    com.google.firebase.firestore.FirebaseFirestore.getInstance()
-                        .collection("usuarios")
-                        .document(currentUser.uid)
-                        .get()
-                        .addOnSuccessListener { document ->
-                            val usuario = document.toObject(com.vozbarrial.domain.Usuario::class.java)
-                            if (usuario != null) {
-                                signedInName = usuario.name.ifBlank { email.substringBefore("@") }
-                                signedInEmail = email
-                                signedInPhone = usuario.phone
-                                signedInPhoto = usuario.photoUrl
-                                equippedFrame = usuario.equippedFrame
-                                signedInPoints = usuario.points
-                                ownedFramesText = usuario.ownedFrames.joinToString("|")
-                            } else {
-                                signedInName = email.substringBefore("@")
-                                signedInEmail = email
-                            }
-                            screen = "com/vozbarrial/features/map"
-                        }
-                        .addOnFailureListener {
-                            signedInName = email.substringBefore("@")
-                            signedInEmail = email
-                            screen = "com/vozbarrial/features/map"
-                        }
-                } else {
+    fun createAccount(name: String, email: String, password: String, onResult: (Boolean, String?) -> Unit) {
+        com.google.firebase.auth.FirebaseAuth.getInstance().createUserWithEmailAndPassword(email, password)
+            .addOnSuccessListener { authResult ->
+                val uid = authResult.user?.uid ?: ""
+                val usuario = Usurious(uid = uid, name = name, email = email)
+                com.google.firebase.firestore.FirebaseFirestore.getInstance().collection("usuarios").document(uid).set(usuario)
+                onResult(true, null)
+            }
+            .addOnFailureListener { e -> onResult(false, e.localizedMessage) }
+    }
+
+    fun enterApp(email: String) {
+        val currentUser = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
+        if (currentUser != null) {
+            reportsViewModel.startObserving()
+            com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                .collection("usuarios")
+                .document(currentUser.uid)
+                .get()
+                .addOnSuccessListener { document ->
+                    val usuario = document.toObject(Usurious::class.java)
+                    if (usuario != null) {
+                        signedInName = usuario.name.ifBlank { email.substringBefore("@") }
+                        signedInEmail = email
+                        signedInPhoto = usuario.photoUrl
+                        equippedFrame = usuario.equippedFrame
+                        signedInPoints = usuario.points
+                        signedInMonedas = usuario.monedas
+                        signedInNivel = usuario.nivel
+                        signedInUid = currentUser.uid
+                        ownedFramesText = usuario.ownedFrames.joinToString("|")
+                    } else {
+                        signedInName = email.substringBefore("@")
+                        signedInEmail = email
+                    }
+                    navigationViewModel.navigate("map", clearStack = true)
+                }
+                .addOnFailureListener {
                     signedInName = email.substringBefore("@")
                     signedInEmail = email
-                    screen = "com/vozbarrial/features/map"
+                    navigationViewModel.navigate("map", clearStack = true)
                 }
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        val currentUser = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
+        if (currentUser != null) {
+            enterApp(currentUser.email.orEmpty())
+        }
+    }
+
+    when (screen) {
+        "auth" -> AuthRoute(
+            onBack = { navigationViewModel.goBack() },
+            onRegisterClick = { navigationViewModel.navigate("register") },
+            onLogin = ::verifyAccount,
+            onRequestPasswordReset = { email, callback ->
+                com.google.firebase.auth.FirebaseAuth.getInstance().sendPasswordResetEmail(email)
+                    .addOnSuccessListener { callback(AuthOperationResult.Success(Unit)) }
+                    .addOnFailureListener { callback(AuthOperationResult.Failure(AuthError.ProviderFailure(null, it.localizedMessage))) }
             },
+            onAuthenticated = { email: String -> enterApp(email) }
         )
-        "com/vozbarrial/features/map" -> ReportsMap(
+        "register" -> RegisterRoute(
+            onBack = { navigationViewModel.goBack() },
+            onLoginClick = { navigationViewModel.goBack() },
+            onAccountCreated = {
+                navigationViewModel.goBack()
+            },
+            onCreateAccount = ::createAccount
+        )
+        "map" -> ReportsMap(
             name = signedInName,
             profilePhoto = signedInPhoto,
-            onSignOut = { com.google.firebase.auth.FirebaseAuth.getInstance().signOut(); screen = "com/vozbarrial/features/welcome" },
-            onNavigate = { page -> if (page == "createReport") screen = "createReport" else { dashboardPage = page; screen = "com/vozbarrial/features/dashboard" } },
-            points = signedInPoints
-        )
-        "com/vozbarrial/features/dashboard" -> CommunityPage(dashboardPage, signedInName, onBack = { screen = "com/vozbarrial/features/map" }, onNavigate = { page -> if (page == "editProfile") screen = "editProfile" else if (page == "frames") screen = "frames" else if (page == "store") screen = "store" else dashboardPage = page }, onSignOut = { com.google.firebase.auth.FirebaseAuth.getInstance().signOut(); screen = "com/vozbarrial/features/welcome" }, onSaveName = { newName -> signedInName = newName; accounts.edit().putString(accountKey(signedInEmail) + "_name", newName).apply() }, onDeleteAccount = { val key = accountKey(signedInEmail); accounts.edit().remove(key + "_name").remove(key + "_salt").remove(key + "_hash").remove(key + "_phone").remove(key + "_photo").remove(key + "_frame").apply(); signedInName = ""; signedInEmail = ""; signedInPhone = ""; signedInPhoto = null; equippedFrame = "Clásico Cívico"; screen = "com/vozbarrial/features/welcome" }, profilePhoto = signedInPhoto, points = signedInPoints)
-        "frames" -> FramesPage(signedInName, equippedFrame, points = signedInPoints, onBack = { screen = "com/vozbarrial/features/dashboard"; dashboardPage = "profile" }, onEquip = { frame -> equippedFrame = frame; accounts.edit().putString(accountKey(signedInEmail) + "_frame", frame).apply() })
-        "store" -> StorePage(signedInName, signedInPoints, ownedFramesText.split("|").filter { it.isNotBlank() }.toSet(), equippedFrame, onBack = { screen = "com/vozbarrial/features/dashboard"; dashboardPage = "profile" }, onPurchase = { frame, cost, owned -> signedInPoints -= cost; ownedFramesText = owned.joinToString("|"); val key = accountKey(signedInEmail); accounts.edit().putInt(key + "_points", signedInPoints).putString(key + "_owned_frames", ownedFramesText).apply() }, onEquip = { frame -> equippedFrame = frame; accounts.edit().putString(accountKey(signedInEmail) + "_frame", frame).apply() })
-        "createReport" -> ReportCreate(
-            signedInName,
-            onBack = { screen = "com/vozbarrial/features/map" },
-            onPublish = { title, description, category, latitude, longitude ->
-                val reportId = java.util.UUID.randomUUID().toString()
-                val place = "Lat: " + "%.5f".format(java.util.Locale.US, latitude) + ", Lon: " + "%.5f".format(java.util.Locale.US, longitude)
-                val report = com.vozbarrial.domain.Reporte(
-                    id = reportId,
-                    title = title,
-                    description = description,
-                    place = place,
-                    category = category,
-                    authorEmail = signedInEmail,
-                    latitude = latitude,
-                    longitude = longitude,
-                    timestamp = System.currentTimeMillis()
-                )
-                com.google.firebase.firestore.FirebaseFirestore.getInstance()
-                    .collection("reportes")
-                    .document(reportId)
-                    .set(report)
-                screen = "com/vozbarrial/features/map"
+            equippedFrame = equippedFrame,
+            monedas = signedInMonedas,
+            nivel = signedInNivel,
+            communityReports = reportsViewModel.reports,
+            onSignOut = {
+                com.google.firebase.auth.FirebaseAuth.getInstance().signOut()
+                navigationViewModel.navigate("welcome", clearStack = true)
+            },
+            onNavigate = { page ->
+                if (page == "createReport" || page.startsWith("reportDetail/")) {
+                    navigationViewModel.navigate(page)
+                } else {
+                    navigationViewModel.showDashboardPage(page)
+                }
+            },
+            onEarnRewards = { m ->
+                signedInMonedas += m
             }
         )
-        "editProfile" -> EditProfile(signedInName, signedInPhone, signedInPhoto, onCancel = { screen = "com/vozbarrial/features/dashboard"; dashboardPage = "profile" }, onSave = { newName, newPhone, newPhoto -> 
-            signedInName = newName
-            signedInPhone = newPhone
-            signedInPhoto = newPhoto
-            val key = accountKey(signedInEmail)
-            accounts.edit().putString(key + "_name", newName).putString(key + "_phone", newPhone).putString(key + "_photo", newPhoto ?: "").apply()
-            
-            val currentUser = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
-            if (currentUser != null) {
-                val updates = mapOf(
-                    "name" to newName,
-                    "phone" to newPhone,
-                    "photoUrl" to (newPhoto ?: "")
-                )
-                com.google.firebase.firestore.FirebaseFirestore.getInstance()
-                    .collection("usuarios")
-                    .document(currentUser.uid)
-                    .update(updates)
+        "dashboard" -> CommunityRoute(
+            page = dashboardPage,
+            name = signedInName,
+            equippedFrame = equippedFrame,
+            onBack = { navigationViewModel.goBack() },
+            onNavigate = { page ->
+                when (page) {
+                    "editProfile", "frames", "store" -> navigationViewModel.navigate(page)
+                    else -> navigationViewModel.showDashboardPage(page)
+                }
+            },
+            onSignOut = {
+                com.google.firebase.auth.FirebaseAuth.getInstance().signOut()
+                navigationViewModel.navigate("welcome", clearStack = true)
+            },
+            onSaveName = { newName ->
+                signedInName = newName
+            },
+            onDeleteAccount = {
+                com.google.firebase.auth.FirebaseAuth.getInstance().signOut()
+                navigationViewModel.navigate("welcome", clearStack = true)
+            },
+            profilePhoto = signedInPhoto,
+            points = signedInPoints,
+            monedas = signedInMonedas,
+            nivel = signedInNivel,
+            reports = myReports,
+            onEditReport = reportsViewModel::updateReport,
+            onDeleteReport = reportsViewModel::deleteReport
+        )
+        "frames" -> FramesPage(
+            name = signedInName,
+            activeFrame = equippedFrame,
+            monedas = signedInMonedas,
+            profilePhoto = signedInPhoto,
+            owned = ownedFrames,
+            onBack = { navigationViewModel.goBack() },
+            onEquip = { selected ->
+                storeViewModel.equip(selected) { success, _ ->
+                    if (success) {
+                        equippedFrame = selected
+                    }
+                }
+            },
+            onOpenStore = { navigationViewModel.navigate("store") }
+        )
+        "store" -> StorePage(
+            name = signedInName,
+            monedas = signedInMonedas,
+            profilePhoto = signedInPhoto,
+            owned = ownedFrames,
+            activeFrame = equippedFrame,
+            onBack = { navigationViewModel.goBack() },
+            onPurchase = { selected, cost, result ->
+                storeViewModel.purchase(selected, cost, { updatedUser ->
+                    signedInMonedas = updatedUser.monedas
+                    equippedFrame = updatedUser.equippedFrame
+                    ownedFramesText = updatedUser.ownedFrames.joinToString("|")
+                }, result)
+            },
+            onEquip = { selected, result ->
+                storeViewModel.equip(selected) { success, error ->
+                    if (success) {
+                        equippedFrame = selected
+                    }
+                    result(success, error)
+                }
             }
-            screen = "com/vozbarrial/features/dashboard"
-            dashboardPage = "profile" 
-        })
-        else -> Welcome(onLoginClick = { screen = "com/vozbarrial/features/auth" })
+        )
+        "createReport" -> ReportCreateRoute(
+            name = signedInName,
+            onBack = { navigationViewModel.goBack() },
+            onPublish = { title, description, category, latitude, longitude, photoUris, done ->
+                val authUser = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
+                val mockProfile = Usurious(
+                    name = signedInName.ifBlank { authUser?.email?.substringBefore("@").orEmpty() },
+                    email = signedInEmail.ifBlank { authUser?.email.orEmpty() },
+                    uid = signedInUid.ifBlank { authUser?.uid.orEmpty() }
+                )
+                signedInMonedas += 50
+                reportsViewModel.createReport(title, description, category, latitude, longitude, photoUris, mockProfile, context) { published, message ->
+                    done(published, message)
+                    if (published) {
+                        navigationViewModel.goBack()
+                    }
+                }
+            }
+        )
+        "editProfile" -> EditProfileRoute(
+            name = signedInName,
+            photo = signedInPhoto,
+            onCancel = { navigationViewModel.goBack() },
+            onSave = {
+                navigationViewModel.goBack()
+            }
+        )
+        else -> if (screen.startsWith("reportDetail/")) {
+            val reportId = screen.substringAfter("reportDetail/")
+            val targetReport = reportsViewModel.reports.firstOrNull { it.id == reportId } ?: reportsViewModel.reports.firstOrNull()
+            if (targetReport != null) {
+                com.vozbarrial.features.reports.detail.ui.ReportDetailRoute(
+                    report = targetReport,
+                    userName = signedInName,
+                    userPhoto = signedInPhoto,
+                    onBack = { navigationViewModel.goBack() }
+                )
+            } else {
+                LaunchedEffect(Unit) { navigationViewModel.goBack() }
+            }
+        } else {
+            WelcomeRoute(onLoginClick = { navigationViewModel.navigate("auth") })
+        }
     }
 }
