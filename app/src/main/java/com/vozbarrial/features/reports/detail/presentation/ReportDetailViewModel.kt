@@ -10,6 +10,7 @@ import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.Query
 import com.vozbarrial.data.repository.ReportsRepository
 import com.vozbarrial.domain.model.Report
+import java.util.UUID
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -105,10 +106,23 @@ class ReportDetailViewModel : ViewModel() {
                     }
                 }
 
+                val contributionId = UUID.randomUUID().toString()
+                val contribution = Contribution(
+                    id = contributionId,
+                    authorName = authorName.ifBlank { "Ciudadano" },
+                    authorRole = "Vecino Colaborador",
+                    timeAgo = "Hace un momento",
+                    content = currentText,
+                    isOfficial = false,
+                    imageUrls = uploadedUrls,
+                    timestamp = System.currentTimeMillis()
+                )
 
                 firestore.collection("reportes")
                     .document(reportId)
                     .collection("aportes")
+                    .document(contributionId)
+                    .set(contribution)
 
                 withContext(Dispatchers.Main) {
                     _uiState.update { it.copy(isUploading = false) }
