@@ -21,12 +21,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.vozbarrial.core.RememberedEmailCache
+import com.vozbarrial.core.RememberedEmailSuggestions
 import com.vozbarrial.ui.theme.*
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -34,6 +37,7 @@ import java.util.Locale
 
 @Composable
 fun PasswordRecovery(onBack: () -> Unit, onAccountExists: (String) -> Boolean, onResetPassword: (String, String) -> Boolean, onResolveName: (String) -> String) {
+    val context = LocalContext.current
     var step by rememberSaveable { mutableIntStateOf(0) }
     var email by rememberSaveable { mutableStateOf("") }
     var accountName by rememberSaveable { mutableStateOf("") }
@@ -41,6 +45,18 @@ fun PasswordRecovery(onBack: () -> Unit, onAccountExists: (String) -> Boolean, o
     var confirmation by rememberSaveable { mutableStateOf("") }
     var showPassword by rememberSaveable { mutableStateOf(false) }
     var message by rememberSaveable { mutableStateOf("") }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            step = 0
+            email = ""
+            accountName = ""
+            newPassword = ""
+            confirmation = ""
+            showPassword = false
+            message = ""
+        }
+    }
 
     Column(Modifier.fillMaxSize().background(VozBackground)) {
         Row(Modifier.fillMaxWidth().height(49.dp).background(Color.White).padding(horizontal = 8.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -81,7 +97,8 @@ fun PasswordRecovery(onBack: () -> Unit, onAccountExists: (String) -> Boolean, o
                 Spacer(Modifier.height(8.dp))
                 Text("Correo Electrónico Registrado", Modifier.fillMaxWidth(), color = VozNavy, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                 Spacer(Modifier.height(3.dp))
-                OutlinedTextField(value = email, onValueChange = { email = it.trim(); message = "" }, modifier = Modifier.fillMaxWidth().height(56.dp), placeholder = { Text("oficial.mendoza@seguridad.vozbarrial.org", fontSize = 12.sp) }, leadingIcon = { Text("@", color = VozNavy, fontWeight = FontWeight.Bold, fontSize = 12.sp) }, trailingIcon = { Text("ⓧ", color = VozMuted, fontSize = 12.sp) }, singleLine = true, shape = RoundedCornerShape(9.dp), colors = OutlinedTextFieldDefaults.colors(unfocusedContainerColor = Color.White, focusedContainerColor = Color.White, unfocusedBorderColor = Color(0xFFE6EBF4)))
+                OutlinedTextField(value = email, onValueChange = { input -> email = input.trim(); message = ""; RememberedEmailCache.remember(context, input) }, modifier = Modifier.fillMaxWidth().height(56.dp), placeholder = { Text("oficial.mendoza@seguridad.vozbarrial.org", fontSize = 12.sp) }, leadingIcon = { Text("@", color = VozNavy, fontWeight = FontWeight.Bold, fontSize = 12.sp) }, trailingIcon = { Text("ⓧ", color = VozMuted, fontSize = 12.sp) }, singleLine = true, shape = RoundedCornerShape(9.dp), colors = OutlinedTextFieldDefaults.colors(unfocusedContainerColor = Color.White, focusedContainerColor = Color.White, unfocusedBorderColor = Color(0xFFE6EBF4)))
+                RememberedEmailSuggestions(email) { email = it }
                 Spacer(Modifier.height(4.dp))
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
                     Icon(Icons.Default.Security, null, tint = Color(0xFF52627A), modifier = Modifier.size(11.dp))

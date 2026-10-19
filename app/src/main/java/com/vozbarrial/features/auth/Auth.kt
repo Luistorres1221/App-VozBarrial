@@ -54,6 +54,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -61,6 +62,8 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.vozbarrial.core.RememberedEmailCache
+import com.vozbarrial.core.RememberedEmailSuggestions
 import com.vozbarrial.ui.theme.*
 
 @Composable
@@ -73,6 +76,7 @@ fun Auth(
     onResetPassword: (String, String) -> Boolean,
     onResolveName: (String) -> String,
 ) {
+    val context = LocalContext.current
     var registering by rememberSaveable { mutableStateOf(false) }
     var name by rememberSaveable { mutableStateOf("") }
     var email by rememberSaveable { mutableStateOf("") }
@@ -137,11 +141,16 @@ fun Auth(
                 }
                 AuthField(
                     value = email,
-                    onValueChange = { email = it; message = "" },
+                    onValueChange = {
+                        email = it
+                        message = ""
+                        RememberedEmailCache.remember(context, it)
+                    },
                     placeholder = "nombre@correo.com",
                     leading = { Icon(Icons.Default.MailOutline, null, tint = VozMuted, modifier = Modifier.size(17.dp)) },
                     keyboardType = KeyboardType.Email,
                 )
+                RememberedEmailSuggestions(email) { email = it }
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     FieldLabel("Contraseña", Modifier.weight(1f))

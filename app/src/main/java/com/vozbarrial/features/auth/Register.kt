@@ -1,4 +1,4 @@
-﻿package com.vozbarrial.features.auth
+package com.vozbarrial.features.auth
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -49,6 +49,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -56,6 +57,8 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.vozbarrial.core.RememberedEmailCache
+import com.vozbarrial.core.RememberedEmailSuggestions
 import com.vozbarrial.ui.theme.*
 
 @Composable
@@ -64,6 +67,7 @@ fun Register(
     onLoginClick: () -> Unit,
     onCreateAccount: (name: String, email: String, phone: String, password: String, (Boolean, String?) -> Unit) -> Unit,
 ) {
+    val context = LocalContext.current
     var name by rememberSaveable { mutableStateOf("") }
     var email by rememberSaveable { mutableStateOf("") }
     var phone by rememberSaveable { mutableStateOf("") }
@@ -99,11 +103,12 @@ fun Register(
         RegisterLabel("Correo electrónico")
         RegisterField(
             value = email,
-            onValueChange = { email = it; error = "" },
+            onValueChange = { input -> email = input; error = ""; RememberedEmailCache.remember(context, input) },
             placeholder = "ej. carlos.mendoza@correo.com",
             icon = { Icon(Icons.Default.MailOutline, null, tint = VozMuted, modifier = Modifier.size(19.dp)) },
             keyboardType = KeyboardType.Email,
         )
+        RememberedEmailSuggestions(email) { email = it }
         Text("Usaremos tu correo para validar tu cuenta y recuperar el acceso.", color = VozNavy, fontSize = 11.sp)
 
         Row(verticalAlignment = Alignment.CenterVertically) {
