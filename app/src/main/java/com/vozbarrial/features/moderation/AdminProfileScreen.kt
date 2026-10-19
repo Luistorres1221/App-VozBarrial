@@ -1,6 +1,7 @@
 package com.vozbarrial.features.moderation
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -9,6 +10,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -30,6 +33,8 @@ fun AdminProfileScreen(
     onBack: () -> Unit,
     onSave: (String, String, String, String, String, (Boolean, String?) -> Unit) -> Unit,
     onSaved: () -> Unit,
+    onSignOut: () -> Unit,
+    onDeleteAccount: (String, (Boolean, String?) -> Unit) -> Unit,
 ) {
     var fullName by remember(name) { mutableStateOf(name) }
     var mobile by remember(phone) { mutableStateOf(phone) }
@@ -39,6 +44,10 @@ fun AdminProfileScreen(
     var confirmPassword by remember { mutableStateOf("") }
     var saving by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
+    var showDeleteDialog by remember { mutableStateOf(false) }
+    var deletePassword by remember { mutableStateOf("") }
+    var deleting by remember { mutableStateOf(false) }
+    var deleteError by remember { mutableStateOf<String?>(null) }
 
     Column(Modifier.fillMaxSize().background(Color(0xFFF4F7FC))) {
         Row(Modifier.fillMaxWidth().background(Color.White).padding(horizontal = 8.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -124,6 +133,33 @@ fun AdminProfileScreen(
                 }
             }
             error?.let { Text(it, color = Color(0xFFC62828), fontSize = 12.sp) }
+
+            Card(
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier.fillMaxWidth().clickable(enabled = !saving && !deleting, onClick = onSignOut)
+            ) {
+                Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = null, tint = AdminProfileNavy)
+                    Spacer(Modifier.width(12.dp))
+                    Text("Cerrar sesión", color = AdminProfileNavy, fontWeight = FontWeight.Bold)
+                }
+            }
+            Card(
+                colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF1F1)),
+                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier.fillMaxWidth().clickable(enabled = !saving && !deleting, onClick = {
+                    deletePassword = ""
+                    deleteError = null
+                    showDeleteDialog = true
+                })
+            ) {
+                Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.DeleteForever, contentDescription = null, tint = Color(0xFFC62828))
+                    Spacer(Modifier.width(12.dp))
+                    Text("Eliminar cuenta", color = Color(0xFFC62828), fontWeight = FontWeight.Bold)
+                }
+            }
         }
 
         Button(
@@ -152,6 +188,48 @@ fun AdminProfileScreen(
         ) {
             if (saving) CircularProgressIndicator(Modifier.size(19.dp), color = Color.White, strokeWidth = 2.dp)
             else Text("Guardar cambios", fontSize = 14.sp, fontWeight = FontWeight.Bold)
+        }
+
+        if (showDeleteDialog) {
+            AlertDialog(
+                onDismissRequest = { if (!deleting) showDeleteDialog = false },
+                title = { Text("Eliminar cuenta") },
+                text = {
+                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Text("Esta acción eliminará permanentemente tu cuenta de administrador. Ingresa tu contraseña para confirmar.")
+                        OutlinedTextField(
+                            value = deletePassword,
+                            onValueChange = { deletePassword = it; deleteError = null },
+                            label = { Text("Contraseña actual") },
+                            visualTransformation = PasswordVisualTransformation(),
+                            singleLine = true,
+                            enabled = !deleting
+                        )
+                        deleteError?.let { Text(it, color = Color(0xFFC62828), fontSize = 12.sp) }
+                    }
+                },
+                confirmButton = {
+                    TextButton(enabled = !deleting, onClick = {
+                        if (deletePassword.isBlank()) {
+                            deleteError = "Ingresa tu contraseña actual."
+                        } else {
+                            deleting = true
+                            deleteError = null
+                            onDeleteAccount(deletePassword) { success, message ->
+                                deleting = false
+                                if (success) showDeleteDialog = false
+                                else deleteError = message ?: "No se pudo eliminar la cuenta."
+                            }
+                        }
+                    }) {
+                        if (deleting) CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
+                        else Text("Eliminar", color = Color(0xFFC62828))
+                    }
+                },
+                dismissButton = {
+                    TextButton(enabled = !deleting, onClick = { showDeleteDialog = false }) { Text("Cancelar") }
+                }
+            )
         }
     }
 }

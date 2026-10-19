@@ -256,6 +256,32 @@ fun AppNavGraph() {
         }
     }
 
+    fun deleteAdminAccount(password: String, onResult: (Boolean, String?) -> Unit) {
+        val auth = com.google.firebase.auth.FirebaseAuth.getInstance()
+        val user = auth.currentUser
+            ?: return onResult(false, "La sesión expiró. Inicia sesión nuevamente.")
+        val email = user.email
+            ?: return onResult(false, "No se encontró el correo de esta cuenta.")
+        val credential = com.google.firebase.auth.EmailAuthProvider.getCredential(email, password)
+        user.reauthenticate(credential)
+            .addOnSuccessListener {
+                val uid = user.uid
+                user.delete()
+                    .addOnSuccessListener {
+                        com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                            .collection("usuarios")
+                            .document(uid)
+                            .delete()
+                            .addOnCompleteListener {
+                                onResult(true, null)
+                                navigationViewModel.navigate("welcome", clearStack = true)
+                            }
+                    }
+                    .addOnFailureListener { onResult(false, it.localizedMessage ?: "No se pudo eliminar la cuenta.") }
+            }
+            .addOnFailureListener { onResult(false, "No se pudo validar la contraseña: ${it.localizedMessage}") }
+    }
+
     LaunchedEffect(Unit) {
         val currentUser = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
         if (currentUser != null) {
@@ -339,7 +365,12 @@ fun AppNavGraph() {
                     phone = signedInPhone,
                     onBack = { navigationViewModel.goBack() },
                     onSave = ::saveAdminProfile,
-                    onSaved = { navigationViewModel.navigate("adminMap", clearStack = true) }
+                    onSaved = { navigationViewModel.navigate("adminMap", clearStack = true) },
+                    onSignOut = {
+                        com.google.firebase.auth.FirebaseAuth.getInstance().signOut()
+                        navigationViewModel.navigate("welcome", clearStack = true)
+                    },
+                    onDeleteAccount = ::deleteAdminAccount
                 )
             }
         }
