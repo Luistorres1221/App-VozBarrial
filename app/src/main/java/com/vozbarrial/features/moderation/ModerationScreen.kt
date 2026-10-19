@@ -272,8 +272,8 @@ fun ModerationScreen(
         ) {
             IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, "Volver", tint = Navy) }
             Column(Modifier.weight(1f)) {
-                Text("Moderación", color = Navy, fontWeight = FontWeight.Bold, fontSize = 18.sp)
-                Text("VozBarrial · Administración", color = Color(0xFF718198), fontSize = 11.sp)
+                Text("Moderación", color = Navy, fontWeight = FontWeight.Bold, fontSize = 20.sp)
+                Text("VozBarrial · Administración", color = Color(0xFF718198), fontSize = 13.sp)
             }
             TextButton(onClick = onOpenMap) {
                 Icon(Icons.Default.Map, null, tint = Navy, modifier = Modifier.size(18.dp))
@@ -293,7 +293,7 @@ fun ModerationScreen(
         }
         if (filtered.isEmpty()) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text(if (tab == "Pendientes") "No hay reportes pendientes" else "No hay reportes en esta sección", color = Color(0xFF718198))
+                Text(if (tab == "Pendientes") "No hay reportes pendientes" else "No hay reportes en esta sección", color = Color(0xFF718198), fontSize = 15.sp)
             }
         } else {
             LazyColumn(contentPadding = PaddingValues(start = 12.dp, end = 12.dp, bottom = 20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -366,7 +366,7 @@ fun ModerationMapScreen(reports: List<Report>, onBack: () -> Unit) {
 @Composable
 private fun ModerationTab(label: String, count: Int, selected: Boolean, onClick: () -> Unit) {
     Column(Modifier.clickable(onClick = onClick).padding(horizontal = 9.dp, vertical = 12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-        Text("$label  $count", color = if (selected) Navy else Color(0xFF718198), fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal, fontSize = 13.sp)
+        Text("$label  $count", color = if (selected) Navy else Color(0xFF718198), fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal, fontSize = 14.sp, maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis)
         Spacer(Modifier.height(7.dp))
         Box(Modifier.width(76.dp).height(3.dp).clip(CircleShape).background(if (selected) Navy else Color.Transparent))
     }
@@ -385,44 +385,44 @@ private fun ModerationReportCard(
     Card(colors = CardDefaults.cardColors(containerColor = Color.White), shape = RoundedCornerShape(14.dp), elevation = CardDefaults.cardElevation(1.dp)) {
         Column(Modifier.fillMaxWidth().padding(11.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(report.category.ifBlank { "Comunidad" }.uppercase(), color = Navy, fontSize = 9.sp, fontWeight = FontWeight.Bold,
+                Text(report.category.ifBlank { "Comunidad" }.uppercase(), color = Navy, fontSize = 11.sp, fontWeight = FontWeight.Bold,
                     modifier = Modifier.clip(RoundedCornerShape(20.dp)).background(Color(0xFFE8F0FF)).padding(horizontal = 8.dp, vertical = 4.dp))
                 Spacer(Modifier.width(6.dp))
-                Text("#${report.id.takeLast(8)}", color = Color(0xFF718198), fontSize = 10.sp, modifier = Modifier.weight(1f))
-                Text(timeAgo(report.timestamp), color = Color(0xFF718198), fontSize = 10.sp)
+                Text("#${report.id.takeLast(8)}", color = Color(0xFF718198), fontSize = 11.sp, modifier = Modifier.weight(1f))
+                Text(timeAgo(report.timestamp), color = Color(0xFF718198), fontSize = 11.sp)
             }
-            Text(report.title, color = Navy, fontWeight = FontWeight.Bold, fontSize = 14.sp, lineHeight = 18.sp)
+            Text(report.title, color = Navy, fontWeight = FontWeight.Bold, fontSize = 16.sp, lineHeight = 20.sp)
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Default.LocationOn, null, tint = Color(0xFF55759E), modifier = Modifier.size(15.dp))
-                Text(report.place.ifBlank { "Ubicación no especificada" }, color = Color(0xFF45617F), fontSize = 11.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(report.place.ifBlank { "Ubicación no especificada" }, color = Color(0xFF45617F), fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
             if (!report.imageUrl.isNullOrBlank()) {
                 Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp)).background(Color(0xFFF0F4FA)).padding(6.dp), verticalAlignment = Alignment.CenterVertically) {
                     AsyncImage(model = report.imageUrl.substringBefore(","), contentDescription = "Evidencia del reporte", modifier = Modifier.size(54.dp).clip(RoundedCornerShape(7.dp)))
                     Spacer(Modifier.width(8.dp))
-                    Text(report.description, color = Color(0xFF36516D), fontSize = 11.sp, maxLines = 3, overflow = TextOverflow.Ellipsis)
+                    Text(report.description, color = Color(0xFF36516D), fontSize = 13.sp, maxLines = 3, overflow = TextOverflow.Ellipsis)
                 }
             }
             Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(9.dp)).background(Color(0xFFF0F4FA)).padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
                 Box(Modifier.size(27.dp).background(Color(0xFFDCE8F8), CircleShape), contentAlignment = Alignment.Center) { Text("${report.authorName.firstOrNull()?.uppercaseChar() ?: 'U'}", color = Navy, fontWeight = FontWeight.Bold) }
                 Spacer(Modifier.width(7.dp))
                 Column(Modifier.weight(1f)) {
-                    Text(report.authorName.ifBlank { report.authorEmail.substringBefore("@") }, color = Navy, fontSize = 11.sp, fontWeight = FontWeight.Medium)
-                    Text("★ ${report.authorNivel} · ${report.votes} pts", color = Color(0xFF718198), fontSize = 9.sp)
+                    Text(report.authorName.ifBlank { report.authorEmail.substringBefore("@") }, color = Navy, fontSize = 13.sp, fontWeight = FontWeight.Medium)
+                    Text("★ ${report.authorNivel} · ${report.votes} pts", color = Color(0xFF718198), fontSize = 11.sp)
                 }
-                TextButton(onClick = onMap, contentPadding = PaddingValues(horizontal = 6.dp)) { Icon(Icons.Default.Map, null, modifier = Modifier.size(14.dp)); Spacer(Modifier.width(3.dp)); Text("Mapa", fontSize = 10.sp) }
+                TextButton(onClick = onMap, contentPadding = PaddingValues(horizontal = 6.dp)) { Icon(Icons.Default.Map, null, modifier = Modifier.size(16.dp)); Spacer(Modifier.width(3.dp)); Text("Mapa", fontSize = 12.sp) }
             }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 OutlinedButton(onClick = onView, modifier = Modifier.weight(1f), contentPadding = PaddingValues(horizontal = 4.dp), enabled = !loading) {
-                    Icon(Icons.Default.Visibility, null, modifier = Modifier.size(15.dp)); Spacer(Modifier.width(3.dp)); Text("Ver info", fontSize = 10.sp, maxLines = 1)
+                    Icon(Icons.Default.Visibility, null, modifier = Modifier.size(17.dp)); Spacer(Modifier.width(3.dp)); Text("Ver info", fontSize = 12.sp, maxLines = 1)
                 }
                 if (pending) {
                     OutlinedButton(onClick = onReject, modifier = Modifier.weight(1f), contentPadding = PaddingValues(horizontal = 4.dp), enabled = !loading) {
-                        Icon(Icons.Default.Close, null, tint = Color(0xFFD83C45), modifier = Modifier.size(15.dp)); Spacer(Modifier.width(2.dp)); Text("Rechazar", color = Color(0xFFD83C45), fontSize = 10.sp, maxLines = 1)
+                        Icon(Icons.Default.Close, null, tint = Color(0xFFD83C45), modifier = Modifier.size(17.dp)); Spacer(Modifier.width(2.dp)); Text("Rechazar", color = Color(0xFFD83C45), fontSize = 12.sp, maxLines = 1)
                     }
                     Button(onClick = onApprove, modifier = Modifier.weight(1f), contentPadding = PaddingValues(horizontal = 4.dp), enabled = !loading, colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00845A))) {
-                        if (loading) CircularProgressIndicator(Modifier.size(14.dp), color = Color.White, strokeWidth = 2.dp) else Icon(Icons.Default.Check, null, modifier = Modifier.size(15.dp))
-                        Spacer(Modifier.width(2.dp)); Text("Aprobar", fontSize = 10.sp, maxLines = 1)
+                        if (loading) CircularProgressIndicator(Modifier.size(16.dp), color = Color.White, strokeWidth = 2.dp) else Icon(Icons.Default.Check, null, modifier = Modifier.size(17.dp))
+                        Spacer(Modifier.width(2.dp)); Text("Aprobar", fontSize = 12.sp, maxLines = 1)
                     }
                 }
             }
