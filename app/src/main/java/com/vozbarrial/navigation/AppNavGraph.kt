@@ -23,6 +23,7 @@ import com.vozbarrial.features.moderation.ModerationScreen
 import com.vozbarrial.features.moderation.ModerationMapScreen
 import com.vozbarrial.features.moderation.AdminMapScreen
 import com.vozbarrial.features.moderation.ResolutionScreen
+import com.vozbarrial.features.moderation.RejectionScreen
 
 @Composable
 fun AppNavGraph() {
@@ -38,6 +39,7 @@ fun AppNavGraph() {
     val screen by navigationViewModel.screen.collectAsStateWithLifecycle()
     val dashboardPage by navigationViewModel.dashboardPage.collectAsStateWithLifecycle()
     var moderationInitialTab by rememberSaveable { mutableStateOf("Pendientes") }
+    var selectedRejectionReportId by rememberSaveable { mutableStateOf("") }
 
     val authUser = remember { com.google.firebase.auth.FirebaseAuth.getInstance().currentUser }
     var signedInName by remember { mutableStateOf(authUser?.email?.substringBefore("@").orEmpty()) }
@@ -233,11 +235,44 @@ fun AppNavGraph() {
                     onOpenMap = { navigationViewModel.navigate("adminMap", clearStack = true) },
                     onOpenReport = { navigationViewModel.navigate("reportDetail/$it") },
                     onModerate = reportsViewModel::moderateReport,
+                    onStartRejection = { reportId ->
+                        selectedRejectionReportId = reportId
+                        navigationViewModel.navigate("rejection")
+                    },
                     onApproved = {
                         moderationInitialTab = "En Proceso"
                         navigationViewModel.navigate("resolution", clearStack = true)
                     }
                 )
+            }
+        }
+        "rejection" -> {
+            if (!com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.email.equals("vozbarrial@gmail.com", true)) {
+                LaunchedEffect(Unit) { navigationViewModel.navigate("welcome", clearStack = true) }
+            } else {
+                val report = reportsViewModel.reports.firstOrNull { it.id == selectedRejectionReportId }
+                if (report == null) {
+                    LaunchedEffect(Unit) { navigationViewModel.navigate("moderation", clearStack = true) }
+                } else {
+                    RejectionScreen(
+                        report = report,
+                        onBack = { navigationViewModel.goBack() },
+                        onConfirm = { reason, explanation, allowResubmission, notifyByEmail, complete ->
+                            reportsViewModel.rejectReport(
+                                report.id,
+                                reason,
+                                explanation,
+                                allowResubmission,
+                                notifyByEmail,
+                                complete
+                            )
+                        },
+                        onRejected = {
+                            moderationInitialTab = "Historial"
+                            navigationViewModel.navigate("resolution", clearStack = true)
+                        }
+                    )
+                }
             }
         }
         "resolution" -> {

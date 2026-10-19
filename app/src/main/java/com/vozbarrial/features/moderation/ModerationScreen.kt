@@ -245,6 +245,7 @@ fun ModerationScreen(
     onOpenMap: () -> Unit,
     onOpenReport: (String) -> Unit,
     onModerate: (String, String, (Boolean, String?) -> Unit) -> Unit,
+    onStartRejection: (String) -> Unit = {},
     onApproved: () -> Unit = {},
 ) {
     var tab by remember(initialTab) { mutableStateOf(initialTab) }
@@ -312,11 +313,7 @@ fun ModerationScreen(
                             }
                         },
                         onReject = {
-                            busyReport = report.id
-                            onModerate(report.id, ReportStatus.RECHAZADO.value) { ok, error ->
-                                busyReport = null
-                                message = if (ok) "Reporte rechazado" else error ?: "No se pudo rechazar el reporte"
-                            }
+                            onStartRejection(report.id)
                         }
                     )
                 }

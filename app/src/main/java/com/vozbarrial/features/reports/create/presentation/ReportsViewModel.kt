@@ -133,4 +133,21 @@ class ReportsViewModel : ViewModel() {
             onComplete(result.isSuccess, result.exceptionOrNull()?.localizedMessage)
         }
     }
+
+    fun rejectReport(
+        id: String,
+        reason: String,
+        explanation: String,
+        allowResubmission: Boolean,
+        notifyByEmail: Boolean,
+        onComplete: (Boolean, String?) -> Unit,
+    ) {
+        repository.reject(id, reason, explanation, allowResubmission, notifyByEmail) { result ->
+            if (result.isSuccess) {
+                val index = reports.indexOfFirst { it.id == id }
+                if (index >= 0) reports[index] = reports[index].copy(status = com.vozbarrial.domain.model.ReportStatus.RECHAZADO.value)
+            }
+            onComplete(result.isSuccess, result.exceptionOrNull()?.localizedMessage)
+        }
+    }
 }

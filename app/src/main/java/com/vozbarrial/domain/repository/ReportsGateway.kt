@@ -9,4 +9,12 @@ interface ReportsGateway {
     fun update(reportId: String, title: String, description: String, onResult: (Result<Unit>) -> Unit)
     fun delete(reportId: String, onResult: (Result<Unit>) -> Unit)
     fun moderate(reportId: String, status: String, onResult: (Result<Unit>) -> Unit)
+    fun reject(
+        reportId: String,
+        reason: String,
+        explanation: String,
+        allowResubmission: Boolean,
+        notifyByEmail: Boolean,
+        onResult: (Result<Unit>) -> Unit,
+    )
 }
