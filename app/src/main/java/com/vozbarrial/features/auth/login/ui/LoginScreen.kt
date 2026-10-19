@@ -1,0 +1,444 @@
+package com.vozbarrial.features.auth.login.ui
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Fingerprint
+import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Login
+import androidx.compose.material.icons.filled.MailOutline
+import androidx.compose.material.icons.filled.PersonAdd
+import androidx.compose.material.icons.filled.Security
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.vozbarrial.core.result.AuthOperationResult
+import com.vozbarrial.features.auth.passwordRecovery.ui.PasswordRecoveryRoute
+import com.vozbarrial.features.auth.login.presentation.LoginUiState
+import com.vozbarrial.features.auth.login.presentation.LoginViewModel
+import com.vozbarrial.ui.theme.*
+
+/**
+ * Punto de entrada Stateful para el login, conectado con AuthFormViewModel.
+ */
+@Composable
+fun AuthRoute(
+    onBack: () -> Unit,
+    onRegisterClick: () -> Unit,
+    onLogin: (email: String, password: String, (Boolean) -> Unit) -> Unit,
+    onAuthenticated: (name: String) -> Unit,
+    onRequestPasswordReset: (String, (AuthOperationResult<Unit>) -> Unit) -> Unit,
+    formViewModel: LoginViewModel = viewModel()
+) {
+    val formState by formViewModel.uiState.collectAsStateWithLifecycle()
+
+    if (formState.showRecovery) {
+        androidx.activity.compose.BackHandler {
+            formViewModel.showRecovery(false)
+        }
+        PasswordRecoveryRoute(
+            onBack = { formViewModel.showRecovery(false) },
+            onRequestPasswordReset = onRequestPasswordReset
+        )
+        return
+    }
+
+    AuthContent(
+        formState = formState,
+        onBack = onBack,
+        onRegisterClick = onRegisterClick,
+        onEmailChange = formViewModel::updateEmail,
+        onPasswordChange = formViewModel::updatePassword,
+        onTogglePasswordVisibility = formViewModel::togglePasswordVisibility,
+        onShowRecovery = { formViewModel.showRecovery(true) },
+        onSubmitLogin = { formViewModel.submitLogin(onLogin, onAuthenticated) },
+        onShowDialog = formViewModel::showDialog,
+        onDismissDialog = { formViewModel.showDialog("") }
+    )
+}
+
+/**
+ * Vista UI Stateless pura para el inicio de sesión.
+ */
+@Composable
+fun AuthContent(
+    formState: LoginUiState,
+    onBack: () -> Unit,
+    onRegisterClick: () -> Unit,
+    onEmailChange: (String) -> Unit,
+    onPasswordChange: (String) -> Unit,
+    onTogglePasswordVisibility: () -> Unit,
+    onShowRecovery: () -> Unit,
+    onSubmitLogin: () -> Unit,
+    onShowDialog: (String) -> Unit,
+    onDismissDialog: () -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(VozBackground)
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 12.dp, vertical = 10.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        Header(onBack)
+        StatusRow()
+        IntroCard()
+
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            color = Color.White,
+            shape = RoundedCornerShape(18.dp),
+            shadowElevation = 2.dp,
+        ) {
+            Column(
+                modifier = Modifier.padding(horizontal = 14.dp, vertical = 13.dp),
+                verticalArrangement = Arrangement.spacedBy(7.dp),
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    FieldLabel("Correo Electrónico", Modifier.weight(1f))
+                    Text("Perfil Ciudadano", color = VozMuted, fontSize = 10.sp)
+                }
+                AuthField(
+                    value = formState.email,
+                    onValueChange = onEmailChange,
+                    placeholder = "nombre@correo.com",
+                    leading = { Icon(Icons.Default.MailOutline, null, tint = VozMuted, modifier = Modifier.size(17.dp)) },
+                    keyboardType = KeyboardType.Email,
+                )
+
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    FieldLabel("Contraseña", Modifier.weight(1f))
+                    Text(
+                        "¿Olvidaste tu contraseña?",
+                        color = Color(0xFF45628A),
+                        fontSize = 10.sp,
+                        modifier = Modifier.clickable(onClick = onShowRecovery),
+                    )
+                }
+                AuthField(
+                    value = formState.password,
+                    onValueChange = onPasswordChange,
+                    placeholder = "Mínimo 6 caracteres",
+                    leading = { Icon(Icons.Default.Lock, null, tint = VozMuted, modifier = Modifier.size(17.dp)) },
+                    keyboardType = KeyboardType.Password,
+                    password = true,
+                    visible = formState.passwordVisible,
+                    onToggleVisibility = onTogglePasswordVisibility,
+                )
+
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.Security, null, tint = VozGreen, modifier = Modifier.size(12.dp))
+                    Spacer(Modifier.width(5.dp))
+                    Text("Te enviaremos un enlace de recuperación seguro si no la recuerdas.", color = VozMuted, fontSize = 10.sp, lineHeight = 13.sp)
+                }
+
+                if (formState.message.isNotBlank()) {
+                    Text(
+                        formState.message,
+                        color = if (formState.success) Color(0xFF087A55) else Color(0xFFB42318),
+                        fontSize = 12.sp,
+                        lineHeight = 16.sp,
+                    )
+                }
+
+                Button(
+                    onClick = onSubmitLogin,
+                    enabled = !formState.loading,
+                    modifier = Modifier.fillMaxWidth().height(46.dp),
+                    shape = RoundedCornerShape(9.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = VozNavy),
+                ) {
+                    if (formState.loading) {
+                        CircularProgressIndicator(modifier = Modifier.size(20.dp), color = Color.White, strokeWidth = 2.dp)
+                    } else {
+                        Icon(Icons.Default.Login, null, modifier = Modifier.size(17.dp))
+                        Spacer(Modifier.width(8.dp))
+                        Text("Ingresar a mi Barrio", fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                    }
+                }
+
+                DividerLabel("O CONTINÚA CON")
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedButton(
+                        onClick = { onShowDialog("El acceso con Google estará disponible cuando conectemos el proveedor de autenticación.") },
+                        modifier = Modifier.weight(1f).height(42.dp),
+                        shape = RoundedCornerShape(9.dp),
+                    ) {
+                        Text("G", color = Color(0xFF4285F4), fontWeight = FontWeight.Black, fontSize = 19.sp)
+                        Spacer(Modifier.width(6.dp))
+                        Text("Google", color = VozNavy, fontSize = 11.sp)
+                    }
+                    OutlinedButton(
+                        onClick = { onShowDialog("El acceso biométrico estará disponible cuando configuremos la autenticación segura del dispositivo.") },
+                        modifier = Modifier.weight(1f).height(42.dp),
+                        shape = RoundedCornerShape(9.dp),
+                    ) {
+                        Icon(Icons.Default.Fingerprint, null, tint = Color(0xFF188A79), modifier = Modifier.size(17.dp))
+                        Spacer(Modifier.width(5.dp))
+                        Text("Huella / Face", color = VozNavy, fontSize = 11.sp)
+                    }
+                }
+            }
+        }
+
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            color = Color.White,
+            shape = RoundedCornerShape(17.dp),
+            shadowElevation = 2.dp,
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 11.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                Box(
+                    modifier = Modifier.size(34.dp).clip(CircleShape).background(Color(0xFF9AF1CA)),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(Icons.Default.PersonAdd, null, tint = Color(0xFF087A55), modifier = Modifier.size(18.dp))
+                }
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        "¿Aún no eres miembro?",
+                        color = VozNavy,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                    )
+                    Text(
+                        "Súmate a la vigilancia y cuidado barrial.",
+                        color = VozMuted,
+                        fontSize = 10.sp,
+                    )
+                }
+                Button(
+                    onClick = onRegisterClick,
+                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 0.dp),
+                    modifier = Modifier.height(34.dp),
+                    shape = RoundedCornerShape(8.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF087A55)),
+                ) {
+                    Text("Registrarme", fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                }
+            }
+        }
+
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(bottom = 4.dp),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(Icons.Default.Security, null, tint = Color(0xFF8A949E), modifier = Modifier.size(11.dp))
+            Spacer(Modifier.width(5.dp))
+            Text("Participación ciudadana segura · VozBarrial", color = Color(0xFF8A949E), fontSize = 10.sp)
+        }
+    }
+
+    if (formState.dialogMessage.isNotBlank()) {
+        AlertDialog(
+            onDismissRequest = onDismissDialog,
+            title = { Text("VozBarrial", color = VozNavy) },
+            text = { Text(formState.dialogMessage) },
+            confirmButton = { TextButton(onClick = onDismissDialog) { Text("Entendido") } },
+        )
+    }
+}
+
+@Composable
+private fun Header(onBack: () -> Unit) {
+    Row(
+        modifier = Modifier.fillMaxWidth().height(44.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        IconButton(onClick = onBack, modifier = Modifier.size(36.dp)) {
+            Icon(Icons.Default.ArrowBack, contentDescription = "Volver", tint = VozNavy, modifier = Modifier.size(19.dp))
+        }
+        Box(
+            modifier = Modifier.size(29.dp).clip(CircleShape).background(VozNavy),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(Icons.Default.LocationOn, null, tint = Color.White, modifier = Modifier.size(20.dp))
+        }
+        Spacer(Modifier.width(8.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text("VozBarrial", color = VozNavy, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+            Text("Acceso ciudadano", color = VozMuted, fontSize = 10.sp)
+        }
+        Icon(Icons.Default.Security, contentDescription = "Acceso seguro", tint = Color(0xFF56AA9A), modifier = Modifier.size(17.dp))
+    }
+}
+
+@Composable
+private fun StatusRow() {
+    Row(horizontalArrangement = Arrangement.spacedBy(7.dp), modifier = Modifier.fillMaxWidth()) {
+        StatusPill("Red Segura Activa", Modifier.weight(1f), true)
+        StatusPill("Comunidad en línea", Modifier.weight(1f), false)
+    }
+}
+
+@Composable
+private fun StatusPill(text: String, modifier: Modifier, secure: Boolean) {
+    Surface(modifier = modifier, shape = RoundedCornerShape(50), color = if (secure) Color(0xFFD6FAEA) else Color(0xFFF0F3F9)) {
+        Row(
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 5.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center,
+        ) {
+            if (secure) Icon(Icons.Default.Security, null, tint = Color(0xFF07885F), modifier = Modifier.size(11.dp))
+            else Box(Modifier.size(6.dp).clip(CircleShape).background(Color(0xFF6EB99B)))
+            Spacer(Modifier.width(4.dp))
+            Text(text, color = if (secure) Color(0xFF087A55) else VozNavy, fontSize = 9.sp, fontWeight = FontWeight.Medium, maxLines = 1)
+        }
+    }
+}
+
+@Composable
+private fun IntroCard() {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(18.dp),
+        color = Color.White,
+        shadowElevation = 2.dp,
+    ) {
+        Column(
+            modifier = Modifier
+                .background(Brush.horizontalGradient(listOf(Color(0xFFE5FFF4), Color.White, Color(0xFFEFF4FF))))
+                .padding(horizontal = 16.dp, vertical = 13.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Box(
+                modifier = Modifier.size(52.dp).clip(RoundedCornerShape(15.dp)).background(Color(0xFFF0F4FF)),
+                contentAlignment = Alignment.Center,
+            ) {
+                Box(Modifier.size(36.dp).clip(CircleShape).background(VozNavy), contentAlignment = Alignment.Center) {
+                    Icon(Icons.Default.LocationOn, null, tint = Color.White, modifier = Modifier.size(24.dp))
+                    Icon(Icons.Default.CheckCircle, null, tint = Color(0xFF3884F5), modifier = Modifier.size(13.dp).align(Alignment.Center))
+                }
+            }
+            Spacer(Modifier.height(6.dp))
+            Text("VOZBARRIAL DIGITAL", color = Color(0xFF07885F), fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+            Text(
+                "Bienvenido a VozBarrial",
+                color = VozNavy,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center,
+            )
+            Text(
+                "Tu red de colaboración y seguridad vecinal en tiempo real.",
+                color = VozMuted,
+                fontSize = 11.sp,
+                lineHeight = 15.sp,
+                textAlign = TextAlign.Center,
+            )
+        }
+    }
+}
+
+@Composable
+private fun FieldLabel(text: String, modifier: Modifier = Modifier) {
+    Text(text, modifier = modifier, color = VozNavy, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+}
+
+@Composable
+private fun AuthField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    placeholder: String,
+    leading: @Composable () -> Unit,
+    keyboardType: KeyboardType,
+    password: Boolean = false,
+    visible: Boolean = false,
+    onToggleVisibility: () -> Unit = {},
+) {
+    OutlinedTextField(
+        value = value,
+        onValueChange = onValueChange,
+        modifier = Modifier.fillMaxWidth().height(53.dp),
+        singleLine = true,
+        placeholder = { Text(placeholder, fontSize = 11.sp, color = VozMuted) },
+        leadingIcon = leading,
+        trailingIcon = if (password) {
+            {
+                IconButton(onClick = onToggleVisibility, modifier = Modifier.size(36.dp)) {
+                    Icon(
+                        if (visible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                        contentDescription = if (visible) "Ocultar contraseña" else "Mostrar contraseña",
+                        tint = VozMuted,
+                        modifier = Modifier.size(17.dp),
+                    )
+                }
+            }
+        } else null,
+        visualTransformation = if (password && !visible) PasswordVisualTransformation() else VisualTransformation.None,
+        keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
+        shape = RoundedCornerShape(9.dp),
+        textStyle = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp, color = VozNavy),
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedContainerColor = VozBlueSurface,
+            unfocusedContainerColor = VozBlueSurface,
+            focusedBorderColor = Color(0xFFB8C8E8),
+            unfocusedBorderColor = Color.Transparent,
+            focusedLeadingIconColor = VozMuted,
+            unfocusedLeadingIconColor = VozMuted,
+        ),
+    )
+}
+
+@Composable
+private fun DividerLabel(text: String) {
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(7.dp)) {
+        Box(Modifier.weight(1f).height(1.dp).background(Color(0xFFE9EDF4)))
+        Text(text, color = VozMuted, fontSize = 9.sp)
+        Box(Modifier.weight(1f).height(1.dp).background(Color(0xFFE9EDF4)))
+    }
+}
