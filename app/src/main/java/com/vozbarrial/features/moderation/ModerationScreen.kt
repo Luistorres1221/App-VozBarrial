@@ -54,6 +54,7 @@ fun AdminMapScreen(
     reports: List<Report>,
     onVerification: () -> Unit,
     onResolution: () -> Unit,
+    onProfileClick: () -> Unit,
     onOpenReport: (String) -> Unit,
 ) {
     val context = LocalContext.current
@@ -157,7 +158,7 @@ fun AdminMapScreen(
 
         Column(Modifier.align(Alignment.TopCenter).fillMaxWidth().padding(horizontal = 8.dp, vertical = 7.dp)) {
             Card(shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = Color.White), elevation = CardDefaults.cardElevation(4.dp)) {
-                Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
+                Row(Modifier.fillMaxWidth().clickable(onClick = onProfileClick).padding(horizontal = 12.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
                     Box(Modifier.size(37.dp).clip(CircleShape).background(Color(0xFFE8EFF8)), contentAlignment = Alignment.Center) {
                         Text(name.firstOrNull()?.uppercase() ?: "A", color = Navy, fontWeight = FontWeight.Bold)
                     }

@@ -19,11 +19,13 @@ import com.vozbarrial.features.auth.welcome.ui.WelcomeRoute
 import com.vozbarrial.core.result.AuthOperationResult
 import com.vozbarrial.core.result.AuthError
 import com.vozbarrial.domain.model.Usurious
+import com.vozbarrial.domain.model.UserRole
 import com.vozbarrial.features.moderation.ModerationScreen
 import com.vozbarrial.features.moderation.ModerationMapScreen
 import com.vozbarrial.features.moderation.AdminMapScreen
 import com.vozbarrial.features.moderation.ResolutionScreen
 import com.vozbarrial.features.moderation.RejectionScreen
+import com.vozbarrial.features.moderation.AdminProfileScreen
 
 @Composable
 fun AppNavGraph() {
@@ -44,6 +46,8 @@ fun AppNavGraph() {
     val authUser = remember { com.google.firebase.auth.FirebaseAuth.getInstance().currentUser }
     var signedInName by remember { mutableStateOf(authUser?.email?.substringBefore("@").orEmpty()) }
     var signedInEmail by remember { mutableStateOf(authUser?.email.orEmpty()) }
+    var signedInPhone by remember { mutableStateOf("") }
+    var signedInRole by remember { mutableStateOf(UserRole.USUARIO) }
     var signedInPhoto by remember { mutableStateOf<String?>(null) }
     var signedInUid by remember { mutableStateOf(authUser?.uid.orEmpty()) }
     var equippedFrame by remember { mutableStateOf("Clásico Cívico") }
@@ -52,6 +56,7 @@ fun AppNavGraph() {
     var signedInNivel by remember { mutableStateOf("novato") }
     var ownedFramesText by remember { mutableStateOf("Clásico Cívico|Guardián Dorado|Eco Barrio Verde|Escudo Ciudadano") }
     val ownedFrames = ownedFramesText.split("|").filter { it.isNotBlank() }.toSet()
+    val isAdminSession = signedInEmail.equals("vozbarrial@gmail.com", true) || signedInRole == UserRole.ADMIN
 
     val reportList = reportsViewModel.reports
     val myReports = remember(reportList.toList(), signedInEmail, signedInUid, signedInName) {
@@ -86,6 +91,8 @@ fun AppNavGraph() {
                     if (usuario != null) {
                         signedInName = usuario.name.ifBlank { currentUser.email?.substringBefore("@").orEmpty() }
                         signedInEmail = currentUser.email.orEmpty()
+                        signedInPhone = usuario.phone
+                        signedInRole = usuario.role
                         signedInPhoto = usuario.photoUrl
                         equippedFrame = usuario.equippedFrame
                         signedInPoints = usuario.points
@@ -131,6 +138,8 @@ fun AppNavGraph() {
                     if (usuario != null) {
                         signedInName = usuario.name.ifBlank { email.substringBefore("@") }
                         signedInEmail = email
+                        signedInPhone = usuario.phone
+                        signedInRole = if (email.equals("vozbarrial@gmail.com", true)) UserRole.ADMIN else usuario.role
                         signedInPhoto = usuario.photoUrl
                         equippedFrame = usuario.equippedFrame
                         signedInPoints = usuario.points
@@ -138,17 +147,112 @@ fun AppNavGraph() {
                         signedInNivel = usuario.nivel
                         signedInUid = currentUser.uid
                         ownedFramesText = usuario.ownedFrames.joinToString("|")
+                        if (email.equals("vozbarrial@gmail.com", true) && usuario.role != UserRole.ADMIN) {
+                            document.reference.set(mapOf("role" to UserRole.ADMIN.value), com.google.firebase.firestore.SetOptions.merge())
+                        }
                     } else {
                         signedInName = email.substringBefore("@")
                         signedInEmail = email
+                        signedInRole = if (email.equals("vozbarrial@gmail.com", true)) UserRole.ADMIN else UserRole.USUARIO
+                        if (signedInRole == UserRole.ADMIN) {
+                            document.reference.set(
+                                mapOf("uid" to currentUser.uid, "name" to signedInName, "email" to email, "role" to UserRole.ADMIN.value),
+                                com.google.firebase.firestore.SetOptions.merge()
+                            )
+                        }
                     }
-                    navigationViewModel.navigate(if (email.equals("vozbarrial@gmail.com", true)) "adminMap" else "map", clearStack = true)
+                    navigationViewModel.navigate(if (signedInRole == UserRole.ADMIN) "adminMap" else "map", clearStack = true)
                 }
                 .addOnFailureListener {
                     signedInName = email.substringBefore("@")
                     signedInEmail = email
+                    signedInRole = if (email.equals("vozbarrial@gmail.com", true)) UserRole.ADMIN else UserRole.USUARIO
                     navigationViewModel.navigate(if (email.equals("vozbarrial@gmail.com", true)) "adminMap" else "map", clearStack = true)
                 }
+        }
+    }
+
+    fun saveAdminProfile(
+        fullName: String,
+        phone: String,
+        newEmail: String,
+        currentPassword: String,
+        newPassword: String,
+        onResult: (Boolean, String?) -> Unit,
+    ) {
+        val user = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
+            ?: return onResult(false, "La sesión expiró. Inicia sesión nuevamente.")
+        val emailChanged = !newEmail.equals(user.email, ignoreCase = true)
+
+        fun persistProfile(afterSave: (Boolean, String?) -> Unit) {
+            val profileRequest = com.google.firebase.auth.UserProfileChangeRequest.Builder()
+                .setDisplayName(fullName)
+                .build()
+            user.updateProfile(profileRequest)
+                .addOnSuccessListener {
+                    val values = mapOf(
+                        "uid" to user.uid,
+                        "name" to fullName,
+                        "email" to user.email.orEmpty(),
+                        "phone" to phone,
+                        "role" to UserRole.ADMIN.value
+                    )
+                    com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                        .collection("usuarios")
+                        .document(user.uid)
+                        .set(values, com.google.firebase.firestore.SetOptions.merge())
+                        .addOnSuccessListener {
+                            signedInName = fullName
+                            signedInEmail = user.email.orEmpty()
+                            signedInPhone = phone
+                            signedInRole = UserRole.ADMIN
+                            signedInUid = user.uid
+                            afterSave(true, null)
+                        }
+                        .addOnFailureListener { afterSave(false, it.localizedMessage) }
+                }
+                .addOnFailureListener { afterSave(false, it.localizedMessage) }
+        }
+
+        fun updatePasswordThenPersist() {
+            if (newPassword.isBlank()) {
+                persistProfile(onResult)
+            } else {
+                user.updatePassword(newPassword)
+                    .addOnSuccessListener { persistProfile(onResult) }
+                    .addOnFailureListener { error ->
+                        if (emailChanged) {
+                            persistProfile { _, _ ->
+                                onResult(false, "El correo se actualizó, pero no se pudo cambiar la contraseña: ${error.localizedMessage}")
+                            }
+                        } else {
+                            onResult(false, error.localizedMessage)
+                        }
+                    }
+            }
+        }
+
+        fun updateEmailAndFinish() {
+            if (!emailChanged) {
+                updatePasswordThenPersist()
+            } else {
+                user.updateEmail(newEmail)
+                    .addOnSuccessListener {
+                        signedInEmail = user.email.orEmpty()
+                        user.sendEmailVerification()
+                        updatePasswordThenPersist()
+                    }
+                    .addOnFailureListener { onResult(false, it.localizedMessage) }
+            }
+        }
+
+        if (emailChanged || newPassword.isNotBlank()) {
+            val credential = com.google.firebase.auth.EmailAuthProvider.getCredential(user.email.orEmpty(), currentPassword)
+            user.reauthenticate(credential)
+                .addOnSuccessListener { updateEmailAndFinish() }
+                .addOnFailureListener { onResult(false, "No se pudo validar la contraseña actual: ${it.localizedMessage}") }
+        } else {
+            updateEmailAndFinish()
         }
     }
 
@@ -206,7 +310,7 @@ fun AppNavGraph() {
             }
         )
         "adminMap" -> {
-            if (!com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.email.equals("vozbarrial@gmail.com", true)) {
+            if (!isAdminSession) {
                 LaunchedEffect(Unit) { navigationViewModel.navigate("welcome", clearStack = true) }
             } else {
                 AdminMapScreen(
@@ -220,12 +324,27 @@ fun AppNavGraph() {
                         moderationInitialTab = "En Proceso"
                         navigationViewModel.navigate("resolution")
                     },
+                    onProfileClick = { navigationViewModel.navigate("adminProfile") },
                     onOpenReport = { navigationViewModel.navigate("reportDetail/$it") }
                 )
             }
         }
+        "adminProfile" -> {
+            if (!isAdminSession) {
+                LaunchedEffect(Unit) { navigationViewModel.navigate("welcome", clearStack = true) }
+            } else {
+                AdminProfileScreen(
+                    name = signedInName,
+                    email = signedInEmail,
+                    phone = signedInPhone,
+                    onBack = { navigationViewModel.goBack() },
+                    onSave = ::saveAdminProfile,
+                    onSaved = { navigationViewModel.navigate("adminMap", clearStack = true) }
+                )
+            }
+        }
         "moderation" -> {
-            if (!com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.email.equals("vozbarrial@gmail.com", true)) {
+            if (!isAdminSession) {
                 LaunchedEffect(Unit) { navigationViewModel.navigate("map", clearStack = true) }
             } else {
                 ModerationScreen(
@@ -247,7 +366,7 @@ fun AppNavGraph() {
             }
         }
         "rejection" -> {
-            if (!com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.email.equals("vozbarrial@gmail.com", true)) {
+            if (!isAdminSession) {
                 LaunchedEffect(Unit) { navigationViewModel.navigate("welcome", clearStack = true) }
             } else {
                 val report = reportsViewModel.reports.firstOrNull { it.id == selectedRejectionReportId }
@@ -276,7 +395,7 @@ fun AppNavGraph() {
             }
         }
         "resolution" -> {
-            if (!com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.email.equals("vozbarrial@gmail.com", true)) {
+            if (!isAdminSession) {
                 LaunchedEffect(Unit) { navigationViewModel.navigate("welcome", clearStack = true) }
             } else {
                 ResolutionScreen(
@@ -290,7 +409,7 @@ fun AppNavGraph() {
             }
         }
         "moderationMap" -> {
-            if (!com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.email.equals("vozbarrial@gmail.com", true)) {
+            if (!isAdminSession) {
                 LaunchedEffect(Unit) { navigationViewModel.navigate("welcome", clearStack = true) }
             } else {
                 ModerationMapScreen(reports = reportsViewModel.reports, onBack = { navigationViewModel.goBack() })

@@ -139,12 +139,14 @@ class ReportsRepository(
     override fun moderate(reportId: String, status: String, onResult: (Result<Unit>) -> Unit) {
         val user = auth.currentUser
             ?: return onResult(Result.failure(IllegalStateException("Inicia sesión para moderar reportes.")))
-        if (!user.email.equals(ADMIN_EMAIL, ignoreCase = true)) {
-            return onResult(Result.failure(SecurityException("Esta acción está reservada al administrador.")))
-        }
         val ref = firestore.collection(REPORTS).document(reportId)
+        val adminRef = firestore.collection("usuarios").document(user.uid)
         firestore.runTransaction { tx ->
+            val adminProfile = tx.get(adminRef)
             val snapshot = tx.get(ref)
+            val isAdmin = user.email.equals(ADMIN_EMAIL, ignoreCase = true) ||
+                adminProfile.getString("role").equals("ADMIN", ignoreCase = true)
+            require(isAdmin) { "Esta acción está reservada al administrador." }
             require(snapshot.exists()) { "El reporte ya no está disponible." }
             tx.update(ref, mapOf(
                 "status" to status,
@@ -165,12 +167,14 @@ class ReportsRepository(
     ) {
         val user = auth.currentUser
             ?: return onResult(Result.failure(IllegalStateException("Inicia sesión para moderar reportes.")))
-        if (!user.email.equals(ADMIN_EMAIL, ignoreCase = true)) {
-            return onResult(Result.failure(SecurityException("Esta acción está reservada al administrador.")))
-        }
         val ref = firestore.collection(REPORTS).document(reportId)
+        val adminRef = firestore.collection("usuarios").document(user.uid)
         firestore.runTransaction { tx ->
+            val adminProfile = tx.get(adminRef)
             val snapshot = tx.get(ref)
+            val isAdmin = user.email.equals(ADMIN_EMAIL, ignoreCase = true) ||
+                adminProfile.getString("role").equals("ADMIN", ignoreCase = true)
+            require(isAdmin) { "Esta acción está reservada al administrador." }
             require(snapshot.exists()) { "El reporte ya no está disponible." }
             tx.update(ref, mapOf(
                 "status" to com.vozbarrial.domain.model.ReportStatus.RECHAZADO.value,
