@@ -8,4 +8,5 @@ interface ReportsGateway {
     fun publish(report: Report, onResult: (Result<Unit>) -> Unit)
     fun update(reportId: String, title: String, description: String, onResult: (Result<Unit>) -> Unit)
     fun delete(reportId: String, onResult: (Result<Unit>) -> Unit)
+    fun moderate(reportId: String, status: String, onResult: (Result<Unit>) -> Unit)
 }

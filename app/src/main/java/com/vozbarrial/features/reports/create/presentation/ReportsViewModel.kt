@@ -123,4 +123,10 @@ class ReportsViewModel : ViewModel() {
             onComplete(result.isSuccess, result.exceptionOrNull()?.localizedMessage)
         }
     }
+
+    fun moderateReport(id: String, status: String, onComplete: (Boolean, String?) -> Unit) {
+        repository.moderate(id, status) { result ->
+            onComplete(result.isSuccess, result.exceptionOrNull()?.localizedMessage)
+        }
+    }
 }

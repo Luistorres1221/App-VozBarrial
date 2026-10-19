@@ -136,5 +136,27 @@ class ReportsRepository(
         }.addOnFailureListener { onResult(Result.failure(it)) }
     }
 
-    companion object { private const val REPORTS = "reportes" }
+    override fun moderate(reportId: String, status: String, onResult: (Result<Unit>) -> Unit) {
+        val user = auth.currentUser
+            ?: return onResult(Result.failure(IllegalStateException("Inicia sesión para moderar reportes.")))
+        if (!user.email.equals(ADMIN_EMAIL, ignoreCase = true)) {
+            return onResult(Result.failure(SecurityException("Esta acción está reservada al administrador.")))
+        }
+        val ref = firestore.collection(REPORTS).document(reportId)
+        firestore.runTransaction { tx ->
+            val snapshot = tx.get(ref)
+            require(snapshot.exists()) { "El reporte ya no está disponible." }
+            tx.update(ref, mapOf(
+                "status" to status,
+                "moderatedAt" to System.currentTimeMillis(),
+                "moderatedBy" to user.uid
+            ))
+        }.addOnSuccessListener { onResult(Result.success(Unit)) }
+            .addOnFailureListener { onResult(Result.failure(it)) }
+    }
+
+    companion object {
+        private const val REPORTS = "reportes"
+        private const val ADMIN_EMAIL = "vozbarrial@gmail.com"
+    }
 }
