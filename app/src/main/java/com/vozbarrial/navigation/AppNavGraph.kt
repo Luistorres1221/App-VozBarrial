@@ -22,6 +22,7 @@ import com.vozbarrial.domain.model.Usurious
 import com.vozbarrial.features.moderation.ModerationScreen
 import com.vozbarrial.features.moderation.ModerationMapScreen
 import com.vozbarrial.features.moderation.AdminMapScreen
+import com.vozbarrial.features.moderation.ResolutionScreen
 
 @Composable
 fun AppNavGraph() {
@@ -214,8 +215,8 @@ fun AppNavGraph() {
                         navigationViewModel.navigate("moderation")
                     },
                     onResolution = {
-                        moderationInitialTab = "Resolución"
-                        navigationViewModel.navigate("moderation")
+                        moderationInitialTab = "En Proceso"
+                        navigationViewModel.navigate("resolution")
                     },
                     onOpenReport = { navigationViewModel.navigate("reportDetail/$it") }
                 )
@@ -226,6 +227,24 @@ fun AppNavGraph() {
                 LaunchedEffect(Unit) { navigationViewModel.navigate("map", clearStack = true) }
             } else {
                 ModerationScreen(
+                    reports = reportsViewModel.reports,
+                    initialTab = moderationInitialTab,
+                    onBack = { navigationViewModel.navigate("adminMap", clearStack = true) },
+                    onOpenMap = { navigationViewModel.navigate("adminMap", clearStack = true) },
+                    onOpenReport = { navigationViewModel.navigate("reportDetail/$it") },
+                    onModerate = reportsViewModel::moderateReport,
+                    onApproved = {
+                        moderationInitialTab = "En Proceso"
+                        navigationViewModel.navigate("resolution", clearStack = true)
+                    }
+                )
+            }
+        }
+        "resolution" -> {
+            if (!com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.email.equals("vozbarrial@gmail.com", true)) {
+                LaunchedEffect(Unit) { navigationViewModel.navigate("welcome", clearStack = true) }
+            } else {
+                ResolutionScreen(
                     reports = reportsViewModel.reports,
                     initialTab = moderationInitialTab,
                     onBack = { navigationViewModel.navigate("adminMap", clearStack = true) },

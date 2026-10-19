@@ -126,6 +126,10 @@ class ReportsViewModel : ViewModel() {
 
     fun moderateReport(id: String, status: String, onComplete: (Boolean, String?) -> Unit) {
         repository.moderate(id, status) { result ->
+            if (result.isSuccess) {
+                val index = reports.indexOfFirst { it.id == id }
+                if (index >= 0) reports[index] = reports[index].copy(status = status)
+            }
             onComplete(result.isSuccess, result.exceptionOrNull()?.localizedMessage)
         }
     }
