@@ -51,10 +51,27 @@ class ProfileRepository(
                 }
             }
 
-            val updated = mapOf("name" to name.trim(), "photoUrl" to finalPhotoUrl)
+            val cleanName = name.trim()
+            val updated = mapOf("name" to cleanName, "photoUrl" to finalPhotoUrl)
             firestore.collection(USERS).document(user.uid).set(updated, SetOptions.merge())
                 .addOnSuccessListener {
-                    onResult(Result.success(Usurious(uid = user.uid, name = name.trim(), email = user.email.orEmpty(), photoUrl = finalPhotoUrl)))
+                    firestore.collection("reportes").whereEqualTo("authorUid", user.uid).get()
+                        .addOnSuccessListener { docs ->
+                            for (doc in docs) {
+                                doc.reference.update("authorName", cleanName)
+                            }
+                        }
+                    val userEmail = user.email.orEmpty()
+                    if (userEmail.isNotBlank()) {
+                        firestore.collection("reportes").whereEqualTo("authorEmail", userEmail).get()
+                            .addOnSuccessListener { docs ->
+                                for (doc in docs) {
+                                    doc.reference.update("authorName", cleanName)
+                                }
+                            }
+                    }
+
+                    onResult(Result.success(Usurious(uid = user.uid, name = cleanName, email = userEmail, photoUrl = finalPhotoUrl)))
                 }
                 .addOnFailureListener { onResult(Result.failure(it)) }
         }
