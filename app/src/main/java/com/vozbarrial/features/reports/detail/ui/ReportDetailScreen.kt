@@ -3,6 +3,7 @@ package com.vozbarrial.features.reports.detail.ui
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -83,6 +84,7 @@ fun ReportDetailRoute(
     userName: String,
     userPhoto: String?,
     onBack: () -> Unit,
+    onNavigateToProfile: (String) -> Unit = {},
     viewModel: ReportDetailViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -97,6 +99,7 @@ fun ReportDetailRoute(
         userName = userName,
         userPhoto = userPhoto,
         onBack = onBack,
+        onNavigateToProfile = onNavigateToProfile,
         onContributionChange = viewModel::onNewContributionChanged,
         onAddPhoto = viewModel::addContributionPhoto,
         onRemovePhoto = viewModel::removeContributionPhoto,
@@ -111,6 +114,7 @@ private fun ReportDetailScreen(
     userName: String,
     userPhoto: String?,
     onBack: () -> Unit,
+    onNavigateToProfile: (String) -> Unit,
     onContributionChange: (String) -> Unit,
     onAddPhoto: (String?) -> Unit,
     onRemovePhoto: (Int) -> Unit,
@@ -381,7 +385,12 @@ private fun ReportDetailScreen(
                 shape = RoundedCornerShape(16.dp),
                 color = Color.White,
                 shadowElevation = 2.dp,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth().clickable {
+                    val authorId = report.authorUid.ifBlank { report.authorEmail.ifBlank { report.authorName } }
+                    if (authorId.isNotBlank()) {
+                        onNavigateToProfile(authorId)
+                    }
+                }
             ) {
                 Row(
                     modifier = Modifier.padding(16.dp),
@@ -410,7 +419,12 @@ private fun ReportDetailScreen(
                 shape = RoundedCornerShape(16.dp),
                 color = Color.White,
                 shadowElevation = 2.dp,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth().clickable {
+                    val authorId = report.authorUid.ifBlank { report.authorEmail.ifBlank { report.authorName } }
+                    if (authorId.isNotBlank()) {
+                        onNavigateToProfile(authorId)
+                    }
+                }
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {

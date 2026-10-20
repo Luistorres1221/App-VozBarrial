@@ -370,11 +370,19 @@ fun AppNavGraph() {
                         report = targetReport,
                         userName = signedInName,
                         userPhoto = signedInPhoto,
-                        onBack = { navigationViewModel.goBack() }
+                        onBack = { navigationViewModel.goBack() },
+                        onNavigateToProfile = { authorId -> navigationViewModel.navigate("userProfile/$authorId") }
                     )
                 } else {
                     LaunchedEffect(Unit) { navigationViewModel.goBack() }
                 }
+            }
+            screen.startsWith("userProfile/") -> {
+                val authorId = screen.substringAfter("userProfile/")
+                com.vozbarrial.features.profile.publicProfile.UserProfileScreen(
+                    authorId = authorId,
+                    onBack = { navigationViewModel.goBack() }
+                )
             }
             screen.startsWith("adminRejectReason/") -> {
                 val reportId = screen.substringAfter("adminRejectReason/")
