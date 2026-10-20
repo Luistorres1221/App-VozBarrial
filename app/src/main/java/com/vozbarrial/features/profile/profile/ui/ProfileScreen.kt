@@ -461,7 +461,7 @@ fun CommunityContent(
                                             val isRejected = report.status.equals("RECHAZADO", true)
                                             ReportCard(
                                                 report = report,
-                                                onEdit = if (isRejected) { { onOpenEditReport(report) } } else null,
+                                                onEdit = if (isRejected) { { onNavigate("editReport/${report.id}") } } else null,
                                                 onDelete = { onOpenDeleteReport(report) }
                                             )
                                         }

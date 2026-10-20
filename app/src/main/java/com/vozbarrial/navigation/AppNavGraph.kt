@@ -271,8 +271,8 @@ fun AppNavGraph() {
             equippedFrame = equippedFrame,
             onBack = { navigationViewModel.goBack() },
             onNavigate = { page ->
-                when (page) {
-                    "editProfile", "frames", "store" -> navigationViewModel.navigate(page)
+                when {
+                    page == "editProfile" || page == "frames" || page == "store" || page.startsWith("editReport/") -> navigationViewModel.navigate(page)
                     else -> navigationViewModel.showDashboardPage(page)
                 }
             },
@@ -372,6 +372,32 @@ fun AppNavGraph() {
                         userPhoto = signedInPhoto,
                         onBack = { navigationViewModel.goBack() },
                         onNavigateToProfile = { authorId -> navigationViewModel.navigate("userProfile/$authorId") }
+                    )
+                } else {
+                    LaunchedEffect(Unit) { navigationViewModel.goBack() }
+                }
+            }
+            screen.startsWith("editReport/") -> {
+                val reportId = screen.substringAfter("editReport/")
+                val targetReport = reportsViewModel.reports.firstOrNull { it.id == reportId }
+                if (targetReport != null) {
+                    com.vozbarrial.features.reports.create.ui.ReportEditRoute(
+                        report = targetReport,
+                        onBack = { navigationViewModel.goBack() },
+                        onUpdate = { title, description, category, photos, done ->
+                            val imageUrls = if (photos.isNotEmpty()) photos.joinToString(",") else null
+                            val firestore = com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                            val updates = mapOf(
+                                "title" to title.trim(),
+                                "description" to description.trim(),
+                                "category" to category,
+                                "imageUrl" to imageUrls,
+                                "status" to "POR_VERIFICAR"
+                            )
+                            firestore.collection("reportes").document(reportId).update(updates)
+                                .addOnSuccessListener { done(true, null) }
+                                .addOnFailureListener { done(false, it.localizedMessage) }
+                        }
                     )
                 } else {
                     LaunchedEffect(Unit) { navigationViewModel.goBack() }
