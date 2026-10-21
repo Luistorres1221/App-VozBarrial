@@ -22,6 +22,7 @@ class ReportsRepository(
     private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance(),
 ) : ReportsGateway {
     private var listener: ListenerRegistration? = null
+    private var reportListener: ListenerRegistration? = null
 
     override fun observeReports(onChange: (List<Report>) -> Unit) {
         if (listener != null) return
@@ -33,6 +34,18 @@ class ReportsRepository(
     }
 
     override fun stopObserving() { listener?.remove(); listener = null }
+
+    override fun observeReport(reportId: String, onChange: (Report?) -> Unit) {
+        reportListener?.remove()
+        if (reportId.isBlank()) return
+        reportListener = firestore.collection(REPORTS).document(reportId)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null || snapshot == null) return@addSnapshotListener
+                onChange(snapshot.toObject(Report::class.java)?.copy(id = snapshot.id))
+            }
+    }
+
+    override fun stopObservingReport() { reportListener?.remove(); reportListener = null }
 
     suspend fun uploadToCloudinary(context: Context, uri: Uri): String? = withContext(Dispatchers.IO) {
         try {

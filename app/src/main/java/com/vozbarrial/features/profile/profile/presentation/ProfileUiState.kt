@@ -38,7 +38,7 @@ data class ProfileUiState(
         get() = sortedReports.filter { report ->
             when (activityFilter) {
                 "Por verificar" -> report.status.equals("POR_VERIFICAR", true)
-                "Verificado"-> report.status.equals("VERIFICADO", true) || report.status.equals("RESUELTO", true)
+                "Aprobados", "Verificados", "Verificado" -> report.status.equals("VERIFICADO", true) || report.status.equals("RESUELTO", true)
                 "Rechazado" -> report.status.equals("RECHAZADO", true)
                 else -> true
             }

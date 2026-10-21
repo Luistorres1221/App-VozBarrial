@@ -15,5 +15,8 @@ data class Report(
     val longitude: Double = 0.0,
     val status: String = ReportStatus.POR_VERIFICAR.value,
     val votes: Int = 0,
-    val timestamp: Long = System.currentTimeMillis()
+    val timestamp: Long = System.currentTimeMillis(),
+    val rejectionReason: String? = null,
+    val rejectionExplanation: String? = null,
+    val allowResubmit: Boolean = false
 )

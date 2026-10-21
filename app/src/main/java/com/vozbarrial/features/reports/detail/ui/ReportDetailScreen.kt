@@ -90,8 +90,12 @@ fun ReportDetailRoute(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
-    LaunchedEffect(report) {
+    LaunchedEffect(report.id) {
         viewModel.setReport(report)
+    }
+
+    DisposableEffect(viewModel, report.id) {
+        onDispose { viewModel.stopObservingReport() }
     }
 
     ReportDetailScreen(
@@ -193,6 +197,7 @@ private fun ReportDetailScreen(
                         ReportStatus.RESUELTO -> Color(0xFFDBEAFE)
                         ReportStatus.RECHAZADO -> Color(0xFFFEE2E2)
                         ReportStatus.ELIMINADO -> Color(0xFFF1F5F9)
+                        ReportStatus.DESCONOCIDO -> Color(0xFFF1F5F9)
                     }
                     val statusFg = when (statusEnum) {
                         ReportStatus.POR_VERIFICAR -> Color(0xFFD97706)
@@ -200,20 +205,16 @@ private fun ReportDetailScreen(
                         ReportStatus.RESUELTO -> Color(0xFF1D4ED8)
                         ReportStatus.RECHAZADO -> Color(0xFFDC2626)
                         ReportStatus.ELIMINADO -> Color(0xFF64748B)
+                        ReportStatus.DESCONOCIDO -> Color(0xFF64748B)
                     }
-                    val statusLabel = when (statusEnum) {
-                        ReportStatus.POR_VERIFICAR -> "Por verificar"
-                        ReportStatus.VERIFICADO -> "Verificado Oficialmente"
-                        ReportStatus.RESUELTO -> "Resuelto"
-                        ReportStatus.RECHAZADO -> "Rechazado"
-                        ReportStatus.ELIMINADO -> "Eliminado"
-                    }
+                    val statusLabel = statusEnum.label
                     val statusIcon = when (statusEnum) {
                         ReportStatus.POR_VERIFICAR -> Icons.Default.Schedule
                         ReportStatus.VERIFICADO -> Icons.Default.CheckCircle
                         ReportStatus.RESUELTO -> Icons.Default.CheckCircle
                         ReportStatus.RECHAZADO -> Icons.Default.Warning
                         ReportStatus.ELIMINADO -> Icons.Default.Close
+                        ReportStatus.DESCONOCIDO -> Icons.Default.Warning
                     }
 
                     Row(
@@ -237,6 +238,23 @@ private fun ReportDetailScreen(
                                 }
                             }
                         }
+                    }
+
+                    if (statusEnum == ReportStatus.RECHAZADO) {
+                        Spacer(Modifier.height(10.dp))
+                        Text("Motivo del rechazo", color = VozNavy, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                        report.rejectionReason?.takeIf { it.isNotBlank() }?.let {
+                            Text(it, color = VozMuted, fontSize = 12.sp)
+                        }
+                        report.rejectionExplanation?.takeIf { it.isNotBlank() }?.let {
+                            Text(it, color = VozMuted, fontSize = 12.sp)
+                        }
+                        Text(
+                            if (report.allowResubmit) "Puedes corregir y reenviar este reporte."
+                            else "Este rechazo es final.",
+                            color = VozMuted,
+                            fontSize = 11.sp
+                        )
                     }
 
                     Spacer(Modifier.height(14.dp))

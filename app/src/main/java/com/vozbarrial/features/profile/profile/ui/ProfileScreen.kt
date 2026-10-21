@@ -346,7 +346,7 @@ fun CommunityContent(
                                 modifier = Modifier.weight(1f)
                             )
                             SummaryTile(
-                                label = "Verificados",
+                                label = "Aprobados",
                                 value = uiState.verifiedCount.toString(),
                                 subtitle = "${uiState.effectivenessPercentage}% efectividad",
                                 modifier = Modifier.weight(1f)
@@ -415,7 +415,7 @@ fun CommunityContent(
                         val filterOptions = listOf(
                             "Todas" to uiState.reports.size,
                             "Por verificar" to uiState.reports.count { it.status.equals("POR_VERIFICAR", true) },
-                            "Verificados" to uiState.reports.count { it.status.equals("VERIFICADO", true) || it.status.equals("RESUELTO", true) },
+                            "Aprobados" to uiState.reports.count { it.status.equals("VERIFICADO", true) || it.status.equals("RESUELTO", true) },
                             "Rechazados" to uiState.reports.count { it.status.equals("RECHAZADO", true) }
                         )
                         androidx.compose.foundation.lazy.LazyRow(
@@ -458,10 +458,9 @@ fun CommunityContent(
                                         verticalArrangement = Arrangement.spacedBy(8.dp)
                                     ) {
                                         chunk.forEach { report ->
-                                            val isRejected = report.status.equals("RECHAZADO", true)
                                             ReportCard(
                                                 report = report,
-                                                onEdit = if (isRejected) { { onNavigate("editReport/${report.id}") } } else null,
+                                                onEdit = if (report.status.equals("RECHAZADO", true) && report.allowResubmit) { { onNavigate("editReport/${report.id}") } } else null,
                                                 onDelete = { onOpenDeleteReport(report) }
                                             )
                                         }

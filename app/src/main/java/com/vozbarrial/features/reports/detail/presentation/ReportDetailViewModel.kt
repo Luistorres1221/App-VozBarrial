@@ -28,9 +28,19 @@ class ReportDetailViewModel : ViewModel() {
 
     fun setReport(report: Report) {
         _uiState.update { it.copy(report = report, supportCount = report.votes) }
+        repository.observeReport(report.id) { currentReport ->
+            if (currentReport != null) {
+                _uiState.update { state ->
+                    if (state.report.id == currentReport.id) state.copy(report = currentReport, supportCount = currentReport.votes)
+                    else state
+                }
+            }
+        }
         observeContributions(report.id)
         checkUserSupport(report.id)
     }
+
+    fun stopObservingReport() = repository.stopObservingReport()
 
     private fun checkUserSupport(reportId: String) {
         val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return
@@ -173,6 +183,7 @@ class ReportDetailViewModel : ViewModel() {
 
     override fun onCleared() {
         super.onCleared()
+        repository.stopObservingReport()
         listenerRegistration?.remove()
     }
 }
