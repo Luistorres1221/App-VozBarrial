@@ -48,8 +48,9 @@ fun AdminModerationScreen(
     var selectedTab by rememberSaveable { mutableStateOf("Pendientes") }
     var selectedCategory by rememberSaveable { mutableStateOf("TODOS") }
 
-    val filteredReports = remember(reports, selectedTab, selectedCategory) {
-        reports.filter { r ->
+    val reportSnapshot = reports.toList()
+    val filteredReports = remember(reportSnapshot, selectedTab, selectedCategory) {
+        reportSnapshot.filter { r ->
             val statusEnum = ReportStatus.fromString(r.status)
             val matchesTab = when (selectedTab) {
                 "Pendientes" -> statusEnum == ReportStatus.POR_VERIFICAR

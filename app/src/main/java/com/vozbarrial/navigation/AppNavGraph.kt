@@ -1,5 +1,6 @@
 ﻿package com.vozbarrial.navigation
 
+import android.widget.Toast
 import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -25,10 +26,36 @@ import com.vozbarrial.core.result.AuthOperationResult
 import com.vozbarrial.core.result.AuthError
 import com.vozbarrial.domain.model.Usurious
 import com.vozbarrial.domain.model.UserRole
+import com.vozbarrial.R
 
 @Composable
 fun AppNavGraph() {
     val context = LocalContext.current
+    var reportStatusUpdatesInFlight by remember { mutableStateOf(emptySet<String>()) }
+
+    fun updateReportStatus(
+        reportId: String,
+        updates: Map<String, Any>,
+        onSuccess: () -> Unit = {}
+    ) {
+        if (reportId in reportStatusUpdatesInFlight) return
+        reportStatusUpdatesInFlight = reportStatusUpdatesInFlight + reportId
+
+        FirebaseFirestore.getInstance()
+            .collection("reportes")
+            .document(reportId)
+            .update(updates)
+            .addOnSuccessListener {
+                reportStatusUpdatesInFlight = reportStatusUpdatesInFlight - reportId
+                Toast.makeText(context, context.getString(R.string.report_updated_success), Toast.LENGTH_SHORT).show()
+                onSuccess()
+            }
+            .addOnFailureListener {
+                reportStatusUpdatesInFlight = reportStatusUpdatesInFlight - reportId
+                Toast.makeText(context, context.getString(R.string.report_updated_error), Toast.LENGTH_LONG).show()
+            }
+    }
+
     val reportsViewModel: ReportsViewModel = viewModel()
     val navigationViewModel: NavigationViewModel = viewModel()
     val storeViewModel: com.vozbarrial.features.store.StoreViewModel = viewModel()
@@ -239,10 +266,7 @@ fun AppNavGraph() {
                 }
             },
             onUpdateStatus = { reportId, newStatus ->
-                FirebaseFirestore.getInstance()
-                    .collection("reportes")
-                    .document(reportId)
-                    .update("status", newStatus)
+                updateReportStatus(reportId, mapOf("status" to newStatus))
             }
         )
         "adminResolution" -> AdminResolutionScreen(
@@ -420,20 +444,16 @@ fun AppNavGraph() {
                     equippedFrame = equippedFrame,
                     onBack = { navigationViewModel.goBack() },
                     onConfirm = { reason, explanation, allowResubmit ->
-                        FirebaseFirestore.getInstance()
-                            .collection("reportes")
-                            .document(reportId)
-                            .update(
-                                mapOf(
-                                    "status" to "RECHAZADO",
-                                    "rejectionReason" to reason,
-                                    "rejectionExplanation" to explanation,
-                                    "allowResubmit" to allowResubmit
-                                )
-                            )
-                            .addOnSuccessListener {
-                                navigationViewModel.goBack()
-                            }
+                        updateReportStatus(
+                            reportId,
+                            mapOf(
+                                "status" to "RECHAZADO",
+                                "rejectionReason" to reason,
+                                "rejectionExplanation" to explanation,
+                                "allowResubmit" to allowResubmit
+                            ),
+                            onSuccess = { navigationViewModel.goBack() }
+                        )
                     }
                 )
             }
