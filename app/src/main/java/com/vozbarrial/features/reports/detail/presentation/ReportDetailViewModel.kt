@@ -10,6 +10,7 @@ import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.Query
 import com.vozbarrial.data.repository.ReportsRepository
 import com.vozbarrial.domain.model.Report
+import com.vozbarrial.domain.model.ReportStatus
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -41,6 +42,29 @@ class ReportDetailViewModel : ViewModel() {
     }
 
     fun stopObservingReport() = repository.stopObservingReport()
+
+    fun canResolveAsOwner(): Boolean {
+        val user = FirebaseAuth.getInstance().currentUser ?: return false
+        val report = _uiState.value.report
+        val isOwner = report.authorUid == user.uid ||
+            (report.authorUid.isBlank() && report.authorEmail.equals(user.email, true))
+        return isOwner && ReportStatus.fromString(report.status) == ReportStatus.VERIFICADO
+    }
+
+    fun resolveAsOwner(onResult: (Result<Unit>) -> Unit) {
+        val report = _uiState.value.report
+        if (!canResolveAsOwner()) {
+            onResult(Result.failure(IllegalStateException("Solo puedes resolver tu reporte aprobado.")))
+            return
+        }
+        if (_uiState.value.isResolvingReport) return
+
+        _uiState.update { it.copy(isResolvingReport = true) }
+        repository.resolveReport(report.id) { result ->
+            _uiState.update { it.copy(isResolvingReport = false) }
+            onResult(result)
+        }
+    }
 
     private fun checkUserSupport(reportId: String) {
         val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return

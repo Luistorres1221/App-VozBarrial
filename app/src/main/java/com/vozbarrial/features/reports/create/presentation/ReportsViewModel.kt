@@ -35,6 +35,10 @@ class ReportsViewModel : ViewModel() {
         repository.stopObserving()
     }
 
+    fun resolveReport(reportId: String, onResult: (Result<Unit>) -> Unit) {
+        repository.resolveReport(reportId, onResult)
+    }
+
     fun createReport(
         title: String,
         description: String,

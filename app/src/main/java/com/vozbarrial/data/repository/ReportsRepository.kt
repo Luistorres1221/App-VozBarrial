@@ -7,6 +7,8 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import com.vozbarrial.domain.model.Report
+import com.vozbarrial.domain.model.ReportStatus
+import com.vozbarrial.domain.model.UserRole
 import com.vozbarrial.domain.repository.ReportsGateway
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -23,6 +25,7 @@ class ReportsRepository(
 ) : ReportsGateway {
     private var listener: ListenerRegistration? = null
     private var reportListener: ListenerRegistration? = null
+    private val resolvingReportIds = mutableSetOf<String>()
 
     override fun observeReports(onChange: (List<Report>) -> Unit) {
         if (listener != null) return
@@ -46,6 +49,42 @@ class ReportsRepository(
     }
 
     override fun stopObservingReport() { reportListener?.remove(); reportListener = null }
+
+    override fun resolveReport(reportId: String, onResult: (Result<Unit>) -> Unit) {
+        val user = auth.currentUser
+            ?: return onResult(Result.failure(IllegalStateException("No hay una sesión activa.")))
+        if (reportId.isBlank()) return onResult(Result.failure(IllegalArgumentException("El reporte no es válido.")))
+        val started = synchronized(resolvingReportIds) { resolvingReportIds.add(reportId) }
+        if (!started) return onResult(Result.failure(IllegalStateException("La resolución ya está en curso.")))
+
+        val reportRef = firestore.collection(REPORTS).document(reportId)
+        val userRef = firestore.collection("usuarios").document(user.uid)
+        firestore.runTransaction { transaction ->
+            val userSnapshot = transaction.get(userRef)
+            val reportSnapshot = transaction.get(reportRef)
+            require(reportSnapshot.exists()) { "El reporte ya no existe." }
+
+            val status = ReportStatus.fromString(reportSnapshot.getString("status"))
+            val role = UserRole.fromValue(userSnapshot.getString("role").orEmpty())
+            val isModerator = role == UserRole.ADMIN
+            val ownerUid = reportSnapshot.getString("authorUid").orEmpty()
+            val ownerEmail = reportSnapshot.getString("authorEmail").orEmpty()
+            val isOwner = ownerUid == user.uid || (ownerUid.isBlank() && ownerEmail.equals(user.email, true))
+            val canResolve = when (status) {
+                ReportStatus.POR_VERIFICAR -> isModerator
+                ReportStatus.VERIFICADO -> isModerator || isOwner
+                else -> false
+            }
+            require(canResolve) { "No puedes resolver este reporte en su estado actual." }
+            transaction.update(reportRef, "status", ReportStatus.RESUELTO.value)
+        }.addOnSuccessListener {
+            synchronized(resolvingReportIds) { resolvingReportIds.remove(reportId) }
+            onResult(Result.success(Unit))
+        }.addOnFailureListener { error ->
+            synchronized(resolvingReportIds) { resolvingReportIds.remove(reportId) }
+            onResult(Result.failure(error))
+        }
+    }
 
     suspend fun uploadToCloudinary(context: Context, uri: Uri): String? = withContext(Dispatchers.IO) {
         try {

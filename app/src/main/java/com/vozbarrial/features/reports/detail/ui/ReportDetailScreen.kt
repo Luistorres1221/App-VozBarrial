@@ -1,5 +1,6 @@
 package com.vozbarrial.features.reports.detail.ui
 
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -32,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.vozbarrial.R
 import coil.compose.AsyncImage
 import com.vozbarrial.domain.model.Report
 import com.vozbarrial.domain.model.ReportStatus
@@ -89,6 +91,7 @@ fun ReportDetailRoute(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val canResolveReport = viewModel.canResolveAsOwner()
 
     LaunchedEffect(report.id) {
         viewModel.setReport(report)
@@ -102,7 +105,16 @@ fun ReportDetailRoute(
         uiState = uiState,
         userName = userName,
         userPhoto = userPhoto,
+        canResolveReport = canResolveReport,
+        isResolvingReport = uiState.isResolvingReport,
         onBack = onBack,
+        onResolveReport = {
+            viewModel.resolveAsOwner { result ->
+                val message = if (result.isSuccess) R.string.report_updated_success else R.string.report_updated_error
+                val duration = if (result.isSuccess) Toast.LENGTH_SHORT else Toast.LENGTH_LONG
+                Toast.makeText(context, context.getString(message), duration).show()
+            }
+        },
         onNavigateToProfile = onNavigateToProfile,
         onContributionChange = viewModel::onNewContributionChanged,
         onAddPhoto = viewModel::addContributionPhoto,
@@ -117,7 +129,10 @@ private fun ReportDetailScreen(
     uiState: com.vozbarrial.features.reports.detail.presentation.ReportDetailUiState,
     userName: String,
     userPhoto: String?,
+    canResolveReport: Boolean,
+    isResolvingReport: Boolean,
     onBack: () -> Unit,
+    onResolveReport: () -> Unit,
     onNavigateToProfile: (String) -> Unit,
     onContributionChange: (String) -> Unit,
     onAddPhoto: (String?) -> Unit,
@@ -163,12 +178,19 @@ private fun ReportDetailScreen(
                 Spacer(Modifier.width(8.dp))
                 Text("Detalle Incidencia", color = VozNavy, fontWeight = FontWeight.Bold, fontSize = 16.sp)
             }
-            Surface(shape = CircleShape, color = Color(0xFFDCEBE7), modifier = Modifier.size(36.dp)) {
-                Box(contentAlignment = Alignment.Center) {
-                    if (!userPhoto.isNullOrBlank()) {
-                        AsyncImage(model = userPhoto, contentDescription = null, modifier = Modifier.fillMaxSize().clip(CircleShape), contentScale = ContentScale.Crop)
-                    } else {
-                        Text(userName.take(1).uppercase(), color = VozGreen, fontWeight = FontWeight.Bold, fontSize = 15.sp)
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                if (canResolveReport) {
+                    TextButton(onClick = onResolveReport, enabled = !isResolvingReport) {
+                        Text("Resuelto", color = VozGreen, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                    }
+                }
+                Surface(shape = CircleShape, color = Color(0xFFDCEBE7), modifier = Modifier.size(36.dp)) {
+                    Box(contentAlignment = Alignment.Center) {
+                        if (!userPhoto.isNullOrBlank()) {
+                            AsyncImage(model = userPhoto, contentDescription = null, modifier = Modifier.fillMaxSize().clip(CircleShape), contentScale = ContentScale.Crop)
+                        } else {
+                            Text(userName.take(1).uppercase(), color = VozGreen, fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                        }
                     }
                 }
             }

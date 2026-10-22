@@ -7,6 +7,7 @@ interface ReportsGateway {
     fun stopObserving()
     fun observeReport(reportId: String, onChange: (Report?) -> Unit)
     fun stopObservingReport()
+    fun resolveReport(reportId: String, onResult: (Result<Unit>) -> Unit)
     fun publish(report: Report, onResult: (Result<Unit>) -> Unit)
     fun update(reportId: String, title: String, description: String, onResult: (Result<Unit>) -> Unit)
     fun delete(reportId: String, onResult: (Result<Unit>) -> Unit)

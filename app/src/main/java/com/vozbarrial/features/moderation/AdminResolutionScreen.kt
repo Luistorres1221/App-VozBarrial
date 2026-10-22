@@ -43,10 +43,11 @@ fun AdminResolutionScreen(
     reports: List<Report> = emptyList(),
     onBack: () -> Unit,
     onNavigate: (String) -> Unit = {},
-    onUpdateStatus: (String, String) -> Unit = { _, _ -> }
+    onResolveReport: (String, (Result<Unit>) -> Unit) -> Unit
 ) {
     var selectedTab by rememberSaveable { mutableStateOf("Pendientes") }
     var selectedCategory by rememberSaveable { mutableStateOf("TODOS") }
+    val resolvingReportIds = remember { mutableStateSetOf<String>() }
 
     val filteredReports = remember(reports, selectedTab, selectedCategory) {
         reports.filter { r ->
@@ -207,11 +208,19 @@ fun AdminResolutionScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 filteredReports.forEach { report ->
+                    val status = ReportStatus.fromString(report.status)
+                    val canResolve = status == ReportStatus.POR_VERIFICAR || status == ReportStatus.VERIFICADO
                     ResolutionReportCard(
                         report = report,
                         onViewInfo = { onNavigate("reportDetail/${report.id}") },
                         onMap = { onBack() },
-                        onResolve = { onUpdateStatus(report.id, "RESUELTO") }
+                        showResolve = canResolve,
+                        isResolving = report.id in resolvingReportIds,
+                        onResolve = {
+                            if (canResolve && resolvingReportIds.add(report.id)) {
+                                onResolveReport(report.id) { resolvingReportIds.remove(report.id) }
+                            }
+                        }
                     )
                 }
             }
@@ -255,6 +264,8 @@ private fun ResolutionReportCard(
     report: Report,
     onViewInfo: () -> Unit,
     onMap: () -> Unit,
+    showResolve: Boolean,
+    isResolving: Boolean,
     onResolve: () -> Unit
 ) {
     Surface(
@@ -406,15 +417,18 @@ Spacer(Modifier.height(8.dp))
                 ) {
                     Text("Ver Info", fontSize = 11.sp, color = VozNavy)
                 }
-                Button(
-                    onClick = onResolve,
-                    modifier = Modifier.weight(1.5f).height(38.dp),
-                    shape = RoundedCornerShape(8.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF16A34A))
-                ) {
-                    Icon(Icons.Default.CheckCircle, null, modifier = Modifier.size(14.dp))
-                    Spacer(Modifier.width(4.dp))
-                    Text("Resuelto", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                if (showResolve) {
+                    Button(
+                        onClick = onResolve,
+                        enabled = !isResolving,
+                        modifier = Modifier.weight(1.5f).height(38.dp),
+                        shape = RoundedCornerShape(8.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF16A34A))
+                    ) {
+                        Icon(Icons.Default.CheckCircle, null, modifier = Modifier.size(14.dp))
+                        Spacer(Modifier.width(4.dp))
+                        Text("Resuelto", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    }
                 }
             }
         }

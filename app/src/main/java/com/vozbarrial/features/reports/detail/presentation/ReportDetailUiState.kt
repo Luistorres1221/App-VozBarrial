@@ -19,6 +19,7 @@ data class ReportDetailUiState(
     val newContributionText: String = "",
     val contributionPhotoUris: List<String> = emptyList(),
     val isUploading: Boolean = false,
+    val isResolvingReport: Boolean = false,
     val isSupported: Boolean = false,
     val supportCount: Int = 42
 )

@@ -282,11 +282,13 @@ fun AppNavGraph() {
                     navigationViewModel.showDashboardPage(page)
                 }
             },
-            onUpdateStatus = { reportId, newStatus ->
-                FirebaseFirestore.getInstance()
-                    .collection("reportes")
-                    .document(reportId)
-                    .update("status", newStatus)
+            onResolveReport = { reportId, onResult ->
+                reportsViewModel.resolveReport(reportId) { result ->
+                    val message = if (result.isSuccess) R.string.report_updated_success else R.string.report_updated_error
+                    val duration = if (result.isSuccess) Toast.LENGTH_SHORT else Toast.LENGTH_LONG
+                    Toast.makeText(context, context.getString(message), duration).show()
+                    onResult(result)
+                }
             }
         )
         "dashboard" -> CommunityRoute(
