@@ -34,12 +34,12 @@ fun FramesPage(
     onOpenStore: () -> Unit = {}
 ) {
  val frames=listOf(
-  FrameItem("Clásico Cívico","Básico","Marco de bienvenida",Color(0xFF07966C),Color(0xFFDDF8EA),"En tu inventario"),
-  FrameItem("Guardián Dorado","Legendario","Canjeado hace 2d",Color(0xFFE9A900),Color(0xFFFFF2C4),"Adquirido"),
-  FrameItem("Eco Barrio Verde","Raro","Canjeado hace 1 sem",Color(0xFF07966C),Color(0xFFDDF8EA),"Adquirido"),
-  FrameItem("Paz Comunitaria","Épico","Canjeado",Color(0xFF2453F5),Color(0xFFE3E9FF),"Adquirido"),
-  FrameItem("Ojo Vigilante Neón","Épico","Canjeado",Color(0xFF00A6C7),Color(0xFFDDF8FF),"Adquirido"),
-  FrameItem("Escudo Ciudadano","Común","Canjeado hace 2 sem",Color(0xFFE64B13),Color(0xFFFFE7DE),"Adquirido")
+     FrameItem("Escudo Ciudadano","Común","Disponible en inventario",Color(0xFFE64B13),Color(0xFFFFE7DE),"Adquirido"),
+     FrameItem("Eco Barrio Verde","Raro","Disponible en inventario",Color(0xFF07966C),Color(0xFFDDF8EA),"Adquirido"),
+     FrameItem("Ojo Vigilante Neón","Épico","Disponible en inventario",Color(0xFF00A6C7),Color(0xFFDDF8FF),"Adquirido"),
+     FrameItem("Paz Comunitaria","Épico","Disponible en inventario",Color(0xFF2453F5),Color(0xFFE3E9FF),"Adquirido"),
+     FrameItem("Guardián Dorado","Legendario","Disponible en inventario",Color(0xFFE9A900),Color(0xFFFFF2C4),"Adquirido"),
+     FrameItem("Líder Platino","Mítico","Disponible en inventario",Color(0xFF8996A5),Color(0xFFE9EDF2),"Adquirido")
  )
  val visibleFrames = frames.filter { it.name in owned }.map { item ->
   item.copy(detail = "Disponible en tu inventario", acquired = "Adquirido")

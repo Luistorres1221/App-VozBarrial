@@ -76,8 +76,22 @@ fun AppNavGraph() {
     var signedInPoints by remember { mutableIntStateOf(1450) }
     var signedInMonedas by remember { mutableIntStateOf(0) }
     var signedInNivel by remember { mutableStateOf("novato") }
-    var ownedFramesText by remember { mutableStateOf("Clásico Cívico|Guardián Dorado|Eco Barrio Verde|Escudo Ciudadano") }
+    var ownedFramesText by remember { mutableStateOf("Clásico Cívico") }
     val ownedFrames = ownedFramesText.split("|").filter { it.isNotBlank() }.toSet()
+
+    fun signOutAndReset() {
+        FirebaseAuth.getInstance().signOut()
+        signedInName = ""
+        signedInEmail = ""
+        signedInPhoto = null
+        signedInUid = ""
+        equippedFrame = "Clásico Cívico"
+        signedInPoints = 0
+        signedInMonedas = 0
+        signedInNivel = "novato"
+        ownedFramesText = "Clásico Cívico"
+        navigationViewModel.navigate("welcome", clearStack = true)
+    }
 
     val reportList = reportsViewModel.reports
     val myReports = remember(reportList.toList(), signedInEmail, signedInUid, signedInName) {
@@ -99,12 +113,13 @@ fun AppNavGraph() {
         }
     }
 
-    DisposableEffect(Unit) {
-        val currentUser = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
+    val currentAuthUid = FirebaseAuth.getInstance().currentUser?.uid
+    DisposableEffect(currentAuthUid) {
+        val currentUser = FirebaseAuth.getInstance().currentUser
         var listener: com.google.firebase.firestore.ListenerRegistration? = null
         if (currentUser != null) {
             signedInUid = currentUser.uid
-            listener = com.google.firebase.firestore.FirebaseFirestore.getInstance()
+            listener = FirebaseFirestore.getInstance()
                 .collection("usuarios")
                 .document(currentUser.uid)
                 .addSnapshotListener { document, _ ->
@@ -215,10 +230,7 @@ fun AppNavGraph() {
             monedas = signedInMonedas,
             nivel = signedInNivel,
             communityReports = reportsViewModel.reports,
-            onSignOut = {
-                com.google.firebase.auth.FirebaseAuth.getInstance().signOut()
-                navigationViewModel.navigate("welcome", clearStack = true)
-            },
+            onSignOut = ::signOutAndReset,
             onNavigate = { page ->
                 if (page == "createReport" || page.startsWith("reportDetail/")) {
                     navigationViewModel.navigate(page)
@@ -237,10 +249,7 @@ fun AppNavGraph() {
             monedas = signedInMonedas,
             nivel = signedInNivel,
             communityReports = reportsViewModel.reports,
-            onSignOut = {
-                FirebaseAuth.getInstance().signOut()
-                navigationViewModel.navigate("welcome", clearStack = true)
-            },
+            onSignOut = ::signOutAndReset,
             onNavigate = { page ->
                 if (page == "createReport" || page.startsWith("reportDetail/") || page == "adminModeration" || page == "adminResolution") {
                     navigationViewModel.navigate(page)
@@ -302,17 +311,11 @@ fun AppNavGraph() {
                     else -> navigationViewModel.showDashboardPage(page)
                 }
             },
-            onSignOut = {
-                com.google.firebase.auth.FirebaseAuth.getInstance().signOut()
-                navigationViewModel.navigate("welcome", clearStack = true)
-            },
+            onSignOut = ::signOutAndReset,
             onSaveName = { newName ->
                 signedInName = newName
             },
-            onDeleteAccount = {
-                com.google.firebase.auth.FirebaseAuth.getInstance().signOut()
-                navigationViewModel.navigate("welcome", clearStack = true)
-            },
+            onDeleteAccount = ::signOutAndReset,
             profilePhoto = signedInPhoto,
             points = signedInPoints,
             monedas = signedInMonedas,

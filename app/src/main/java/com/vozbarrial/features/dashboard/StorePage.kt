@@ -34,13 +34,14 @@ fun StorePage(
     onEquip: (String, (Boolean, String?) -> Unit) -> Unit
 ) {
     val items = listOf(
-        CatalogFrame("Guardián Dorado", "Legendario", 800, Color(0xFFE8A800), Color(0xFFFFF1BC)),
-        CatalogFrame("Eco Barrio Verde", "Raro", 450, Color(0xFF07966C), Color(0xFFDDF8EA)),
-        CatalogFrame("Ojo Vigilante Neón", "Épico", 800, Color(0xFF00A6C7), Color(0xFFDDF8FF)),
+        CatalogFrame("Escudo Ciudadano", "Común", 500, Color(0xFFE64B13), Color(0xFFFFE7DE)),
+        CatalogFrame("Eco Barrio Verde", "Raro", 800, Color(0xFF07966C), Color(0xFFDDF8EA)),
+        CatalogFrame("Ojo Vigilante Neón", "Épico", 1200, Color(0xFF00A6C7), Color(0xFFDDF8FF)),
         CatalogFrame("Paz Comunitaria", "Épico", 1200, Color(0xFF2453F5), Color(0xFFE3E9FF)),
-        CatalogFrame("Líder Platino", "Mítico", 1800, Color(0xFF8996A5), Color(0xFFE9EDF2), true),
-        CatalogFrame("Escudo Ciudadano", "Común", 500, Color(0xFFE84A12), Color(0xFFFFE4DA))
+        CatalogFrame("Guardián Dorado", "Legendario", 1800, Color(0xFFE8A800), Color(0xFFFFF1BC)),
+        CatalogFrame("Líder Platino", "Mítico", 4000, Color(0xFF8996A5), Color(0xFFE9EDF2))
     )
+    val unownedItems = items.filter { it.name !in owned }
     var preview by remember(activeFrame) { mutableStateOf(activeFrame) }
     var message by remember { mutableStateOf("") }
     val chosen = items.firstOrNull { it.name == preview }
@@ -84,34 +85,34 @@ fun StorePage(
                 Text("Catálogo de Marcos", Modifier.weight(1f), fontSize = 14.sp, color = VozNavy, fontWeight = FontWeight.Bold)
                 Text("Tienda de Monedas", Modifier.background(Color(0xFF90F3C2), RoundedCornerShape(40.dp)).padding(6.dp), fontSize = 8.sp, color = VozGreen, fontWeight = FontWeight.Bold)
             }
-            items.chunked(2).forEach { row ->
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(7.dp)) {
-                    row.forEach { item ->
-                        CatalogCard(
-                            item = item,
-                            monedas = monedas,
-                            owned = item.name in owned,
-                            preview = preview == item.name,
-                            modifier = Modifier.weight(1f),
-                            onTry = { preview = item.name },
-                            onAction = {
-                                if (item.name in owned) {
-                                    onEquip(item.name) { ok, error ->
-                                        message = if (ok) item.name + " equipado." else error ?: "No se pudo equipar el marco."
-                                        if (ok) preview = item.name
+            if (unownedItems.isEmpty()) {
+                Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Color.White), shape = RoundedCornerShape(12.dp)) {
+                    Text("¡Has adquirido todos los marcos disponibles en la tienda!", Modifier.padding(18.dp), color = VozNavy, fontSize = 12.sp, textAlign = TextAlign.Center)
+                }
+            } else {
+                unownedItems.chunked(2).forEach { row ->
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(7.dp)) {
+                        row.forEach { item ->
+                            CatalogCard(
+                                item = item,
+                                monedas = monedas,
+                                preview = preview == item.name,
+                                modifier = Modifier.weight(1f),
+                                onTry = { preview = item.name },
+                                onAction = {
+                                    if (monedas >= item.cost) {
+                                        onPurchase(item.name, item.cost) { ok, error ->
+                                            message = if (ok) item.name + " canjeado y equipado." else error ?: "No se pudo completar el canje."
+                                            if (ok) preview = item.name
+                                        }
+                                    } else {
+                                        message = "Te faltan " + (item.cost - monedas) + " monedas para " + item.name + "."
                                     }
-                                } else if (monedas >= item.cost) {
-                                    onPurchase(item.name, item.cost) { ok, error ->
-                                        message = if (ok) item.name + " canjeado y equipado." else error ?: "No se pudo completar el canje."
-                                        if (ok) preview = item.name
-                                    }
-                                } else {
-                                    message = "Te faltan " + (item.cost - monedas) + " monedas para " + item.name + "."
                                 }
-                            }
-                        )
+                            )
+                        }
+                        if (row.size == 1) Spacer(Modifier.weight(1f))
                     }
-                    if (row.size == 1) Spacer(Modifier.weight(1f))
                 }
             }
         }
@@ -127,7 +128,7 @@ fun StorePage(
 }
 
 @Composable
-private fun CatalogCard(item: CatalogFrame, monedas: Int, owned: Boolean, preview: Boolean, modifier: Modifier, onTry: () -> Unit, onAction: () -> Unit) {
+private fun CatalogCard(item: CatalogFrame, monedas: Int, preview: Boolean, modifier: Modifier, onTry: () -> Unit, onAction: () -> Unit) {
     Card(modifier, colors = CardDefaults.cardColors(containerColor = Color.White), shape = RoundedCornerShape(11.dp), elevation = CardDefaults.cardElevation(2.dp)) {
         Column(Modifier.fillMaxWidth().padding(6.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -139,7 +140,8 @@ private fun CatalogCard(item: CatalogFrame, monedas: Int, owned: Boolean, previe
                 Text("✦", fontSize = 18.sp, color = item.color)
             }
             Text(item.name, Modifier.fillMaxWidth(), fontSize = 9.sp, color = VozNavy, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, maxLines = 1)
-            if (item.locked) {
+            val canAfford = monedas >= item.cost
+            if (!canAfford) {
                 Text("Faltan " + (item.cost - monedas) + " Monedas", Modifier.fillMaxWidth().background(Color(0xFFFFE5E5), RoundedCornerShape(4.dp)).padding(3.dp), fontSize = 7.sp, color = Color(0xFFBA1A1A), textAlign = TextAlign.Center)
             }
             Row(horizontalArrangement = Arrangement.spacedBy(3.dp)) {
@@ -154,19 +156,19 @@ private fun CatalogCard(item: CatalogFrame, monedas: Int, owned: Boolean, previe
                 }
                 Button(
                     onClick = onAction,
-                    enabled = owned || (!item.locked && monedas >= item.cost),
+                    enabled = canAfford,
                     modifier = Modifier.weight(1f).height(27.dp),
                     contentPadding = PaddingValues(1.dp),
                     shape = RoundedCornerShape(6.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = if (owned) Color(0xFF90F3C2) else VozNavy,
-                        contentColor = if (owned) VozGreen else Color.White,
+                        containerColor = VozNavy,
+                        contentColor = Color.White,
                         disabledContainerColor = VozBlueSurface,
                         disabledContentColor = Color(0xFF68788B)
                     )
                 ) {
                     Text(
-                        if (owned) "Equipar" else if (item.locked) "Bloqueado" else "Canjear",
+                        if (canAfford) "Canjear" else "Bloqueado",
                         fontSize = 7.sp,
                         fontWeight = FontWeight.Bold
                     )

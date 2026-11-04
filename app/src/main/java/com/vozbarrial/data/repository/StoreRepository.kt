@@ -25,6 +25,7 @@ class StoreRepository(
             frame.startsWith("Ojo") -> 800
             frame.startsWith("Paz") -> 1200
             frame.startsWith("Escudo") -> 500
+            frame.startsWith("Líder") -> 1800
             else -> null
         }
         if (expectedCost == null || expectedCost != cost) {
