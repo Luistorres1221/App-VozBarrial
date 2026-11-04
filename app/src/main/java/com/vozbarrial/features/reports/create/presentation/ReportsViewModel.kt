@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import com.vozbarrial.data.repository.ReportsRepository
 import com.vozbarrial.domain.model.Report
 import com.vozbarrial.domain.model.Usurious
+import com.vozbarrial.domain.model.Nivel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext

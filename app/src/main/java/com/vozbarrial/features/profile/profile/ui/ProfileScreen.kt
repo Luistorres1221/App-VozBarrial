@@ -24,6 +24,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -37,6 +38,186 @@ import com.vozbarrial.domain.model.ReportStatus
 import com.vozbarrial.features.profile.profile.presentation.ProfileUiState
 import com.vozbarrial.features.profile.profile.presentation.ProfileViewModel
 import com.vozbarrial.ui.theme.*
+
+data class Achievement(
+    val id: String,
+    val title: String,
+    val description: String,
+    val reward: Int,
+    val isUnlocked: (ProfileUiState) -> Boolean,
+    val progressText: (ProfileUiState) -> String
+)
+
+private val achievementsList = listOf(
+    Achievement(
+        id = "first_report",
+        title = "Primer Reporte Ciudadano",
+        description = "Publica tu primer reporte en el mapa cívico",
+        reward = 50,
+        isUnlocked = { it.reports.isNotEmpty() },
+        progressText = { if (it.reports.isNotEmpty()) "1/1 Completado" else "0/1 Reportes" }
+    ),
+    Achievement(
+        id = "active_guardian",
+        title = "Guardián Activo",
+        description = "Publica al menos 3 reportes ciudadanos",
+        reward = 75,
+        isUnlocked = { it.reports.size >= 3 },
+        progressText = { "${it.reports.size.coerceAtMost(3)}/3 Reportes" }
+    ),
+    Achievement(
+        id = "star_reporter",
+        title = "Reportero Estrella",
+        description = "Publica 5 o más reportes en la app",
+        reward = 100,
+        isUnlocked = { it.reports.size >= 5 },
+        progressText = { "${it.reports.size.coerceAtMost(5)}/5 Reportes" }
+    ),
+    Achievement(
+        id = "inexhaustible_voice",
+        title = "Voz Inagotable",
+        description = "Publica 10 reportes ciudadanos",
+        reward = 125,
+        isUnlocked = { it.reports.size >= 10 },
+        progressText = { "${it.reports.size.coerceAtMost(10)}/10 Reportes" }
+    ),
+    Achievement(
+        id = "neighborhood_chronicler",
+        title = "Cronista del Barrio",
+        description = "Publica 15 reportes en la comunidad",
+        reward = 150,
+        isUnlocked = { it.reports.size >= 15 },
+        progressText = { "${it.reports.size.coerceAtMost(15)}/15 Reportes" }
+    ),
+    Achievement(
+        id = "definitive_voice",
+        title = "Voz Definitiva",
+        description = "Publica 20 reportes ciudadanos",
+        reward = 150,
+        isUnlocked = { it.reports.size >= 20 },
+        progressText = { "${it.reports.size.coerceAtMost(20)}/20 Reportes" }
+    ),
+    Achievement(
+        id = "first_success",
+        title = "Primer Éxito",
+        description = "Logra que al menos 1 reporte sea verificado o resuelto",
+        reward = 75,
+        isUnlocked = { it.verifiedCount >= 1 },
+        progressText = { if (it.verifiedCount >= 1) "1/1 Completado" else "0/1 Verificados" }
+    ),
+    Achievement(
+        id = "civic_solver",
+        title = "Solucionador Cívico",
+        description = "Logra que 3 reportes sean verificados o resueltos",
+        reward = 100,
+        isUnlocked = { it.verifiedCount >= 3 },
+        progressText = { "${it.verifiedCount.coerceAtMost(3)}/3 Verificados" }
+    ),
+    Achievement(
+        id = "community_impact",
+        title = "Impacto Comunitario",
+        description = "Logra que 5 reportes sean verificados o resueltos",
+        reward = 125,
+        isUnlocked = { it.verifiedCount >= 5 },
+        progressText = { "${it.verifiedCount.coerceAtMost(5)}/5 Verificados" }
+    ),
+    Achievement(
+        id = "solution_leader",
+        title = "Líder de Soluciones",
+        description = "Logra que 10 reportes sean verificados o resueltos",
+        reward = 150,
+        isUnlocked = { it.verifiedCount >= 10 },
+        progressText = { "${it.verifiedCount.coerceAtMost(10)}/10 Verificados" }
+    ),
+    Achievement(
+        id = "neighborhood_support",
+        title = "Apoyo Vecinal",
+        description = "Acumula 10 votos totales en tus reportes",
+        reward = 75,
+        isUnlocked = { it.totalVotes >= 10 },
+        progressText = { "${it.totalVotes.coerceAtMost(10)}/10 Votos" }
+    ),
+    Achievement(
+        id = "backed_voice",
+        title = "Voz Respaldada",
+        description = "Acumula 25 votos en tus reportes",
+        reward = 100,
+        isUnlocked = { it.totalVotes >= 25 },
+        progressText = { "${it.totalVotes.coerceAtMost(25)}/25 Votos" }
+    ),
+    Achievement(
+        id = "civic_popularity",
+        title = "Popularidad Cívica",
+        description = "Acumula 50 votos en tus reportes",
+        reward = 125,
+        isUnlocked = { it.totalVotes >= 50 },
+        progressText = { "${it.totalVotes.coerceAtMost(50)}/50 Votos" }
+    ),
+    Achievement(
+        id = "store_collector",
+        title = "Coleccionista Cívico",
+        description = "Adquiere marcos en la tienda de la comunidad",
+        reward = 75,
+        isUnlocked = { it.ownedFrames.size > 1 },
+        progressText = { if (it.ownedFrames.size > 1) "Adquirido" else "0/1 Marcos" }
+    ),
+    Achievement(
+        id = "community_stylist",
+        title = "Estilista Comunitario",
+        description = "Posee al menos 3 marcos diferentes",
+        reward = 100,
+        isUnlocked = { it.ownedFrames.size >= 3 },
+        progressText = { "${it.ownedFrames.size.coerceAtMost(3)}/3 Marcos" }
+    ),
+    Achievement(
+        id = "elite_wardrobe",
+        title = "Guardarropa de Élite",
+        description = "Posee al menos 5 marcos diferentes",
+        reward = 125,
+        isUnlocked = { it.ownedFrames.size >= 5 },
+        progressText = { "${it.ownedFrames.size.coerceAtMost(5)}/5 Marcos" }
+    ),
+    Achievement(
+        id = "civic_saver",
+        title = "Ahorrador Cívico",
+        description = "Acumula 100 o más monedas en tu cartera",
+        reward = 75,
+        isUnlocked = { it.monedas >= 100 },
+        progressText = { "${it.monedas.coerceAtMost(100)}/100 Monedas" }
+    ),
+    Achievement(
+        id = "neighborhood_tycoon",
+        title = "Magnate Vecinal",
+        description = "Acumula 250 o más monedas en tu cartera",
+        reward = 100,
+        isUnlocked = { it.monedas >= 250 },
+        progressText = { "${it.monedas.coerceAtMost(250)}/250 Monedas" }
+    ),
+    Achievement(
+        id = "committed_citizen",
+        title = "Ciudadano Ejemplar",
+        description = "Alcanza o supera los 300 puntos de reputación",
+        reward = 100,
+        isUnlocked = { it.points >= 300 },
+        progressText = { "${it.points}/300 Pts" }
+    ),
+    Achievement(
+        id = "supreme_guardian",
+        title = "Guardián Supremo",
+        description = "Alcanza o supera los 1,000 puntos de reputación",
+        reward = 150,
+        isUnlocked = { it.points >= 1000 },
+        progressText = { "${it.points.coerceAtMost(1000)}/1000 Pts" }
+    ),
+    Achievement(
+        id = "community_hero",
+        title = "Héroe de la Comunidad",
+        description = "Alcanza o supera los 2,000 puntos de reputación",
+        reward = 200,
+        isUnlocked = { it.points >= 2000 },
+        progressText = { "${it.points.coerceAtMost(2000)}/2000 Pts" }
+    )
+)
 
 @Composable
 fun CommunityRoute(
@@ -53,6 +234,9 @@ fun CommunityRoute(
     monedas: Int,
     nivel: String,
     reports: List<Report>,
+    ownedFrames: List<String> = emptyList(),
+    claimedAchievements: List<String> = emptyList(),
+    onClaimAchievement: (String, Int) -> Unit = { _, _ -> },
     onEditReport: (String, String, String, (Boolean, String?) -> Unit) -> Unit,
     onDeleteReport: (String, (Boolean, String?) -> Unit) -> Unit,
     viewModel: ProfileViewModel = viewModel()
@@ -65,8 +249,8 @@ fun CommunityRoute(
     val deleteSuccessMsg = stringResource(R.string.report_deleted_success)
     val deleteErrorMsg = stringResource(R.string.report_deleted_error)
 
-    LaunchedEffect(page, name, profilePhoto, points, monedas, nivel, reports) {
-        viewModel.updateProfileData(page, name, profilePhoto, points, monedas, nivel, reports, availableFilters)
+    LaunchedEffect(page, name, profilePhoto, points, monedas, nivel, reports, ownedFrames, claimedAchievements) {
+        viewModel.updateProfileData(page, name, profilePhoto, points, monedas, nivel, reports, ownedFrames, claimedAchievements, availableFilters)
     }
 
     CommunityContent(
@@ -94,7 +278,8 @@ fun CommunityRoute(
             viewModel.onConfirmDeleteReport(onDeleteReport, deleteSuccessMsg, deleteErrorMsg)
         },
         onShowDeleteAccountDialog = viewModel::onShowDeleteAccountDialog,
-        onDismissOperationMessage = viewModel::onDismissOperationMessage
+        onDismissOperationMessage = viewModel::onDismissOperationMessage,
+        onClaimAchievement = onClaimAchievement
     )
 }
 
@@ -121,6 +306,7 @@ fun CommunityContent(
     onConfirmDeleteReport: () -> Unit,
     onShowDeleteAccountDialog: (Boolean) -> Unit,
     onDismissOperationMessage: () -> Unit,
+    onClaimAchievement: (String, Int) -> Unit,
 ) {
     Column(Modifier.fillMaxSize().background(VozBackground)) {
         Row(
@@ -380,8 +566,9 @@ fun CommunityContent(
                                 Column(modifier = Modifier.weight(1f)) {
                                     Text("Insignias y Logros Cívicos", color = VozNavy, fontWeight = FontWeight.Bold, fontSize = 14.sp)
                                     Spacer(Modifier.height(2.dp))
+                                    val unlockedCount = achievementsList.count { it.isUnlocked(uiState) }
                                     Surface(shape = RoundedCornerShape(50), color = Color(0xFFD3F9E8)) {
-                                        Text("4/5 Desbloqueadas", modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp), color = VozGreen, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                                        Text("$unlockedCount/${achievementsList.size} Desbloqueadas", modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp), color = VozGreen, fontSize = 9.sp, fontWeight = FontWeight.Bold)
                                     }
                                     Spacer(Modifier.height(4.dp))
                                     Text("Descubre tus medallas ganadas, progreso a Héroe y recompensas.", color = VozMuted, fontSize = 11.sp)
@@ -551,18 +738,107 @@ fun CommunityContent(
                 }
                 else -> {
                     item {
-                        Card(colors = CardDefaults.cardColors(containerColor = VozNavy)) {
+                        Card(colors = CardDefaults.cardColors(containerColor = VozNavy), shape = RoundedCornerShape(16.dp)) {
                             Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                                 Text(stringResource(R.string.community_participation), color = Color.White, fontWeight = FontWeight.Bold, fontSize = 18.sp)
                                 Text(
                                     stringResource(R.string.participation_summary, uiState.points, uiState.reports.size, uiState.verifiedCount),
-                                    color = Color.White
+                                    color = Color.White,
+                                    fontSize = 12.sp
                                 )
                                 LinearProgressIndicator(
                                     progress = { (uiState.reports.size / 10f).coerceIn(0f, 1f) },
-                                    modifier = Modifier.fillMaxWidth(),
+                                    modifier = Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(3.dp)),
                                     color = Color(0xFF55E0B0),
+                                    trackColor = Color(0xFF1E3A5F)
                                 )
+                            }
+                        }
+                    }
+                    item {
+                        Spacer(Modifier.height(4.dp))
+                        Text("Logros y Recompensas de Puntos", color = VozNavy, fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                        Text("Completa logros para ganar puntos y subir de nivel.", color = VozMuted, fontSize = 11.sp)
+                    }
+                    items(achievementsList, key = { it.id }) { achievement ->
+                        val unlocked = achievement.isUnlocked(uiState)
+                        val claimed = achievement.id in uiState.claimedAchievements
+
+                        Card(
+                            colors = CardDefaults.cardColors(containerColor = Color.White),
+                            shape = RoundedCornerShape(14.dp),
+                            elevation = CardDefaults.cardElevation(2.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth().padding(14.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Surface(
+                                    shape = CircleShape,
+                                    color = if (claimed) Color(0xFFEAF9F5) else if (unlocked) Color(0xFFFFF2E7) else Color(0xFFF3F4F6),
+                                    modifier = Modifier.size(46.dp)
+                                ) {
+                                    Box(contentAlignment = Alignment.Center) {
+                                        Icon(
+                                            imageVector = if (claimed) Icons.Default.CheckCircle else if (unlocked) Icons.Default.EmojiEvents else Icons.Default.Lock,
+                                            contentDescription = null,
+                                            tint = if (claimed) VozGreen else if (unlocked) Color(0xFFD97706) else VozMuted,
+                                            modifier = Modifier.size(22.dp)
+                                        )
+                                    }
+                                }
+                                Spacer(Modifier.width(12.dp))
+                                Column(Modifier.weight(1f)) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Text(
+                                            text = achievement.title,
+                                            color = VozNavy,
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 13.sp,
+                                            modifier = Modifier.weight(1f),
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+                                        Spacer(Modifier.width(6.dp))
+                                        Surface(shape = RoundedCornerShape(50.dp), color = Color(0xFFFFF2E7)) {
+                                            Text(
+                                                text = "+${achievement.reward} Pts",
+                                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                                                color = Color(0xFF8A5723),
+                                                fontSize = 9.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                maxLines = 1
+                                            )
+                                        }
+                                    }
+                                    Spacer(Modifier.height(2.dp))
+                                    Text(achievement.description, color = VozMuted, fontSize = 11.sp)
+                                    Spacer(Modifier.height(4.dp))
+                                    Text(achievement.progressText(uiState), color = if (unlocked) VozGreen else VozNavy, fontSize = 10.sp, fontWeight = FontWeight.SemiBold)
+                                }
+                                Spacer(Modifier.width(8.dp))
+                                Button(
+                                    onClick = { onClaimAchievement(achievement.id, achievement.reward) },
+                                    enabled = unlocked && !claimed,
+                                    shape = RoundedCornerShape(8.dp),
+                                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = if (claimed) Color(0xFFEAF9F5) else if (unlocked) VozGreen else Color(0xFFE5E7EB),
+                                        contentColor = if (claimed) VozGreen else if (unlocked) Color.White else Color(0xFF9CA3AF),
+                                        disabledContainerColor = if (claimed) Color(0xFFEAF9F5) else Color(0xFFE5E7EB),
+                                        disabledContentColor = if (claimed) VozGreen else Color(0xFF9CA3AF)
+                                    )
+                                ) {
+                                    Text(
+                                        text = if (claimed) "Completado ✓" else if (unlocked) "Reclamar" else "Bloqueado",
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
                             }
                         }
                     }

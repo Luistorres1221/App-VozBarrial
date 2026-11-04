@@ -20,6 +20,8 @@ class ProfileViewModel : ViewModel() {
         monedas: Int,
         nivel: String,
         reports: List<Report>,
+        ownedFrames: List<String>,
+        claimedAchievements: List<String>,
         filters: List<String>
     ) {
         _uiState.update { currentState ->
@@ -31,6 +33,8 @@ class ProfileViewModel : ViewModel() {
                 monedas = monedas,
                 nivel = nivel,
                 reports = reports,
+                ownedFrames = ownedFrames,
+                claimedAchievements = claimedAchievements,
                 availableFilters = filters,
                 activityFilter = if (currentState.activityFilter.isEmpty() && filters.isNotEmpty()) filters.first() else currentState.activityFilter
             )

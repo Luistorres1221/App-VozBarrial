@@ -10,6 +10,7 @@ data class Usurious(
     val monedas: Int = 0,
     val nivel: String = Nivel.NOVATO.value,
     val ownedFrames: List<String> = emptyList(),
+    val claimedAchievements: List<String> = emptyList(),
     val role: UserRole = UserRole.USUARIO,
     val createdAt: Long = System.currentTimeMillis()
 )

@@ -26,6 +26,7 @@ import com.vozbarrial.core.result.AuthOperationResult
 import com.vozbarrial.core.result.AuthError
 import com.vozbarrial.domain.model.Usurious
 import com.vozbarrial.domain.model.UserRole
+import com.vozbarrial.domain.model.Nivel
 import com.vozbarrial.R
 
 @Composable
@@ -78,6 +79,7 @@ fun AppNavGraph() {
     var signedInNivel by remember { mutableStateOf("novato") }
     var ownedFramesText by remember { mutableStateOf("Clásico Cívico") }
     val ownedFrames = ownedFramesText.split("|").filter { it.isNotBlank() }.toSet()
+    var claimedAchievements by remember { mutableStateOf(emptyList<String>()) }
 
     fun signOutAndReset() {
         FirebaseAuth.getInstance().signOut()
@@ -90,6 +92,7 @@ fun AppNavGraph() {
         signedInMonedas = 0
         signedInNivel = "novato"
         ownedFramesText = "Clásico Cívico"
+        claimedAchievements = emptyList()
         navigationViewModel.navigate("welcome", clearStack = true)
     }
 
@@ -134,6 +137,7 @@ fun AppNavGraph() {
                         signedInNivel = usuario.nivel
                         signedInUid = currentUser.uid
                         ownedFramesText = usuario.ownedFrames.joinToString("|")
+                        claimedAchievements = usuario.claimedAchievements
                     }
                 }
         }
@@ -179,6 +183,7 @@ fun AppNavGraph() {
                         signedInNivel = usuario.nivel
                         signedInUid = currentUser.uid
                         ownedFramesText = usuario.ownedFrames.joinToString("|")
+                        claimedAchievements = usuario.claimedAchievements
 
                         val destination = if (usuario.role == UserRole.ADMIN) "adminMap" else "map"
                         navigationViewModel.navigate(destination, clearStack = true)
@@ -321,6 +326,33 @@ fun AppNavGraph() {
             monedas = signedInMonedas,
             nivel = signedInNivel,
             reports = myReports,
+            ownedFrames = ownedFrames.toList(),
+            claimedAchievements = claimedAchievements,
+            onClaimAchievement = { achievementId, reward ->
+                val authUser = FirebaseAuth.getInstance().currentUser
+                if (authUser != null) {
+                    val newPoints = signedInPoints + reward
+                    val newNivel = when {
+                        newPoints > 2000 -> Nivel.HEROE.value
+                        newPoints > 800 -> Nivel.GUARDIAN.value
+                        newPoints > 250 -> Nivel.COLABORADOR.value
+                        else -> Nivel.NOVATO.value
+                    }
+                    val updatedClaimed = (claimedAchievements + achievementId).distinct()
+                    FirebaseFirestore.getInstance().collection("usuarios").document(authUser.uid)
+                        .update(mapOf(
+                            "points" to newPoints,
+                            "nivel" to newNivel,
+                            "claimedAchievements" to updatedClaimed
+                        ))
+                        .addOnSuccessListener {
+                            signedInPoints = newPoints
+                            signedInNivel = newNivel
+                            claimedAchievements = updatedClaimed
+                            Toast.makeText(context, "¡Logro reclamado! +$reward puntos", Toast.LENGTH_SHORT).show()
+                        }
+                }
+            },
             onEditReport = reportsViewModel::updateReport,
             onDeleteReport = reportsViewModel::deleteReport
         )

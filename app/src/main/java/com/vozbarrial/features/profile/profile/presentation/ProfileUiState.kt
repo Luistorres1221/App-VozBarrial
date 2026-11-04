@@ -10,6 +10,8 @@ data class ProfileUiState(
     val monedas: Int = 0,
     val nivel: String = "novato",
     val reports: List<Report> = emptyList(),
+    val ownedFrames: List<String> = emptyList(),
+    val claimedAchievements: List<String> = emptyList(),
     val activityFilter: String = "Todas",
     val availableFilters: List<String> = emptyList(),
     val showNameEditor: Boolean = false,
