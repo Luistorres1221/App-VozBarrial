@@ -97,7 +97,6 @@ fun ReportsMap(name: String, profilePhoto: String? = null, equippedFrame: String
 
     var selectedCategory by rememberSaveable { mutableStateOf("TODOS") }
     var selectedReportId by rememberSaveable { mutableStateOf<String?>(null) }
-    var radarActive by rememberSaveable { mutableStateOf(true) }
     var distance by rememberSaveable { mutableStateOf("1.5 km") }
     var distanceMenu by remember { mutableStateOf(false) }
     var showNotifications by rememberSaveable { mutableStateOf(false) }
@@ -369,13 +368,12 @@ fun ReportsMap(name: String, profilePhoto: String? = null, equippedFrame: String
                 Row(
                     modifier = Modifier
                         .clip(RoundedCornerShape(50))
-                        .clickable { radarActive = !radarActive }
                         .padding(horizontal = 8.dp, vertical = 5.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Box(Modifier.size(7.dp).clip(CircleShape).background(if (radarActive) VozGreen else Color.Gray))
+                    Box(Modifier.size(7.dp).clip(CircleShape).background(VozGreen))
                     Spacer(Modifier.width(5.dp))
-                    Text(if (radarActive) "Radar Activo" else "Radar Pausado", color = if (radarActive) VozGreen else VozMuted, fontSize = 10.sp, fontWeight = FontWeight.SemiBold)
+                    Text("Radar Activo", color = VozGreen, fontSize = 10.sp, fontWeight = FontWeight.SemiBold)
                 }
             }
         }
