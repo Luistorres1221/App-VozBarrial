@@ -102,6 +102,13 @@ fun ReportsMap(name: String, profilePhoto: String? = null, equippedFrame: String
     var showNotifications by rememberSaveable { mutableStateOf(false) }
     var showPoints by rememberSaveable { mutableStateOf(false) }
 
+    val totalCount = reports.size
+    var lastViewedCount by rememberSaveable { mutableIntStateOf(-1) }
+    if (lastViewedCount == -1) {
+        lastViewedCount = totalCount
+    }
+    val hasUnreadNotifications = totalCount > lastViewedCount
+
     LaunchedEffect(Unit) {
         if (!hasLocationPermission) {
             locationPermissionLauncher.launch(
@@ -334,8 +341,12 @@ fun ReportsMap(name: String, profilePhoto: String? = null, equippedFrame: String
                 reportCount = distanceFilteredReports.size,
                 monedas = monedas,
                 nivel = nivel,
+                hasUnreadNotifications = hasUnreadNotifications,
                 onPoints = { showPoints = true },
-                onNotifications = { onNavigate("activity") },
+                onNotifications = {
+                    lastViewedCount = totalCount
+                    onNavigate("activity")
+                },
                 onSignOut = onSignOut,
                 onProfile = { onNavigate("profile") },
             )
@@ -539,6 +550,7 @@ private fun MapHeader(
     reportCount: Int,
     monedas: Int,
     nivel: String,
+    hasUnreadNotifications: Boolean,
     onPoints: () -> Unit,
     onNotifications: () -> Unit,
     onSignOut: () -> Unit,
@@ -570,7 +582,9 @@ private fun MapHeader(
         IconButton(onClick = onNotifications, modifier = Modifier.size(34.dp)) {
             Box(contentAlignment = Alignment.TopEnd) {
                 Icon(Icons.Default.Notifications, contentDescription = "Notificaciones", tint = VozNavy, modifier = Modifier.size(21.dp))
-                Box(Modifier.size(7.dp).clip(CircleShape).background(Color(0xFFE35454)))
+                if (hasUnreadNotifications) {
+                    Box(Modifier.size(7.dp).clip(CircleShape).background(Color(0xFFE35454)))
+                }
             }
         }
     }

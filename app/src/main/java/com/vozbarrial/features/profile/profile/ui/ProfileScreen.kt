@@ -3,7 +3,9 @@ package com.vozbarrial.features.profile.profile.ui
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -18,6 +20,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -219,6 +225,60 @@ private val achievementsList = listOf(
     )
 )
 
+data class CommunityNotification(
+    val id: String,
+    val title: String,
+    val description: String,
+    val type: String, // "Logros", "Votos", "Reportes"
+    val icon: androidx.compose.ui.graphics.vector.ImageVector,
+    val color: Color
+)
+
+@Composable
+fun NotificationCard(notification: CommunityNotification) {
+    Card(
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        shape = RoundedCornerShape(14.dp),
+        elevation = CardDefaults.cardElevation(1.dp),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier.padding(14.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Surface(
+                shape = CircleShape,
+                color = notification.color.copy(alpha = 0.15f),
+                modifier = Modifier.size(42.dp)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        imageVector = notification.icon,
+                        contentDescription = null,
+                        tint = notification.color,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f)) {
+                Text(
+                    text = notification.title,
+                    color = VozNavy,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 13.sp
+                )
+                Spacer(Modifier.height(2.dp))
+                Text(
+                    text = notification.description,
+                    color = VozMuted,
+                    fontSize = 11.sp
+                )
+            }
+        }
+    }
+}
+
 @Composable
 fun CommunityRoute(
     page: String,
@@ -242,7 +302,7 @@ fun CommunityRoute(
     viewModel: ProfileViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val availableFilters = listOf("Todas", "ACTIVO", "RESUELTO")
+    val availableFilters = listOf("Todas", "Logros", "Votos", "Reportes")
 
     val editSuccessMsg = stringResource(R.string.report_updated_success)
     val editErrorMsg = stringResource(R.string.report_updated_error)
@@ -253,11 +313,27 @@ fun CommunityRoute(
         viewModel.updateProfileData(page, name, profilePhoto, points, monedas, nivel, reports, ownedFrames, claimedAchievements, availableFilters)
     }
 
+    val unclaimedUnlockedCount = achievementsList.count { it.isUnlocked(uiState) && it.id !in claimedAchievements }
+    val currentActivityCount = unclaimedUnlockedCount + uiState.reports.sumOf { it.votes } + uiState.reports.count { it.status != "POR_VERIFICAR" }
+    var lastViewedCount by rememberSaveable { mutableIntStateOf(-1) }
+    if (lastViewedCount == -1) {
+        lastViewedCount = currentActivityCount
+    }
+    val hasUnreadNotifications = currentActivityCount > lastViewedCount
+
     CommunityContent(
         uiState = uiState,
         equippedFrame = equippedFrame,
         onBack = onBack,
         onNavigate = onNavigate,
+        hasUnreadNotifications = hasUnreadNotifications,
+        onNotificationClick = {
+            lastViewedCount = currentActivityCount
+            onNavigate("activity")
+        },
+        onMarkViewed = {
+            lastViewedCount = currentActivityCount
+        },
         onSignOut = onSignOut,
         onDeleteAccount = onDeleteAccount,
         onFilterSelected = viewModel::onActivityFilterSelected,
@@ -307,7 +383,62 @@ fun CommunityContent(
     onShowDeleteAccountDialog: (Boolean) -> Unit,
     onDismissOperationMessage: () -> Unit,
     onClaimAchievement: (String, Int) -> Unit,
+    hasUnreadNotifications: Boolean,
+    onNotificationClick: () -> Unit,
+    onMarkViewed: () -> Unit,
 ) {
+    LaunchedEffect(uiState.currentPage) {
+        if (uiState.currentPage == "activity") {
+            onMarkViewed()
+        }
+    }
+
+    val notificationsList = remember(uiState.reports, uiState.claimedAchievements) {
+        val list = mutableListOf<CommunityNotification>()
+        achievementsList.forEach { achievement ->
+            if (achievement.isUnlocked(uiState)) {
+                val isClaimed = achievement.id in uiState.claimedAchievements
+                list.add(
+                    CommunityNotification(
+                        id = "ach_${achievement.id}",
+                        title = "Logro: ${achievement.title}",
+                        description = "${achievement.description} (+${achievement.reward} Pts) • ${if (isClaimed) "Reclamado" else "¡Disponible para reclamar!"}",
+                        type = "Logros",
+                        icon = Icons.Default.EmojiEvents,
+                        color = Color(0xFFD97706)
+                    )
+                )
+            }
+        }
+        uiState.reports.forEach { report ->
+            if (report.votes > 0) {
+                list.add(
+                    CommunityNotification(
+                        id = "vote_${report.id}",
+                        title = "Apoyo en '${report.title}'",
+                        description = "Tu reporte ha acumulado ${report.votes} votos vecinales.",
+                        type = "Votos",
+                        icon = Icons.Default.ThumbUp,
+                        color = VozGreen
+                    )
+                )
+            }
+            if (!report.status.equals("POR_VERIFICAR", true)) {
+                list.add(
+                    CommunityNotification(
+                        id = "status_${report.id}",
+                        title = "Actualización de Reporte",
+                        description = "Tu reporte '${report.title}' cambió a estado: ${report.status}.",
+                        type = "Reportes",
+                        icon = Icons.Default.Verified,
+                        color = Color(0xFF3188E8)
+                    )
+                )
+            }
+        }
+        list
+    }
+
     Column(Modifier.fillMaxSize().background(VozBackground)) {
         Row(
             Modifier.fillMaxWidth().background(Color.White).padding(horizontal = 12.dp, vertical = 9.dp),
@@ -324,10 +455,10 @@ fun CommunityContent(
                 },
                 Modifier.weight(1f), color = VozNavy, fontWeight = FontWeight.Bold, fontSize = 16.sp,
             )
-            IconButton(onClick = { onNavigate("activity") }) {
+            IconButton(onClick = onNotificationClick) {
                 Box(contentAlignment = Alignment.TopEnd) {
                     Icon(Icons.Default.Notifications, contentDescription = stringResource(R.string.activity_title), tint = VozNavy)
-                    if (uiState.monedas > 0 || uiState.points > 0) {
+                    if (hasUnreadNotifications) {
                         Box(Modifier.size(7.dp).clip(CircleShape).background(Color(0xFFE35454)))
                     }
                 }
@@ -719,21 +850,46 @@ fun CommunityContent(
                 }
                 "activity" -> {
                     item {
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(vertical = 4.dp)
+                        ) {
                             uiState.availableFilters.forEach { filter ->
-                                FilterChip(
-                                    selected = uiState.activityFilter == filter,
-                                    onClick = { onFilterSelected(filter) },
-                                    label = { Text(filter) },
-                                )
+                                val isSelected = uiState.activityFilter == filter || (uiState.activityFilter.isBlank() && filter == "Todas")
+                                Surface(
+                                    modifier = Modifier.height(34.dp).clickable { onFilterSelected(filter) },
+                                    shape = RoundedCornerShape(50),
+                                    color = if (isSelected) Color(0xFF08223A) else Color.White,
+                                    shadowElevation = if (isSelected) 3.dp else 1.dp,
+                                ) {
+                                    Box(
+                                        modifier = Modifier.fillMaxHeight().padding(horizontal = 14.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            text = filter,
+                                            color = if (isSelected) Color.White else VozNavy,
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
+                                }
                             }
                         }
                     }
-                    val activityReports = uiState.filteredActivityReports
-                    if (activityReports.isEmpty()) {
-                        item { EmptyState(stringResource(R.string.no_activity_filter)) }
+
+                    val filteredNotifications = if (uiState.activityFilter.isBlank() || uiState.activityFilter == "Todas") {
+                        notificationsList
                     } else {
-                        items(activityReports, key = { "activity:${it.id}" }) { report -> ReportCard(report) }
+                        notificationsList.filter { it.type.equals(uiState.activityFilter, true) }
+                    }
+
+                    if (filteredNotifications.isEmpty()) {
+                        item { EmptyState("No hay notificaciones en este filtro.") }
+                    } else {
+                        items(filteredNotifications, key = { it.id }) { notif ->
+                            NotificationCard(notif)
+                        }
                     }
                 }
                 else -> {

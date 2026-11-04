@@ -116,6 +116,13 @@ fun AdminReportsMap(
     var showNotifications by rememberSaveable { mutableStateOf(false) }
     var showPoints by rememberSaveable { mutableStateOf(false) }
 
+    val totalCount = reports.size
+    var lastViewedCount by rememberSaveable { mutableIntStateOf(-1) }
+    if (lastViewedCount == -1) {
+        lastViewedCount = totalCount
+    }
+    val hasUnreadNotifications = totalCount > lastViewedCount
+
     LaunchedEffect(Unit) {
         if (!hasLocationPermission) {
             locationPermissionLauncher.launch(
@@ -241,8 +248,12 @@ fun AdminReportsMap(
                 profilePhoto = profilePhoto,
                 equippedFrame = equippedFrame,
                 monedas = monedas,
+                hasUnreadNotifications = hasUnreadNotifications,
                 onPoints = { showPoints = true },
-                onNotifications = { showNotifications = true },
+                onNotifications = {
+                    lastViewedCount = totalCount
+                    showNotifications = true
+                },
                 onSignOut = onSignOut,
                 onProfile = { onNavigate("profile") }
             )
@@ -553,6 +564,7 @@ private fun AdminMapHeader(
     profilePhoto: String? = null,
     equippedFrame: String = "",
     monedas: Int,
+    hasUnreadNotifications: Boolean,
     onPoints: () -> Unit,
     onNotifications: () -> Unit,
     onSignOut: () -> Unit,
@@ -598,7 +610,9 @@ private fun AdminMapHeader(
         IconButton(onClick = onNotifications, modifier = Modifier.size(34.dp)) {
             Box(contentAlignment = Alignment.TopEnd) {
                 Icon(Icons.Default.Notifications, contentDescription = "Notificaciones", tint = VozNavy, modifier = Modifier.size(21.dp))
-                Box(Modifier.size(7.dp).clip(CircleShape).background(Color(0xFFE35454)))
+                if (hasUnreadNotifications) {
+                    Box(Modifier.size(7.dp).clip(CircleShape).background(Color(0xFFE35454)))
+                }
             }
         }
     }

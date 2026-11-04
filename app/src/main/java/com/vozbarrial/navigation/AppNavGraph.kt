@@ -61,12 +61,16 @@ fun AppNavGraph() {
     val navigationViewModel: NavigationViewModel = viewModel()
     val storeViewModel: com.vozbarrial.features.store.StoreViewModel = viewModel()
 
-    androidx.activity.compose.BackHandler(enabled = navigationViewModel.canGoBack) {
-        navigationViewModel.goBack()
-    }
-
     val screen by navigationViewModel.screen.collectAsStateWithLifecycle()
     val dashboardPage by navigationViewModel.dashboardPage.collectAsStateWithLifecycle()
+
+    androidx.activity.compose.BackHandler(enabled = navigationViewModel.canGoBack || dashboardPage != "profile") {
+        if (screen == "dashboard" && dashboardPage != "profile") {
+            navigationViewModel.showDashboardPage("profile")
+        } else {
+            navigationViewModel.goBack()
+        }
+    }
 
     val authUser = remember { com.google.firebase.auth.FirebaseAuth.getInstance().currentUser }
     var signedInName by remember { mutableStateOf(authUser?.email?.substringBefore("@").orEmpty()) }
@@ -309,7 +313,13 @@ fun AppNavGraph() {
             page = dashboardPage,
             name = signedInName,
             equippedFrame = equippedFrame,
-            onBack = { navigationViewModel.goBack() },
+            onBack = {
+                if (dashboardPage != "profile") {
+                    navigationViewModel.showDashboardPage("profile")
+                } else {
+                    navigationViewModel.goBack()
+                }
+            },
             onNavigate = { page ->
                 when {
                     page == "editProfile" || page == "frames" || page == "store" || page.startsWith("editReport/") -> navigationViewModel.navigate(page)
