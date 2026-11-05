@@ -330,7 +330,6 @@ fun AppNavGraph() {
             onSaveName = { newName ->
                 signedInName = newName
             },
-            onDeleteAccount = ::signOutAndReset,
             profilePhoto = signedInPhoto,
             points = signedInPoints,
             monedas = signedInMonedas,

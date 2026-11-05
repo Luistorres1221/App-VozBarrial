@@ -288,7 +288,6 @@ fun CommunityRoute(
     onNavigate: (String) -> Unit,
     onSignOut: () -> Unit,
     onSaveName: (String) -> Unit,
-    onDeleteAccount: () -> Unit,
     profilePhoto: String?,
     points: Int,
     monedas: Int,
@@ -335,7 +334,6 @@ fun CommunityRoute(
             lastViewedCount = currentActivityCount
         },
         onSignOut = onSignOut,
-        onDeleteAccount = onDeleteAccount,
         onFilterSelected = viewModel::onActivityFilterSelected,
         onOpenNameEditor = viewModel::onOpenNameEditor,
         onNameDraftChange = viewModel::onNameDraftChange,
@@ -353,7 +351,6 @@ fun CommunityRoute(
         onConfirmDeleteReport = {
             viewModel.onConfirmDeleteReport(onDeleteReport, deleteSuccessMsg, deleteErrorMsg)
         },
-        onShowDeleteAccountDialog = viewModel::onShowDeleteAccountDialog,
         onDismissOperationMessage = viewModel::onDismissOperationMessage,
         onClaimAchievement = onClaimAchievement
     )
@@ -366,7 +363,6 @@ fun CommunityContent(
     onBack: () -> Unit,
     onNavigate: (String) -> Unit,
     onSignOut: () -> Unit,
-    onDeleteAccount: () -> Unit,
     onFilterSelected: (String) -> Unit,
     onOpenNameEditor: () -> Unit,
     onNameDraftChange: (String) -> Unit,
@@ -380,7 +376,6 @@ fun CommunityContent(
     onOpenDeleteReport: (Report) -> Unit,
     onDismissDeleteReport: () -> Unit,
     onConfirmDeleteReport: () -> Unit,
-    onShowDeleteAccountDialog: (Boolean) -> Unit,
     onDismissOperationMessage: () -> Unit,
     onClaimAchievement: (String, Int) -> Unit,
     hasUnreadNotifications: Boolean,
@@ -826,25 +821,7 @@ fun CommunityContent(
                                 Icon(Icons.AutoMirrored.Filled.ArrowForward, null, tint = VozMuted, modifier = Modifier.size(18.dp))
                             }
                         }
-                        Spacer(Modifier.height(8.dp))
-                        Card(
-                            colors = CardDefaults.cardColors(containerColor = Color(0xFFFEF2F2)),
-                            shape = RoundedCornerShape(16.dp),
-                            modifier = Modifier.fillMaxWidth().clickable { onShowDeleteAccountDialog(true) }
-                        ) {
-                            Row(
-                                modifier = Modifier.padding(16.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(Icons.Default.DeleteForever, null, tint = Color(0xFFDC2626), modifier = Modifier.size(20.dp))
-                                    Spacer(Modifier.width(12.dp))
-                                    Text("Eliminar cuenta", color = Color(0xFFDC2626), fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                                }
-                                Icon(Icons.AutoMirrored.Filled.ArrowForward, null, tint = Color(0xFFDC2626), modifier = Modifier.size(18.dp))
-                            }
-                        }
+
                         Spacer(Modifier.height(16.dp))
                     }
                 }
@@ -1041,17 +1018,7 @@ fun CommunityContent(
         )
     }
 
-    if (uiState.showAccountDelete) AlertDialog(
-        onDismissRequest = { onShowDeleteAccountDialog(false) },
-        title = { Text(stringResource(R.string.delete_account)) },
-        text = { Text(stringResource(R.string.delete_account_confirmation)) },
-        confirmButton = {
-            TextButton(onClick = { onShowDeleteAccountDialog(false); onDeleteAccount() }) {
-                Text(stringResource(R.string.delete), color = MaterialTheme.colorScheme.error)
-            }
-        },
-        dismissButton = { TextButton(onClick = { onShowDeleteAccountDialog(false) }) { Text(stringResource(R.string.cancel)) } },
-    )
+
 
     uiState.operationMessage?.let { message ->
         AlertDialog(
