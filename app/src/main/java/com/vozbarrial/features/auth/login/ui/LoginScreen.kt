@@ -109,14 +109,10 @@ fun AuthRoute(
                     if (activity != null) {
                         val prefs = context.getSharedPreferences("voz_barrial_biometric_global", android.content.Context.MODE_PRIVATE)
                         prefs.edit().putString("saved_biometric_email", email).apply()
-
-                        val bioPrefs = context.getSharedPreferences("biometric_prefs_$email", android.content.Context.MODE_PRIVATE)
-                        if (!bioPrefs.contains("encrypted_data")) {
-                            val biometricManager = com.vozbarrial.core.biometric.BiometricAuthManager(context, email)
-                            biometricManager.encryptAndSaveCredentials(activity, password) { success ->
-                                if (success) {
-                                    android.widget.Toast.makeText(context, "¡Acceso con huella guardado para futuros inicios de sesión!", android.widget.Toast.LENGTH_SHORT).show()
-                                }
+                        val biometricManager = com.vozbarrial.core.biometric.BiometricAuthManager(context, email)
+                        biometricManager.encryptAndSaveCredentials(activity, password) { success ->
+                            if (success) {
+                                android.widget.Toast.makeText(context, "¡Acceso con huella guardado!", android.widget.Toast.LENGTH_SHORT).show()
                             }
                         }
                     }
