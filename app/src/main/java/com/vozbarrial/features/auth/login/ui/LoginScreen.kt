@@ -79,6 +79,8 @@ fun AuthRoute(
     formViewModel: LoginViewModel = viewModel()
 ) {
     val formState by formViewModel.uiState.collectAsStateWithLifecycle()
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val activity = context as? androidx.fragment.app.FragmentActivity
 
     if (formState.showRecovery) {
         androidx.activity.compose.BackHandler {
@@ -99,7 +101,48 @@ fun AuthRoute(
         onPasswordChange = formViewModel::updatePassword,
         onTogglePasswordVisibility = formViewModel::togglePasswordVisibility,
         onShowRecovery = { formViewModel.showRecovery(true) },
-        onSubmitLogin = { formViewModel.submitLogin(onLogin, onAuthenticated) },
+        onSubmitLogin = {
+            formViewModel.submitLogin(
+                signIn = onLogin,
+                onAuthenticated = onAuthenticated,
+                onSuccessfulAuth = { email, password ->
+                    if (activity != null) {
+                        val prefs = context.getSharedPreferences("voz_barrial_biometric_global", android.content.Context.MODE_PRIVATE)
+                        prefs.edit().putString("saved_biometric_email", email).apply()
+                        val biometricManager = com.vozbarrial.core.biometric.BiometricAuthManager(context, email)
+                        biometricManager.encryptAndSaveCredentials(activity, password) { success ->
+                            if (success) {
+                                android.widget.Toast.makeText(context, "¡Acceso con huella guardado!", android.widget.Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    }
+                }
+            )
+        },
+        onBiometricLogin = {
+            val prefs = context.getSharedPreferences("voz_barrial_biometric_global", android.content.Context.MODE_PRIVATE)
+            val savedEmail = prefs.getString("saved_biometric_email", null)
+            if (savedEmail.isNullOrBlank()) {
+                formViewModel.showDialog("Inicia sesión con tu correo y contraseña al menos una vez para registrar tu huella dactilar.")
+            } else if (activity != null) {
+                val biometricManager = com.vozbarrial.core.biometric.BiometricAuthManager(context, savedEmail)
+                biometricManager.decryptCredentials(
+                    activity = activity,
+                    onSuccess = { password ->
+                        formViewModel.updateEmail(savedEmail)
+                        formViewModel.updatePassword(password)
+                        formViewModel.submitLogin(
+                            signIn = onLogin,
+                            onAuthenticated = onAuthenticated,
+                            onSuccessfulAuth = { _, _ -> }
+                        )
+                    },
+                    onError = {
+                        formViewModel.showDialog("No se pudo verificar la huella o fue cancelada. Usa tu contraseña.")
+                    }
+                )
+            }
+        },
         onShowDialog = formViewModel::showDialog,
         onDismissDialog = { formViewModel.showDialog("") }
     )
@@ -118,6 +161,7 @@ fun AuthContent(
     onTogglePasswordVisibility: () -> Unit,
     onShowRecovery: () -> Unit,
     onSubmitLogin: () -> Unit,
+    onBiometricLogin: () -> Unit,
     onShowDialog: (String) -> Unit,
     onDismissDialog: () -> Unit,
 ) {
@@ -218,7 +262,7 @@ fun AuthContent(
                         Text("Google", color = VozNavy, fontSize = 11.sp)
                     }
                     OutlinedButton(
-                        onClick = { onShowDialog("El acceso biométrico estará disponible cuando configuremos la autenticación segura del dispositivo.") },
+                        onClick = onBiometricLogin,
                         modifier = Modifier.weight(1f).height(42.dp),
                         shape = RoundedCornerShape(9.dp),
                     ) {

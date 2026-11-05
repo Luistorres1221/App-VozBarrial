@@ -25,6 +25,7 @@ class LoginViewModel : ViewModel() {
     fun submitLogin(
         signIn: (String, String, (Boolean) -> Unit) -> Unit,
         onAuthenticated: (String) -> Unit,
+        onSuccessfulAuth: (String, String) -> Unit = { _, _ -> }
     ) {
         val form = _uiState.value
         val cleanEmail = form.email.trim()
@@ -46,7 +47,10 @@ class LoginViewModel : ViewModel() {
                 message = if (authenticated) "" else "El correo o la contraseña no son correctos.",
                 success = false,
             )
-            if (authenticated) onAuthenticated(cleanEmail)
+            if (authenticated) {
+                onSuccessfulAuth(cleanEmail, form.password)
+                onAuthenticated(cleanEmail)
+            }
         }
     }
 
