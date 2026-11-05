@@ -178,7 +178,6 @@ fun AuthContent(
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         Header(onBack)
-        StatusRow()
         IntroCard()
 
         Surface(
@@ -254,26 +253,15 @@ fun AuthContent(
                     }
                 }
 
-                DividerLabel("O CONTINÚA CON")
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedButton(
-                        onClick = { onShowDialog("El acceso con Google estará disponible cuando conectemos el proveedor de autenticación.") },
-                        modifier = Modifier.weight(1f).height(42.dp),
-                        shape = RoundedCornerShape(9.dp),
-                    ) {
-                        Text("G", color = Color(0xFF4285F4), fontWeight = FontWeight.Black, fontSize = 19.sp)
-                        Spacer(Modifier.width(6.dp))
-                        Text("Google", color = VozNavy, fontSize = 11.sp)
-                    }
-                    OutlinedButton(
-                        onClick = onBiometricLogin,
-                        modifier = Modifier.weight(1f).height(42.dp),
-                        shape = RoundedCornerShape(9.dp),
-                    ) {
-                        Icon(Icons.Default.Fingerprint, null, tint = Color(0xFF188A79), modifier = Modifier.size(17.dp))
-                        Spacer(Modifier.width(5.dp))
-                        Text("Huella / Face", color = VozNavy, fontSize = 11.sp)
-                    }
+                DividerLabel("O ACCESO RÁPIDO")
+                OutlinedButton(
+                    onClick = onBiometricLogin,
+                    modifier = Modifier.fillMaxWidth().height(44.dp),
+                    shape = RoundedCornerShape(9.dp),
+                ) {
+                    Icon(Icons.Default.Fingerprint, null, tint = Color(0xFF188A79), modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Text("Iniciar sesión con Huella", color = VozNavy, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                 }
             }
         }
@@ -320,15 +308,6 @@ fun AuthContent(
             }
         }
 
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(bottom = 4.dp),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Icon(Icons.Default.Security, null, tint = Color(0xFF8A949E), modifier = Modifier.size(11.dp))
-            Spacer(Modifier.width(5.dp))
-            Text("Participación ciudadana segura · VozBarrial", color = Color(0xFF8A949E), fontSize = 10.sp)
-        }
     }
 
     if (formState.dialogMessage.isNotBlank()) {
@@ -362,14 +341,6 @@ private fun Header(onBack: () -> Unit) {
             Text("Acceso ciudadano", color = VozMuted, fontSize = 10.sp)
         }
         Icon(Icons.Default.Security, contentDescription = "Acceso seguro", tint = Color(0xFF56AA9A), modifier = Modifier.size(17.dp))
-    }
-}
-
-@Composable
-private fun StatusRow() {
-    Row(horizontalArrangement = Arrangement.spacedBy(7.dp), modifier = Modifier.fillMaxWidth()) {
-        StatusPill("Red Segura Activa", Modifier.weight(1f), true)
-        StatusPill("Comunidad en línea", Modifier.weight(1f), false)
     }
 }
 
