@@ -62,4 +62,148 @@
     <string name="error_image_size_exceeded">La foto debe pesar máximo 5 MB.</string>
     <string name="dialog_check_data_title">Revisa los datos</string>
     <string name="dialog_understood">Entendido</string>
+
+    <!-- Biometría -->
+    <string name="biometric_saved_toast">¡Acceso con huella guardado para futuros inicios de sesión!</string>
+    <string name="biometric_register_hint">Inicia sesión con tu correo y contraseña al menos una vez para registrar tu huella dactilar.</string>
+    <string name="biometric_verify_error">No se pudo verificar la huella o fue cancelada. Usa tu contraseña.</string>
+    <string name="biometric_title_activate">Activar acceso biométrico</string>
+    <string name="biometric_subtitle_activate">Confirma tu huella para habilitar el inicio de sesión rápido</string>
+    <string name="biometric_title_login">Iniciar sesión con huella</string>
+    <string name="biometric_subtitle_login">Autentícate para acceder a tu cuenta</string>
+    <string name="biometric_negative_cancel">Cancelar</string>
+    <string name="biometric_negative_password">Usar contraseña</string>
+    <string name="login_citizen_profile">Perfil Ciudadano</string>
+    <string name="login_recovery_hint">Te enviaremos un enlace de recuperación seguro si no la recuerdas.</string>
+    <string name="login_button">Ingresar a mi Barrio</string>
+    <string name="login_biometric_button">Iniciar sesión con Huella</string>
+    <string name="register_button_label">Registrarme</string>
+    <string name="login_subtitle">Acceso ciudadano</string>
+    <string name="digital_brand">VOZBARRIAL DIGITAL</string>
+    <string name="password">Contraseña</string>
+    <string name="forgot_password">¿Olvidaste tu contraseña?</string>
+    <string name="email_placeholder_login">nombre@correo.com</string>
+    <string name="password_placeholder">Mínimo 6 caracteres</string>
+    <string name="quick_access">O ACCESO RÁPIDO</string>
+    <string name="not_a_member">¿Aún no eres miembro?</string>
+    <string name="member_invite">Súmate a la vigilancia y cuidado barrial.</string>
+    <string name="welcome_title">Bienvenido a VozBarrial</string>
+    <string name="welcome_subtitle">Tu red de colaboración y seguridad vecinal en tiempo real.</string>
+    <string name="secure_access">Acceso seguro</string>
+    <string name="hide_password">Ocultar contraseña</string>
+    <string name="show_password">Mostrar contraseña</string>
+
+    <!-- Recuperación de contraseña -->
+    <string name="recovery_instructions">Para continuar</string>
+    <string name="back_to_login">Volver al inicio de sesión</string>
+    <string name="email_label">Correo electrónico</string>
+    <string name="email_placeholder">Escribe tu correo electrónico</string>
+    <string name="recovery_email_hint">Usa el mismo correo que registraste en VozBarrial.</string>
+    <string name="send_recovery_link">Enviar enlace de recuperación  ➤</string>
+    <string name="spam_folder_hint">Si no aparece, revisa las carpetas de spam o promociones.</string>
+
+    <!-- Registro -->
+    <string name="register_email_purpose">Usaremos tu correo para validar tu cuenta y recuperar el acceso.</string>
+    <string name="password_strength">Fortaleza: %1$s</string>
+    <string name="password_requirements">Usa al menos 8 caracteres e incluye un número o un símbolo.</string>
+    <string name="create_community_account">Crear Cuenta Comunitaria</string>
+    <string name="community_rules_title">Normas de convivencia</string>
+    <string name="community_rules_text">Al crear tu cuenta, te comprometes a compartir información veraz, respetar a la comunidad y usar la plataforma con responsabilidad cívica.</string>
+    <string name="register_title">Registro</string>
+
+    <!-- Welcome / Inicio -->
+    <string name="sign_in">Iniciar Sesión</string>
+    <string name="welcome_screen_subtitle">Red Cívica Vecinal</string>
+    <string name="welcome_screen_badge">COMUNIDAD ACTIVA</string>
+    <string name="welcome_screen_footer">Participación Ciudadana Segura · VozBarrial</string>
+
+    <!-- Marcos y Tienda -->
+    <string name="acquired_frames">Marcos Adquiridos</string>
+    <string name="no_frames_inventory">No tienes marcos en tu inventario. ¡Canjea algunos en la tienda!</string>
+    <string name="testing_frame">Probando: %1$s</string>
+    <string name="normal_profile_view">Vista: Perfil normal</string>
+    <string name="store_preview_instructions">Toca Probar para ver el marco en directo antes de canjear tus monedas.</string>
+    <string name="frames_catalog">Catálogo de Marcos</string>
+    <string name="coin_store">Tienda de Monedas</string>
+    <string name="store_dialog_title">Tienda de Marcos</string>
+    <string name="missing_coins">Faltan %1$d Monedas</string>
+
+    <!-- Mapa y Radar -->
+    <string name="distance_label">Distancia (%1$s)</string>
+    <string name="active_radar">Radar Activo</string>
+    <string name="notifications_title">Notificaciones</string>
+    <string name="my_coins">Mis monedas</string>
+    <string name="view_report">Ver reporte</string>
+    <string name="ready">Listo</string>
+    <string name="greeting_format">¡Hola, %1$s!</string>
+    <string name="filter_all">Todos</string>
+    <string name="filter_security">Seguridad</string>
+    <string name="filter_emergencies">Emergencias</string>
+    <string name="filter_infrastructure">Infraestructura</string>
+    <string name="filter_pets">Mascotas</string>
+    <string name="filter_community">Comunidad</string>
+    <string name="filter_lighting">Alumbrado</string>
+
+    <!-- Moderación Admin -->
+    <string name="moderation_panel">Panel de Moderación</string>
+    <string name="no_reports_section">No hay reportes en esta sección.</string>
+    <string name="active_neighborhood_validations">Validaciones barriales activas</string>
+    <string name="active_collaborator">Colaborador Activo</string>
+    <string name="map_label">Mapa</string>
+    <string name="view_info">Ver Info</string>
+    <string name="reject">Rechazar</string>
+    <string name="approve">Aprobar</string>
+    <string name="rejection_reason">Motivo del Rechazo</string>
+    <string name="rejection_review_subtitle">Revisión de veracidad y normativas cívicas</string>
+    <string name="inadmissibility_criterion">Criterio de Inadmisibilidad *</string>
+    <string name="step_1_of_2">Paso 1 de 2</string>
+    <string name="admin_selected">Seleccionado</string>
+    <string name="available_criteria">CRITERIOS DISPONIBLES</string>
+    <string name="explanation_for_neighbor">Explicación para el vecino *</string>
+    <string name="suggestions">Sugerencias:</string>
+    <string name="allow_citizen_correct_resubmit">Permitir al ciudadano corregir y reenviar</string>
+    <string name="report_editable_draft_hint">El reporte pasará a estado \'Borrador editable\' en su perfil vecinal.</string>
+    <string name="confirm_rejection">Confirmar Rechazo</string>
+    <string name="cancel_return_to_review">Cancelar y volver a la revisión</string>
+    <string name="verification">Verificación</string>
+    <string name="resolution">Resolución</string>
+    <string name="neighborhood_solution">Solución vecinal</string>
+    <string name="pending_verification_reports">Reportes Pendientes de Verificación</string>
+    <string name="no_pending_verification">No hay reportes pendientes de verificación.</string>
+    <string name="resolution_neighborhood_solutions">Resolución y Soluciones Vecinales</string>
+    <string name="admin_notifications">Notificaciones de Administrador</string>
+    <string name="moderator">Moderador</string>
+    <string name="reports_resolution_title">Resolución de Reportes</string>
+    <string name="resolved">Resuelto</string>
+
+    <!-- Crear / Editar / Detalle Reporte -->
+    <string name="report_incident">Reportar Incidente</string>
+    <string name="active_vigilance_network">Red de Vigilancia Activa</string>
+    <string name="create_citizen_report">Crear Reporte\nCiudadano</string>
+    <string name="report_help_message">Ayuda a mejorar la seguridad y convivencia de tu ciudad para bienestar de todos.</string>
+    <string name="secure_encrypted_storage">Almacenamiento seguro y cifrado</string>
+    <string name="tap_to_choose_map_point">Toca para elegir punto en el mapa</string>
+    <string name="open_map">Abrir mapa  ↗</string>
+    <string name="report_title_label">Título del reporte</string>
+    <string name="report_title_placeholder">ej: Luminarias rotas en esquina de parque</string>
+    <string name="report_description_label">Descripción de lo sucedido</string>
+    <string name="report_description_placeholder">Describe detalles relevantes: hora aproximada, puntos de referencia clave o situación actual.</string>
+    <string name="choose_location">Elige la ubicación</string>
+    <string name="drag_pin_instructions">Arrastra el pin hasta el lugar exacto del incidente.</string>
+    <string name="edit_and_correct_report">Editar y Corregir Reporte</string>
+    <string name="adjust_details_review">Ajusta los detalles para la revisión</string>
+    <string name="upload">Subir</string>
+    <string name="update_and_resend_report">Actualizar y Reenviar Reporte</string>
+    <string name="incident_detail">Detalle Incidencia</string>
+    <string name="rejection_reason_label">Motivo del rechazo</string>
+    <string name="relevance_level">Nivel de Relevancia: %1$s</string>
+    <string name="severity_label">Severidad %1$d/5</string>
+    <string name="incident_description">Descripción del Incidente</string>
+    <string name="published_time">Publicado %1$s</string>
+    <string name="author">Autor</string>
+    <string name="citizen_contributions">Aportes Ciudadanos (%1$d)</string>
+    <string name="live_label">En vivo</string>
+    <string name="contribution_placeholder">Aporta datos, testigos o fotos adicionales…</string>
+    <string name="sending">Enviando…</string>
+    <string name="send">Enviar</string>
 </resources>

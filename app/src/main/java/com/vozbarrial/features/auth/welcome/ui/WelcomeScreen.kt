@@ -24,20 +24,19 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.vozbarrial.features.auth.welcome.presentation.WelcomeUiState
+import com.vozbarrial.R
 import com.vozbarrial.features.auth.welcome.presentation.WelcomeViewModel
 import com.vozbarrial.ui.theme.VozGreen
 import com.vozbarrial.ui.theme.VozNavy
@@ -50,10 +49,7 @@ fun WelcomeRoute(
     modifier: Modifier = Modifier,
     welcomeViewModel: WelcomeViewModel = viewModel()
 ) {
-    val uiState by welcomeViewModel.uiState.collectAsStateWithLifecycle()
-
     WelcomeContent(
-        uiState = uiState,
         onLoginClick = { welcomeViewModel.onLoginClicked(onLoginClick) },
         modifier = modifier
     )
@@ -61,7 +57,6 @@ fun WelcomeRoute(
 
 @Composable
 fun WelcomeContent(
-    uiState: WelcomeUiState,
     onLoginClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -135,9 +130,9 @@ fun WelcomeContent(
             }
 
             Spacer(Modifier.height(18.dp))
-            Text(uiState.title, color = VozNavy, fontSize = 27.sp, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.app_name), color = VozNavy, fontSize = 27.sp, fontWeight = FontWeight.Bold)
             Spacer(Modifier.height(3.dp))
-            Text(uiState.subtitle, color = Color(0xFF52606D), fontSize = 16.sp)
+            Text(stringResource(R.string.welcome_screen_subtitle), color = Color(0xFF52606D), fontSize = 16.sp)
             Spacer(Modifier.height(14.dp))
 
             Surface(shape = RoundedCornerShape(50), color = Color.White.copy(alpha = 0.76f)) {
@@ -148,7 +143,7 @@ fun WelcomeContent(
                 ) {
                     Box(Modifier.size(7.dp).background(VozGreen, CircleShape))
                     Text(
-                        uiState.badgeText,
+                        stringResource(R.string.welcome_screen_badge),
                         color = Color(0xFF52606D),
                         fontSize = 10.sp,
                         fontWeight = FontWeight.SemiBold
@@ -172,7 +167,7 @@ fun WelcomeContent(
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = VozNavy),
             ) {
-                Text("Iniciar Sesión", fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+                Text(stringResource(R.string.sign_in), fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
                 Spacer(Modifier.size(9.dp))
                 Icon(
                     imageVector = Icons.Filled.ArrowForward,
@@ -193,7 +188,7 @@ fun WelcomeContent(
                 )
                 Spacer(Modifier.size(5.dp))
                 Text(
-                    uiState.footerText,
+                    stringResource(R.string.welcome_screen_footer),
                     color = Color(0xFF8A949E),
                     fontSize = 10.sp
                 )
@@ -206,7 +201,6 @@ fun WelcomeContent(
 @Composable
 private fun WelcomePreview() {
     WelcomeContent(
-        uiState = WelcomeUiState(),
         onLoginClick = {}
     )
 }

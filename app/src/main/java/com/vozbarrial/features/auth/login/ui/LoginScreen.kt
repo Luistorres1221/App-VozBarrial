@@ -51,6 +51,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -60,6 +61,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.vozbarrial.R
 import com.vozbarrial.core.result.AuthOperationResult
 import com.vozbarrial.features.auth.passwordRecovery.ui.PasswordRecoveryRoute
 import com.vozbarrial.features.auth.login.presentation.LoginUiState
@@ -115,7 +117,7 @@ fun AuthRoute(
                             val biometricManager = com.vozbarrial.core.biometric.BiometricAuthManager(context, email)
                             biometricManager.encryptAndSaveCredentials(activity, password) { success ->
                                 if (success) {
-                                    android.widget.Toast.makeText(context, "¡Acceso con huella guardado para futuros inicios de sesión!", android.widget.Toast.LENGTH_SHORT).show()
+                                    android.widget.Toast.makeText(context, context.getString(R.string.biometric_saved_toast), android.widget.Toast.LENGTH_SHORT).show()
                                 }
                             }
                         }
@@ -127,7 +129,7 @@ fun AuthRoute(
             val prefs = context.getSharedPreferences("voz_barrial_biometric_global", android.content.Context.MODE_PRIVATE)
             val savedEmail = prefs.getString("saved_biometric_email", null)
             if (savedEmail.isNullOrBlank()) {
-                formViewModel.showDialog("Inicia sesión con tu correo y contraseña al menos una vez para registrar tu huella dactilar.")
+                formViewModel.showDialog(context.getString(R.string.biometric_register_hint))
             } else if (activity != null) {
                 val biometricManager = com.vozbarrial.core.biometric.BiometricAuthManager(context, savedEmail)
                 biometricManager.decryptCredentials(
@@ -142,7 +144,7 @@ fun AuthRoute(
                         )
                     },
                     onError = {
-                        formViewModel.showDialog("No se pudo verificar la huella o fue cancelada. Usa tu contraseña.")
+                        formViewModel.showDialog(context.getString(R.string.biometric_verify_error))
                     }
                 )
             }
@@ -191,21 +193,21 @@ fun AuthContent(
                 verticalArrangement = Arrangement.spacedBy(7.dp),
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    FieldLabel("Correo Electrónico", Modifier.weight(1f))
-                    Text("Perfil Ciudadano", color = VozMuted, fontSize = 10.sp)
+                    FieldLabel(stringResource(R.string.email_label), Modifier.weight(1f))
+                    Text(stringResource(R.string.login_citizen_profile), color = VozMuted, fontSize = 10.sp)
                 }
                 AuthField(
                     value = formState.email,
                     onValueChange = onEmailChange,
-                    placeholder = "nombre@correo.com",
+                    placeholder = stringResource(R.string.email_placeholder_login),
                     leading = { Icon(Icons.Default.MailOutline, null, tint = VozMuted, modifier = Modifier.size(17.dp)) },
                     keyboardType = KeyboardType.Email,
                 )
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    FieldLabel("Contraseña", Modifier.weight(1f))
+                    FieldLabel(stringResource(R.string.password), Modifier.weight(1f))
                     Text(
-                        "¿Olvidaste tu contraseña?",
+                        stringResource(R.string.forgot_password),
                         color = Color(0xFF45628A),
                         fontSize = 10.sp,
                         modifier = Modifier.clickable(onClick = onShowRecovery),
@@ -214,7 +216,7 @@ fun AuthContent(
                 AuthField(
                     value = formState.password,
                     onValueChange = onPasswordChange,
-                    placeholder = "Mínimo 6 caracteres",
+                    placeholder = stringResource(R.string.password_placeholder),
                     leading = { Icon(Icons.Default.Lock, null, tint = VozMuted, modifier = Modifier.size(17.dp)) },
                     keyboardType = KeyboardType.Password,
                     password = true,
@@ -225,7 +227,7 @@ fun AuthContent(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(Icons.Default.Security, null, tint = VozGreen, modifier = Modifier.size(12.dp))
                     Spacer(Modifier.width(5.dp))
-                    Text("Te enviaremos un enlace de recuperación seguro si no la recuerdas.", color = VozMuted, fontSize = 10.sp, lineHeight = 13.sp)
+                    Text(stringResource(R.string.login_recovery_hint), color = VozMuted, fontSize = 10.sp, lineHeight = 13.sp)
                 }
 
                 if (formState.message.isNotBlank()) {
@@ -249,11 +251,11 @@ fun AuthContent(
                     } else {
                         Icon(Icons.Default.Login, null, modifier = Modifier.size(17.dp))
                         Spacer(Modifier.width(8.dp))
-                        Text("Ingresar a mi Barrio", fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.login_button), fontSize = 13.sp, fontWeight = FontWeight.Bold)
                     }
                 }
 
-                DividerLabel("O ACCESO RÁPIDO")
+                DividerLabel(stringResource(R.string.quick_access))
                 OutlinedButton(
                     onClick = onBiometricLogin,
                     modifier = Modifier.fillMaxWidth().height(44.dp),
@@ -261,7 +263,7 @@ fun AuthContent(
                 ) {
                     Icon(Icons.Default.Fingerprint, null, tint = Color(0xFF188A79), modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(8.dp))
-                    Text("Iniciar sesión con Huella", color = VozNavy, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.login_biometric_button), color = VozNavy, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                 }
             }
         }
@@ -285,13 +287,13 @@ fun AuthContent(
                 }
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        "¿Aún no eres miembro?",
+                        stringResource(R.string.not_a_member),
                         color = VozNavy,
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
                     )
                     Text(
-                        "Súmate a la vigilancia y cuidado barrial.",
+                        stringResource(R.string.member_invite),
                         color = VozMuted,
                         fontSize = 10.sp,
                     )
@@ -303,7 +305,7 @@ fun AuthContent(
                     shape = RoundedCornerShape(8.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF087A55)),
                 ) {
-                    Text("Registrarme", fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.register_button_label), fontSize = 10.sp, fontWeight = FontWeight.Bold)
                 }
             }
         }
@@ -313,9 +315,9 @@ fun AuthContent(
     if (formState.dialogMessage.isNotBlank()) {
         AlertDialog(
             onDismissRequest = onDismissDialog,
-            title = { Text("VozBarrial", color = VozNavy) },
+            title = { Text(stringResource(R.string.app_name), color = VozNavy) },
             text = { Text(formState.dialogMessage) },
-            confirmButton = { TextButton(onClick = onDismissDialog) { Text("Entendido") } },
+            confirmButton = { TextButton(onClick = onDismissDialog) { Text(stringResource(R.string.dialog_understood)) } },
         )
     }
 }
@@ -327,7 +329,7 @@ private fun Header(onBack: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         IconButton(onClick = onBack, modifier = Modifier.size(36.dp)) {
-            Icon(Icons.Default.ArrowBack, contentDescription = "Volver", tint = VozNavy, modifier = Modifier.size(19.dp))
+            Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.back), tint = VozNavy, modifier = Modifier.size(19.dp))
         }
         Box(
             modifier = Modifier.size(29.dp).clip(CircleShape).background(VozNavy),
@@ -337,10 +339,10 @@ private fun Header(onBack: () -> Unit) {
         }
         Spacer(Modifier.width(8.dp))
         Column(modifier = Modifier.weight(1f)) {
-            Text("VozBarrial", color = VozNavy, fontSize = 13.sp, fontWeight = FontWeight.Bold)
-            Text("Acceso ciudadano", color = VozMuted, fontSize = 10.sp)
+            Text(stringResource(R.string.app_name), color = VozNavy, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.login_subtitle), color = VozMuted, fontSize = 10.sp)
         }
-        Icon(Icons.Default.Security, contentDescription = "Acceso seguro", tint = Color(0xFF56AA9A), modifier = Modifier.size(17.dp))
+        Icon(Icons.Default.Security, contentDescription = stringResource(R.string.secure_access), tint = Color(0xFF56AA9A), modifier = Modifier.size(17.dp))
     }
 }
 
@@ -384,16 +386,16 @@ private fun IntroCard() {
                 }
             }
             Spacer(Modifier.height(6.dp))
-            Text("VOZBARRIAL DIGITAL", color = Color(0xFF07885F), fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+            Text(stringResource(R.string.digital_brand), color = Color(0xFF07885F), fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
             Text(
-                "Bienvenido a VozBarrial",
+                stringResource(R.string.welcome_title),
                 color = VozNavy,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center,
             )
             Text(
-                "Tu red de colaboración y seguridad vecinal en tiempo real.",
+                stringResource(R.string.welcome_subtitle),
                 color = VozMuted,
                 fontSize = 11.sp,
                 lineHeight = 15.sp,
@@ -419,6 +421,8 @@ private fun AuthField(
     visible: Boolean = false,
     onToggleVisibility: () -> Unit = {},
 ) {
+    val hidePasswordText = stringResource(R.string.hide_password)
+    val showPasswordText = stringResource(R.string.show_password)
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
@@ -431,7 +435,7 @@ private fun AuthField(
                 IconButton(onClick = onToggleVisibility, modifier = Modifier.size(36.dp)) {
                     Icon(
                         if (visible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                        contentDescription = if (visible) "Ocultar contraseña" else "Mostrar contraseña",
+                        contentDescription = if (visible) hidePasswordText else showPasswordText,
                         tint = VozMuted,
                         modifier = Modifier.size(17.dp),
                     )

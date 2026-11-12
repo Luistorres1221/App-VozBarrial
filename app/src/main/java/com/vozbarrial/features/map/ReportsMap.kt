@@ -35,6 +35,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import com.vozbarrial.R
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -99,8 +101,6 @@ fun ReportsMap(name: String, profilePhoto: String? = null, equippedFrame: String
     var selectedReportId by rememberSaveable { mutableStateOf<String?>(null) }
     var distance by rememberSaveable { mutableStateOf("1.5 km") }
     var distanceMenu by remember { mutableStateOf(false) }
-    var showNotifications by rememberSaveable { mutableStateOf(false) }
-    var showPoints by rememberSaveable { mutableStateOf(false) }
 
     val totalCount = reports.size
     var lastViewedCount by rememberSaveable { mutableIntStateOf(-1) }
@@ -342,7 +342,7 @@ fun ReportsMap(name: String, profilePhoto: String? = null, equippedFrame: String
                 monedas = monedas,
                 nivel = nivel,
                 hasUnreadNotifications = hasUnreadNotifications,
-                onPoints = { showPoints = true },
+                onPoints = { onNavigate("store") },
                 onNotifications = {
                     lastViewedCount = totalCount
                     onNavigate("activity")
@@ -363,11 +363,12 @@ fun ReportsMap(name: String, profilePhoto: String? = null, equippedFrame: String
                         Row(Modifier.padding(horizontal = 10.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
                             Icon(Icons.Default.LocationOn, null, tint = VozNavy, modifier = Modifier.size(14.dp))
                             Spacer(Modifier.width(4.dp))
-                            Text("Distancia ($distance)", fontSize = 10.sp, color = VozNavy, fontWeight = FontWeight.Medium)
+                            Text(stringResource(R.string.distance_label, distance), fontSize = 10.sp, color = VozNavy, fontWeight = FontWeight.Medium)
                         }
                     }
                     DropdownMenu(expanded = distanceMenu, onDismissRequest = { distanceMenu = false }) {
-                        listOf("500 m", "1.5 km", "3 km", "5 km", "Todos").forEach { option ->
+                        val allLabel = stringResource(R.string.filter_all)
+                        listOf("500 m", "1.5 km", "3 km", "5 km", allLabel).forEach { option ->
                             DropdownMenuItem(
                                 text = { Text(option) },
                                 onClick = { distance = option; distanceMenu = false },
@@ -384,7 +385,7 @@ fun ReportsMap(name: String, profilePhoto: String? = null, equippedFrame: String
                 ) {
                     Box(Modifier.size(7.dp).clip(CircleShape).background(VozGreen))
                     Spacer(Modifier.width(5.dp))
-                    Text("Radar Activo", color = VozGreen, fontSize = 10.sp, fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(R.string.active_radar), color = VozGreen, fontSize = 10.sp, fontWeight = FontWeight.SemiBold)
                 }
             }
         }
@@ -398,8 +399,16 @@ fun ReportsMap(name: String, profilePhoto: String? = null, equippedFrame: String
                 .zIndex(2f),
             horizontalArrangement = Arrangement.spacedBy(5.dp),
         ) {
+            val filterAll = stringResource(R.string.filter_all)
+            val filterSecurity = stringResource(R.string.filter_security)
+            val filterEmergencies = stringResource(R.string.filter_emergencies)
+            val filterInfrastructure = stringResource(R.string.filter_infrastructure)
+            val filterPets = stringResource(R.string.filter_pets)
+            val filterCommunity = stringResource(R.string.filter_community)
+            val filterLighting = stringResource(R.string.filter_lighting)
+
             MapFilter(
-                text = "Todos",
+                text = filterAll,
                 count = distanceFilteredReports.size,
                 selected = selectedCategory == "TODOS",
                 iconVector = Icons.Default.Layers,
@@ -407,7 +416,7 @@ fun ReportsMap(name: String, profilePhoto: String? = null, equippedFrame: String
                 onClick = { selectedCategory = "TODOS" }
             )
             MapFilter(
-                text = "Seguridad",
+                text = filterSecurity,
                 count = distanceFilteredReports.count { it.category.contains("seguridad", true) },
                 selected = selectedCategory == "Seguridad",
                 iconRes = com.vozbarrial.R.drawable.ic_pin_security,
@@ -415,7 +424,7 @@ fun ReportsMap(name: String, profilePhoto: String? = null, equippedFrame: String
                 onClick = { selectedCategory = if (selectedCategory == "Seguridad") "TODOS" else "Seguridad" }
             )
             MapFilter(
-                text = "Emergencias",
+                text = filterEmergencies,
                 count = distanceFilteredReports.count { it.category.contains("emergencia", true) },
                 selected = selectedCategory == "Emergencias Médicas",
                 iconRes = com.vozbarrial.R.drawable.ic_pin_emergencias,
@@ -423,7 +432,7 @@ fun ReportsMap(name: String, profilePhoto: String? = null, equippedFrame: String
                 onClick = { selectedCategory = if (selectedCategory == "Emergencias Médicas") "TODOS" else "Emergencias Médicas" }
             )
             MapFilter(
-                text = "Infraestructura",
+                text = filterInfrastructure,
                 count = distanceFilteredReports.count { it.category.contains("infraestructura", true) || it.category.contains("vías", true) },
                 selected = selectedCategory == "Infraestructura y Vías",
                 iconRes = com.vozbarrial.R.drawable.ic_pin_infraestructura,
@@ -431,7 +440,7 @@ fun ReportsMap(name: String, profilePhoto: String? = null, equippedFrame: String
                 onClick = { selectedCategory = if (selectedCategory == "Infraestructura y Vías") "TODOS" else "Infraestructura y Vías" }
             )
             MapFilter(
-                text = "Mascotas",
+                text = filterPets,
                 count = distanceFilteredReports.count { it.category.contains("mascota", true) || it.category.contains("animal", true) },
                 selected = selectedCategory == "Mascotas y Animales",
                 iconRes = com.vozbarrial.R.drawable.ic_pin_mascotas,
@@ -439,7 +448,7 @@ fun ReportsMap(name: String, profilePhoto: String? = null, equippedFrame: String
                 onClick = { selectedCategory = if (selectedCategory == "Mascotas y Animales") "TODOS" else "Mascotas y Animales" }
             )
             MapFilter(
-                text = "Comunidad",
+                text = filterCommunity,
                 count = distanceFilteredReports.count { it.category.contains("comunidad", true) || it.category.contains("entorno", true) },
                 selected = selectedCategory == "Comunidad y Entorno",
                 iconRes = com.vozbarrial.R.drawable.ic_pin_comunidad,
@@ -447,7 +456,7 @@ fun ReportsMap(name: String, profilePhoto: String? = null, equippedFrame: String
                 onClick = { selectedCategory = if (selectedCategory == "Comunidad y Entorno") "TODOS" else "Comunidad y Entorno" }
             )
             MapFilter(
-                text = "Alumbrado",
+                text = filterLighting,
                 count = distanceFilteredReports.count { it.category.contains("alumbrado", true) || it.category.contains("servicio", true) },
                 selected = selectedCategory == "Alumbrado y Servicios",
                 iconRes = com.vozbarrial.R.drawable.ic_pin_alumbrado,
@@ -523,23 +532,6 @@ fun ReportsMap(name: String, profilePhoto: String? = null, equippedFrame: String
             }
         }
     }
-
-    if (showNotifications) {
-        AlertDialog(
-            onDismissRequest = { showNotifications = false },
-            title = { Text("Notificaciones", color = VozNavy) },
-            text = { Text("Tienes ${distanceFilteredReports.count { it.category.contains("seguridad", true) }} alerta de seguridad en tu zona y ${distanceFilteredReports.size} reportes comunitarios activos.") },
-            confirmButton = { TextButton(onClick = { showNotifications = false }) { Text("Listo") } },
-        )
-    }
-    if (showPoints) {
-        AlertDialog(
-            onDismissRequest = { showPoints = false },
-            title = { Text("Mis monedas", color = VozNavy) },
-            text = { Text("Tienes $monedas monedas. Gana 50 monedas al crear un reporte y 200 monedas cuando alguien apoya tus reportes.") },
-            confirmButton = { TextButton(onClick = { showPoints = false }) { Text("Entendido") } },
-        )
-    }
 }
 
 @Composable
@@ -569,7 +561,9 @@ private fun MapHeader(
             modifier = Modifier.clickable(onClick = onProfile)
         )
         Column(modifier = Modifier.weight(1f).clickable(onClick = onProfile)) {
-            Text("¡Hola, ${name.substringBefore('%').substringBefore(' ')}!", color = VozNavy, fontWeight = FontWeight.Bold, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            val firstName = name.substringBefore('%').substringBefore(' ')
+            val greeting = stringResource(R.string.greeting_format, firstName)
+            Text(greeting, color = VozNavy, fontWeight = FontWeight.Bold, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Text(com.vozbarrial.domain.model.Nivel.fromValue(nivel).displayName, color = VozGreen, fontSize = 11.sp, fontWeight = FontWeight.Medium)
         }
         Surface(

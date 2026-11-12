@@ -241,7 +241,7 @@ fun AppNavGraph() {
             communityReports = reportsViewModel.reports,
             onSignOut = ::signOutAndReset,
             onNavigate = { page ->
-                if (page == "createReport" || page.startsWith("reportDetail/")) {
+                if (page == "createReport" || page.startsWith("reportDetail/") || page == "store" || page == "frames") {
                     navigationViewModel.navigate(page)
                 } else {
                     navigationViewModel.showDashboardPage(page)

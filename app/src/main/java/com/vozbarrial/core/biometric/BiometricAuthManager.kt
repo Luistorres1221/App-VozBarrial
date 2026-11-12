@@ -8,6 +8,7 @@ import android.util.Base64
 import androidx.biometric.BiometricPrompt
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
+import com.vozbarrial.R
 import java.security.KeyStore
 import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
@@ -125,9 +126,9 @@ class BiometricAuthManager(
         )
 
         val promptInfo = BiometricPrompt.PromptInfo.Builder()
-            .setTitle("Activar acceso biométrico")
-            .setSubtitle("Confirma tu huella para habilitar el inicio de sesión rápido")
-            .setNegativeButtonText("Cancelar")
+            .setTitle(context.getString(R.string.biometric_title_activate))
+            .setSubtitle(context.getString(R.string.biometric_subtitle_activate))
+            .setNegativeButtonText(context.getString(R.string.biometric_negative_cancel))
             .build()
 
         biometricPrompt.authenticate(promptInfo, BiometricPrompt.CryptoObject(cipher))
@@ -188,9 +189,9 @@ class BiometricAuthManager(
         )
 
         val promptInfo = BiometricPrompt.PromptInfo.Builder()
-            .setTitle("Iniciar sesión con huella")
-            .setSubtitle("Autentícate para acceder a tu cuenta")
-            .setNegativeButtonText("Usar contraseña")
+            .setTitle(context.getString(R.string.biometric_title_login))
+            .setSubtitle(context.getString(R.string.biometric_subtitle_login))
+            .setNegativeButtonText(context.getString(R.string.biometric_negative_password))
             .build()
 
         biometricPrompt.authenticate(promptInfo, BiometricPrompt.CryptoObject(cipher))
