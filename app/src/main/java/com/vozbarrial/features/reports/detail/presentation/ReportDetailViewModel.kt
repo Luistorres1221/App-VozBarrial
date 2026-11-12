@@ -139,15 +139,38 @@ class ReportDetailViewModel : ViewModel() {
                     }
                 }
 
+                val user = FirebaseAuth.getInstance().currentUser
+                val email = user?.email.orEmpty()
+                val resolvedAuthorName = authorName.ifBlank { email.substringBefore("@").ifBlank { "Vecino" } }
 
-                firestore.collection("reportes")
+                val aportesRef = firestore.collection("reportes")
                     .document(reportId)
                     .collection("aportes")
 
-                withContext(Dispatchers.Main) {
-                    _uiState.update { it.copy(isUploading = false) }
-                }
-            } catch (_: Exception) {
+                val contributionId = aportesRef.document().id
+                val contribution = Contribution(
+                    id = contributionId,
+                    authorName = resolvedAuthorName,
+                    authorRole = "Vecino",
+                    content = currentText,
+                    imageUrls = uploadedUrls,
+                    timestamp = System.currentTimeMillis()
+                )
+
+                aportesRef.document(contributionId).set(contribution)
+                    .addOnSuccessListener {
+                        viewModelScope.launch(Dispatchers.Main) {
+                            _uiState.update { it.copy(isUploading = false) }
+                        }
+                    }
+                    .addOnFailureListener { e ->
+                        android.util.Log.e("ReportDetailViewModel", "Error adding contribution: ${e.message}", e)
+                        viewModelScope.launch(Dispatchers.Main) {
+                            _uiState.update { it.copy(isUploading = false) }
+                        }
+                    }
+            } catch (e: Exception) {
+                android.util.Log.e("ReportDetailViewModel", "Error adding contribution: ${e.message}", e)
                 withContext(Dispatchers.Main) {
                     _uiState.update { it.copy(isUploading = false) }
                 }
