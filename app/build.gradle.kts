@@ -1,17 +1,8 @@
-import java.util.Properties
-
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.plugin.compose")
     id("com.google.gms.google-services")
 }
-
-val localProperties = Properties()
-val localPropertiesFile = rootProject.file("local.properties")
-if (localPropertiesFile.exists()) {
-    localProperties.load(localPropertiesFile.inputStream())
-}
-val openRouterApiKey = localProperties.getProperty("OPENROUTER_API_KEY") ?: "sk-or-v1-default-key"
 
 android {
     namespace = "com.vozbarrial"
@@ -23,14 +14,12 @@ android {
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"
-
-        buildConfigField("String", "OPENROUTER_API_KEY", "\"$openRouterApiKey\"")
     }
 
     buildFeatures {
         compose = true
-        buildConfig = true
     }
+
 }
 
 dependencies {
@@ -52,6 +41,7 @@ dependencies {
     implementation(platform("com.google.firebase:firebase-bom:33.16.0"))
     implementation("org.osmdroid:osmdroid-android:6.1.18")
     implementation("androidx.biometric:biometric:1.1.0")
-    implementation("com.squareup.okhttp3:okhttp:4.12.0")
     debugImplementation("androidx.compose.ui:ui-tooling")
 }
+
+

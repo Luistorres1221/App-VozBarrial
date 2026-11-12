@@ -140,23 +140,13 @@ class ReportDetailViewModel : ViewModel() {
                 }
 
 
-                val contribution = mapOf(
-                    "authorName" to authorName,
-                    "authorRole" to "Ciudadano",
-                    "content" to currentText,
-                    "imageUrls" to uploadedUrls,
-                    "timestamp" to System.currentTimeMillis()
-                )
-
                 firestore.collection("reportes")
                     .document(reportId)
                     .collection("aportes")
-                    .add(contribution)
-                    .addOnCompleteListener {
-                        viewModelScope.launch(Dispatchers.Main) {
-                            _uiState.update { it.copy(isUploading = false) }
-                        }
-                    }
+
+                withContext(Dispatchers.Main) {
+                    _uiState.update { it.copy(isUploading = false) }
+                }
             } catch (_: Exception) {
                 withContext(Dispatchers.Main) {
                     _uiState.update { it.copy(isUploading = false) }
