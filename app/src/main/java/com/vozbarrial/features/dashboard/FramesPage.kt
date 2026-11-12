@@ -13,14 +13,41 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.vozbarrial.R
 import com.vozbarrial.ui.components.UserAvatarWithFrame
 import com.vozbarrial.ui.theme.*
 
 private data class FrameItem(val name:String,val category:String,val detail:String,val color:Color,val pale:Color,val acquired:String)
+
+@Composable
+fun getLocalizedFrameName(name: String): String {
+    return when (name) {
+        "Escudo Ciudadano" -> stringResource(R.string.frame_escudo_ciudadano)
+        "Eco Barrio Verde" -> stringResource(R.string.frame_eco_barrio_verde)
+        "Ojo Vigilante Neón" -> stringResource(R.string.frame_ojo_vigilante_neon)
+        "Paz Comunitaria" -> stringResource(R.string.frame_paz_comunitaria)
+        "Guardián Dorado" -> stringResource(R.string.frame_guardian_dorado)
+        "Líder Platino" -> stringResource(R.string.frame_lider_platino)
+        else -> name
+    }
+}
+
+@Composable
+fun getLocalizedCategory(category: String): String {
+    return when (category) {
+        "Común" -> stringResource(R.string.rarity_common)
+        "Raro" -> stringResource(R.string.rarity_rare)
+        "Épico" -> stringResource(R.string.rarity_epic)
+        "Legendario" -> stringResource(R.string.rarity_legendary)
+        "Mítico" -> stringResource(R.string.rarity_mythic)
+        else -> category
+    }
+}
 
 @Composable
 fun FramesPage(
@@ -41,13 +68,19 @@ fun FramesPage(
      FrameItem("Guardián Dorado","Legendario","Disponible en inventario",Color(0xFFE9A900),Color(0xFFFFF2C4),"Adquirido"),
      FrameItem("Líder Platino","Mítico","Disponible en inventario",Color(0xFF8996A5),Color(0xFFE9EDF2),"Adquirido")
  )
+ val availableInInventoryText = stringResource(R.string.available_in_inventory)
+ val acquiredText = stringResource(R.string.acquired)
+
  val visibleFrames = frames.filter { it.name in owned }.map { item ->
-  item.copy(detail = "Disponible en tu inventario", acquired = "Adquirido")
+  item.copy(detail = availableInInventoryText, acquired = acquiredText)
  }
+
+ val activeFrameDisplayName = getLocalizedFrameName(activeFirmSafely(activeFrame))
+
  Column(Modifier.fillMaxSize().background(VozBackground)) {
   Row(Modifier.fillMaxWidth().background(Color.White).padding(horizontal=10.dp,vertical=8.dp),verticalAlignment=Alignment.CenterVertically) {
    Text("‹",Modifier.clickable(onClick=onBack).padding(horizontal=7.dp),fontSize=24.sp,color=VozNavy)
-   Text("Mis Marcos",Modifier.weight(1f),fontSize=15.sp,fontWeight=FontWeight.Bold,color=VozNavy)
+   Text(stringResource(R.string.my_frames),Modifier.weight(1f),fontSize=15.sp,fontWeight=FontWeight.Bold,color=VozNavy)
    Surface(shape=RoundedCornerShape(50.dp),color=Color(0xFFFFF2E7)){Text("🟠 $monedas",Modifier.padding(horizontal=8.dp,vertical=5.dp),fontSize=9.sp,color=Color(0xFF8A5723),fontWeight=FontWeight.Bold)}
    Spacer(Modifier.width(6.dp))
    Text(" V ",color=VozGreen,fontSize=11.sp,fontWeight=FontWeight.Bold)
@@ -65,21 +98,24 @@ fun FramesPage(
       Surface(Modifier.size(26.dp),shape=CircleShape,color=VozNavy){Box(contentAlignment=Alignment.Center){Text("✓",color=Color.White,fontSize=12.sp)}}
      }
      Text(name,color=VozNavy,fontSize=13.sp,fontWeight=FontWeight.Bold)
-     Surface(shape=RoundedCornerShape(50.dp),color=Color(0xFF90F3C2)){Text(if(activeFrame.isBlank())"Perfil al natural" else "✓ Marco Activo: $activeFrame",Modifier.padding(horizontal=8.dp,vertical=4.dp),fontSize=9.sp,color=VozGreen,fontWeight=FontWeight.Bold)}
+     Surface(shape=RoundedCornerShape(50.dp),color=Color(0xFF90F3C2)){
+         val activeText = if(activeFrame.isBlank()) stringResource(R.string.natural_profile) else stringResource(R.string.active_frame_format, activeFrameDisplayName)
+         Text(activeText,Modifier.padding(horizontal=8.dp,vertical=4.dp),fontSize=9.sp,color=VozGreen,fontWeight=FontWeight.Bold)
+     }
      Row(Modifier.fillMaxWidth().padding(top=3.dp),horizontalArrangement=Arrangement.spacedBy(6.dp)) {
-      FrameAction("×  Desequipar",Modifier.weight(1f),true){onEquip("")}
+      FrameAction(stringResource(R.string.unequip),Modifier.weight(1f),true){onEquip("")}
      }
     }
    }
-   Surface(Modifier.fillMaxWidth().clickable(onClick = onOpenStore),shape=RoundedCornerShape(50.dp),color=Color.White,shadowElevation=1.dp) {Text("Ir a la Tienda",Modifier.padding(horizontal=12.dp,vertical=7.dp),fontSize=10.sp,color=VozNavy,fontWeight=FontWeight.SemiBold)}
+   Surface(Modifier.fillMaxWidth().clickable(onClick = onOpenStore),shape=RoundedCornerShape(50.dp),color=Color.White,shadowElevation=1.dp) {Text(stringResource(R.string.go_to_store),Modifier.padding(horizontal=12.dp,vertical=7.dp),fontSize=10.sp,color=VozNavy,fontWeight=FontWeight.SemiBold)}
    Row(verticalAlignment=Alignment.CenterVertically) {
-    Text("Marcos Adquiridos",Modifier.weight(1f),color=VozNavy,fontSize=15.sp,fontWeight=FontWeight.Bold)
-    Text("${visibleFrames.size} en tu inventario",color=Color(0xFF68788B),fontSize=9.sp)
+    Text(stringResource(R.string.acquired_frames),Modifier.weight(1f),color=VozNavy,fontSize=15.sp,fontWeight=FontWeight.Bold)
+    Text(stringResource(R.string.inventory_count_format, visibleFrames.size),color=Color(0xFF68788B),fontSize=9.sp)
     Spacer(Modifier.width(5.dp))
    }
    if (visibleFrames.isEmpty()) {
     Surface(Modifier.fillMaxWidth(), color = Color.White, shape = RoundedCornerShape(12.dp)) {
-     Text("No tienes marcos en tu inventario. ¡Canjea algunos en la tienda!", Modifier.padding(18.dp), color = VozMuted, fontSize = 12.sp, textAlign = TextAlign.Center)
+     Text(stringResource(R.string.no_frames_inventory), Modifier.padding(18.dp), color = VozMuted, fontSize = 12.sp, textAlign = TextAlign.Center)
     }
    } else {
     visibleFrames.chunked(2).forEach { row ->
@@ -93,17 +129,24 @@ fun FramesPage(
  }
 }
 
+private fun activeFirmSafely(activeFrame: String) = activeFrame
+
 @Composable private fun FrameCard(frame:FrameItem,active:Boolean,owned:Boolean,modifier:Modifier,onClick:()->Unit) {
+ val frameName = getLocalizedFrameName(frame.name)
+ val categoryName = getLocalizedCategory(frame.category)
+ val inUseText = stringResource(R.string.in_use)
+ val equipText = stringResource(R.string.equip)
+
  Card(modifier,colors=CardDefaults.cardColors(containerColor=Color.White),shape=RoundedCornerShape(12.dp),elevation=CardDefaults.cardElevation(defaultElevation=2.dp)) {
   Column(Modifier.fillMaxWidth().padding(7.dp),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(4.dp)) {
    Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically) {
-    Surface(shape=RoundedCornerShape(50.dp),color=frame.pale){Text(frame.category,Modifier.padding(horizontal=5.dp,vertical=3.dp),fontSize=8.sp,color=frame.color,fontWeight=FontWeight.Bold)}
+    Surface(shape=RoundedCornerShape(50.dp),color=frame.pale){Text(categoryName,Modifier.padding(horizontal=5.dp,vertical=3.dp),fontSize=8.sp,color=frame.color,fontWeight=FontWeight.Bold)}
     Spacer(Modifier.weight(1f));Text(frame.acquired,fontSize=7.sp,color=Color(0xFF68788B))
    }
    Box(Modifier.padding(vertical=3.dp).size(52.dp).border(2.dp,frame.color,CircleShape).padding(4.dp).border(1.dp,frame.color,CircleShape).padding(4.dp).background(VozBlueSurface,CircleShape),contentAlignment=Alignment.Center){Text("✦",fontSize=20.sp,color=frame.color)}
-   Text(frame.name,color=VozNavy,fontWeight=FontWeight.Bold,fontSize=10.sp,textAlign=TextAlign.Center,maxLines=1)
+   Text(frameName,color=VozNavy,fontWeight=FontWeight.Bold,fontSize=10.sp,textAlign=TextAlign.Center,maxLines=1)
    Text(frame.detail,color=Color(0xFF68788B),fontSize=8.sp,textAlign=TextAlign.Center,maxLines=1)
-   Button(onClick=onClick,enabled=owned,modifier=Modifier.fillMaxWidth().height(31.dp),shape=RoundedCornerShape(7.dp),contentPadding=PaddingValues(2.dp),colors=ButtonDefaults.buttonColors(containerColor=if(active)Color(0xFF90F3C2) else VozNavy,contentColor=if(active)VozGreen else Color.White,disabledContainerColor=VozBlueSurface,disabledContentColor=Color(0xFF68788B))) {Text(if(active)"✓ En Uso" else "Equipar",fontSize=9.sp,fontWeight=FontWeight.Bold)}
+   Button(onClick=onClick,enabled=owned,modifier=Modifier.fillMaxWidth().height(31.dp),shape=RoundedCornerShape(7.dp),contentPadding=PaddingValues(2.dp),colors=ButtonDefaults.buttonColors(containerColor=if(active)Color(0xFF90F3C2) else VozNavy,contentColor=if(active)VozGreen else Color.White,disabledContainerColor=VozBlueSurface,disabledContentColor=Color(0xFF68788B))) {Text(if(active) inUseText else equipText,fontSize=9.sp,fontWeight=FontWeight.Bold)}
   }
  }
 }
