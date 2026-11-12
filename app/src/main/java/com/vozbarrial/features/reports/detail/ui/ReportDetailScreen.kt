@@ -157,6 +157,12 @@ private fun ReportDetailScreen(
     val votes = uiState.supportCount
     val relevanceData = remember(votes) { getRelevanceInfo(votes) }
 
+    var isGloballyTranslated by remember { mutableStateOf(false) }
+    var isGlobalTranslating by remember { mutableStateOf(false) }
+    var translatedTitle by remember { mutableStateOf<String?>(null) }
+    var translatedDescription by remember { mutableStateOf<String?>(null) }
+    val translatedComments = remember { mutableStateMapOf<String, String>() }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -179,6 +185,68 @@ private fun ReportDetailScreen(
                 Text("Detalle Incidencia", color = VozNavy, fontWeight = FontWeight.Bold, fontSize = 16.sp)
             }
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                OutlinedButton(
+                    onClick = {
+                        if (!isGlobalTranslating) {
+                            if (isGloballyTranslated) {
+                                translatedTitle = null
+                                translatedDescription = null
+                                translatedComments.clear()
+                                isGloballyTranslated = false
+                            } else {
+                                isGlobalTranslating = true
+                                val targetLang = if (Locale.getDefault().language.startsWith("en")) "Español" else "English"
+                                
+                                com.vozbarrial.core.ai.OpenRouterApiService.translateText(report.title.ifBlank { "Incidencia" }, targetLang) { titleRes ->
+                                    com.vozbarrial.core.ai.OpenRouterApiService.translateText(report.description.ifBlank { "Sin descripción" }, targetLang) { descRes ->
+                                        val contributions = uiState.contributions
+                                        var pending = contributions.size
+                                        if (pending == 0) {
+                                            isGlobalTranslating = false
+                                            isGloballyTranslated = true
+                                            titleRes.onSuccess { translatedTitle = it }
+                                            descRes.onSuccess { translatedDescription = it }
+                                        } else {
+                                            contributions.forEach { contrib ->
+                                                if (contrib.content.isBlank()) {
+                                                    pending--
+                                                    if (pending == 0) {
+                                                        isGlobalTranslating = false
+                                                        isGloballyTranslated = true
+                                                        titleRes.onSuccess { translatedTitle = it }
+                                                        descRes.onSuccess { translatedDescription = it }
+                                                    }
+                                                } else {
+                                                    com.vozbarrial.core.ai.OpenRouterApiService.translateText(contrib.content, targetLang) { cRes ->
+                                                        cRes.onSuccess { translatedComments[contrib.id] = it }
+                                                        pending--
+                                                        if (pending == 0) {
+                                                            isGlobalTranslating = false
+                                                            isGloballyTranslated = true
+                                                            titleRes.onSuccess { translatedTitle = it }
+                                                            descRes.onSuccess { translatedDescription = it }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    modifier = Modifier.height(30.dp),
+                    shape = RoundedCornerShape(50),
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)
+                ) {
+                    if (isGlobalTranslating) {
+                        CircularProgressIndicator(modifier = Modifier.size(12.dp), strokeWidth = 2.dp)
+                        Spacer(Modifier.width(4.dp))
+                    }
+                    val targetLang = if (Locale.getDefault().language.startsWith("en")) "Español" else "English"
+                    Text(if (!isGloballyTranslated) "Traducir" else "Original", fontSize = 10.sp, color = VozNavy, fontWeight = FontWeight.Bold)
+                }
+
                 if (canResolveReport) {
                     TextButton(onClick = onResolveReport, enabled = !isResolvingReport) {
                         Text("Resuelto", color = VozGreen, fontWeight = FontWeight.Bold, fontSize = 12.sp)
@@ -203,6 +271,7 @@ private fun ReportDetailScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
+
             Surface(
                 shape = RoundedCornerShape(16.dp),
                 color = Color.White,
@@ -320,7 +389,7 @@ private fun ReportDetailScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = report.title.ifBlank { "Incidencia vecinal reportada" },
+                            text = (translatedTitle ?: report.title).ifBlank { "Incidencia vecinal reportada" },
                             color = VozNavy,
                             fontWeight = FontWeight.Bold,
                             fontSize = 20.sp,
@@ -413,7 +482,7 @@ private fun ReportDetailScreen(
                     }
                     Spacer(Modifier.height(10.dp))
                     Text(
-                        text = report.description.ifBlank { "Sin descripción detallada proporcionada para este reporte." },
+                        text = (translatedDescription ?: report.description).ifBlank { "Sin descripción detallada proporcionada para este reporte." },
                         color = VozNavy,
                         fontSize = 13.sp,
                         lineHeight = 18.sp
@@ -572,8 +641,9 @@ private fun ReportDetailScreen(
                                     Text(formatTimeAgo(contrib.timestamp), color = VozMuted, fontSize = 10.sp)
                                 }
                                 Spacer(Modifier.height(6.dp))
-                                if (contrib.content.isNotBlank()) {
-                                    Text("\"${contrib.content}\"", color = VozNavy, fontSize = 12.sp, fontStyle = androidx.compose.ui.text.font.FontStyle.Italic)
+                                val commentText = translatedComments[contrib.id] ?: contrib.content
+                                if (commentText.isNotBlank()) {
+                                    Text("\"$commentText\"", color = VozNavy, fontSize = 12.sp, fontStyle = androidx.compose.ui.text.font.FontStyle.Italic)
                                     Spacer(Modifier.height(6.dp))
                                 }
                                 if (contrib.imageUrls.isNotEmpty()) {
