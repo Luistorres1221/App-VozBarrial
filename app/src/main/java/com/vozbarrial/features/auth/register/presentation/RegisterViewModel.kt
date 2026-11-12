@@ -18,22 +18,28 @@ class RegisterViewModel : ViewModel() {
     fun updateConfirmation(value: String) = update { copy(confirmation = value, error = null) }
     fun togglePasswordVisibility() = update { copy(passwordVisible = !passwordVisible) }
     fun setTermsAccepted(value: Boolean) = update { copy(acceptedTerms = value, error = null) }
-    fun setAlertsEnabled(value: Boolean) = update { copy(receiveAlerts = value) }
     fun showTerms(value: Boolean) = update { copy(showTerms = value) }
 
     fun submit(
         createAccount: (String, String, String, (Boolean, String?) -> Unit) -> Unit,
         onSuccess: () -> Unit,
+        errNameEmpty: String,
+        errEmailInvalid: String,
+        errPwdLength: String,
+        errPwdSymbol: String,
+        errPwdMismatch: String,
+        errTermsRequired: String,
+        errGeneric: String
     ) {
         val form = _uiState.value
         val cleanEmail = form.email.trim()
         val validationError = when {
-            form.name.trim().length < 2 -> "Escribe tu nombre completo."
-            !InputValidator.isValidEmail(cleanEmail) -> "Escribe un correo electrónico válido."
-            form.password.length < 8 -> "La contraseña debe tener al menos 8 caracteres."
-            !form.password.any { it.isDigit() || !it.isLetterOrDigit() } -> "Incluye al menos un número o un símbolo en la contraseña."
-            form.password != form.confirmation -> "Las contraseñas no coinciden."
-            !form.acceptedTerms -> "Debes aceptar las normas de convivencia para crear tu cuenta."
+            form.name.trim().length < 2 -> errNameEmpty
+            !InputValidator.isValidEmail(cleanEmail) -> errEmailInvalid
+            form.password.length < 8 -> errPwdLength
+            !form.password.any { it.isDigit() || !it.isLetterOrDigit() } -> errPwdSymbol
+            form.password != form.confirmation -> errPwdMismatch
+            !form.acceptedTerms -> errTermsRequired
             else -> null
         }
         if (validationError != null) {
@@ -45,7 +51,7 @@ class RegisterViewModel : ViewModel() {
         createAccount(form.name.trim(), cleanEmail, form.password) { success, error ->
             _uiState.value = _uiState.value.copy(
                 loading = false,
-                error = if (success) null else error ?: "Ya existe una cuenta con ese correo o hubo un error.",
+                error = if (success) null else error ?: errGeneric,
             )
             if (success) {
                 _uiState.value = RegisterUiState()

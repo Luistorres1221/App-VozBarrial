@@ -444,6 +444,15 @@
     <string name="strength_medium">Medium</string>
     <string name="strength_high">High</string>
 
+    <!-- Register Errors -->
+    <string name="error_name_empty">Enter your full name.</string>
+    <string name="error_email_invalid">Enter a valid email address.</string>
+    <string name="error_password_length">Password must be at least 8 characters.</string>
+    <string name="error_password_symbol">Include at least one number or symbol in the password.</string>
+    <string name="error_passwords_mismatch">Passwords do not match.</string>
+    <string name="error_terms_required">You must accept the coexistence rules to create your account.</string>
+    <string name="error_register_generic">An account with this email already exists or an error occurred.</string>
+
     <!-- Terms and Conditions Screen -->
     <string name="terms_and_conditions_title">Civic Terms and Conditions</string>
     <string name="terms_section_1_title">1. Truthfulness Commitment</string>

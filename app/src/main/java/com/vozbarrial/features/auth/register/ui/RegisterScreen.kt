@@ -28,6 +28,7 @@ import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
+
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
@@ -72,6 +73,13 @@ fun RegisterRoute(
     registerViewModel: RegisterViewModel = viewModel()
 ) {
     val uiState by registerViewModel.uiState.collectAsStateWithLifecycle()
+    val errNameEmpty = stringResource(R.string.error_name_empty)
+    val errEmailInvalid = stringResource(R.string.error_email_invalid)
+    val errPwdLength = stringResource(R.string.error_password_length)
+    val errPwdSymbol = stringResource(R.string.error_password_symbol)
+    val errPwdMismatch = stringResource(R.string.error_passwords_mismatch)
+    val errTermsRequired = stringResource(R.string.error_terms_required)
+    val errGeneric = stringResource(R.string.error_register_generic)
 
     RegisterContent(
         uiState = uiState,
@@ -83,9 +91,20 @@ fun RegisterRoute(
         onConfirmationChange = registerViewModel::updateConfirmation,
         onTogglePasswordVisibility = registerViewModel::togglePasswordVisibility,
         onTermsAcceptedChange = registerViewModel::setTermsAccepted,
-        onAlertsEnabledChange = registerViewModel::setAlertsEnabled,
         onShowTerms = onShowTerms,
-        onSubmit = { registerViewModel.submit(onCreateAccount, onAccountCreated) }
+        onSubmit = {
+            registerViewModel.submit(
+                onCreateAccount,
+                onAccountCreated,
+                errNameEmpty,
+                errEmailInvalid,
+                errPwdLength,
+                errPwdSymbol,
+                errPwdMismatch,
+                errTermsRequired,
+                errGeneric
+            )
+        }
     )
 }
 
@@ -103,7 +122,6 @@ fun RegisterContent(
     onConfirmationChange: (String) -> Unit,
     onTogglePasswordVisibility: () -> Unit,
     onTermsAcceptedChange: (Boolean) -> Unit,
-    onAlertsEnabledChange: (Boolean) -> Unit,
     onShowTerms: () -> Unit,
     onSubmit: () -> Unit,
 ) {
@@ -190,7 +208,7 @@ fun RegisterContent(
 
         Button(
             onClick = onSubmit,
-            enabled = !uiState.loading,
+            enabled = !uiState.loading && uiState.acceptedTerms,
             modifier = Modifier.fillMaxWidth().height(58.dp),
             shape = RoundedCornerShape(10.dp),
             elevation = ButtonDefaults.buttonElevation(defaultElevation = 2.dp),

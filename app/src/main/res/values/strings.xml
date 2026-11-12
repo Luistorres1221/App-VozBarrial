@@ -438,6 +438,15 @@
     <string name="strength_medium">Media</string>
     <string name="strength_high">Alta</string>
 
+    <!-- Register Errors -->
+    <string name="error_name_empty">Escribe tu nombre completo.</string>
+    <string name="error_email_invalid">Escribe un correo electrónico válido.</string>
+    <string name="error_password_length">La contraseña debe tener al menos 8 caracteres.</string>
+    <string name="error_password_symbol">Incluye al menos un número o un símbolo en la contraseña.</string>
+    <string name="error_passwords_mismatch">Las contraseñas no coinciden.</string>
+    <string name="error_terms_required">Debes aceptar las normas de convivencia para crear tu cuenta.</string>
+    <string name="error_register_generic">Ya existe una cuenta con ese correo o hubo un error.</string>
+
     <!-- Terms and Conditions Screen -->
     <string name="terms_and_conditions_title">Términos y Condiciones Cívicos</string>
     <string name="terms_section_1_title">1. Compromiso de Veracidad</string>
