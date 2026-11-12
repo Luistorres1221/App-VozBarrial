@@ -40,6 +40,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
@@ -67,12 +68,15 @@ fun PasswordRecoveryRoute(
     recoveryViewModel: RecoveryViewModel = viewModel()
 ) {
     val uiState by recoveryViewModel.uiState.collectAsStateWithLifecycle()
+    val emptyEmailMsg = stringResource(R.string.email_empty_error)
+    val networkErrorMsg = stringResource(R.string.network_error)
+    val defaultErrorMsg = stringResource(R.string.password_reset_error)
 
     PasswordRecoveryContent(
         uiState = uiState,
         onBack = onBack,
         onEmailChange = recoveryViewModel::updateEmail,
-        onRequestReset = { recoveryViewModel.requestReset(onRequestPasswordReset) }
+        onRequestReset = { recoveryViewModel.requestReset(onRequestPasswordReset, emptyEmailMsg, networkErrorMsg, defaultErrorMsg) }
     )
 }
 
@@ -99,22 +103,22 @@ fun PasswordRecoveryContent(
             IconButton(onClick = onBack, modifier = Modifier.size(38.dp)) {
                 Icon(
                     Icons.Default.ArrowBack,
-                    contentDescription = "Volver",
+                    contentDescription = stringResource(R.string.back),
                     tint = VozNavy,
                     modifier = Modifier.size(18.dp)
                 )
             }
             Image(
                 painter = painterResource(R.mipmap.logo_foreground),
-                contentDescription = "VozBarrial",
+                contentDescription = stringResource(R.string.app_name),
                 modifier = Modifier.size(27.dp),
             )
             Spacer(Modifier.width(5.dp))
-            Text("VozBarrial", color = VozMuted, fontSize = 12.sp, modifier = Modifier.weight(1f))
+            Text(stringResource(R.string.app_name), color = VozMuted, fontSize = 12.sp, modifier = Modifier.weight(1f))
             Column(horizontalAlignment = Alignment.End) {
-                Text("VOZBARRIAL", color = VozNavy, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.app_name).uppercase(), color = VozNavy, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                 Text(
-                    "Recuperar contraseña",
+                    stringResource(R.string.recover_password_header),
                     color = VozNavy,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
@@ -135,7 +139,7 @@ fun PasswordRecoveryContent(
             if (uiState.succeeded) {
                 // Vista de Éxito
                 Text(
-                    "✉  SOLICITUD PROCESADA",
+                    stringResource(R.string.request_processed),
                     Modifier
                         .background(VozBlueSurface, RoundedCornerShape(30.dp))
                         .padding(horizontal = 11.dp, vertical = 5.dp),
@@ -152,7 +156,7 @@ fun PasswordRecoveryContent(
                 )
                 Spacer(Modifier.height(12.dp))
                 Text(
-                    "Revisa tu correo",
+                    stringResource(R.string.check_your_email),
                     color = VozNavy,
                     fontWeight = FontWeight.Bold,
                     fontSize = 22.sp,
@@ -160,7 +164,7 @@ fun PasswordRecoveryContent(
                 )
                 Spacer(Modifier.height(8.dp))
                 Text(
-                    "Si el correo está asociado a una cuenta, recibirás un enlace para restablecer la contraseña.",
+                    stringResource(R.string.recovery_email_sent_msg),
                     color = VozMuted,
                     fontSize = 14.sp,
                     lineHeight = 20.sp,
@@ -177,10 +181,10 @@ fun PasswordRecoveryContent(
                         Modifier.padding(horizontal = 13.dp, vertical = 12.dp),
                         verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        Text("Para continuar", color = VozNavy, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                        RecoveryStep("1", "Revisa tu bandeja de entrada y, si no aparece, las carpetas de spam o promociones.")
-                        RecoveryStep("2", "Abre el enlace del correo y cambia tu contraseña en la página que se abre.")
-                        RecoveryStep("3", "Cuando termines, vuelve a VozBarrial e inicia sesión con tu nueva contraseña.")
+                        Text(stringResource(R.string.to_continue), color = VozNavy, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                        RecoveryStep("1", stringResource(R.string.recovery_step_1))
+                        RecoveryStep("2", stringResource(R.string.recovery_step_2))
+                        RecoveryStep("3", stringResource(R.string.recovery_step_3))
                     }
                 }
                 Spacer(Modifier.height(20.dp))
@@ -190,12 +194,12 @@ fun PasswordRecoveryContent(
                     shape = RoundedCornerShape(8.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = VozNavy),
                 ) {
-                    Text("Volver al inicio de sesión", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                    Text(stringResource(R.string.back_to_login), fontWeight = FontWeight.Bold, fontSize = 13.sp)
                 }
             } else {
                 // Formulario de Solicitud
                 Text(
-                    "✿  RECUPERACIÓN SEGURA DE CUENTA",
+                    stringResource(R.string.secure_account_recovery),
                     Modifier
                         .background(VozBlueSurface, RoundedCornerShape(30.dp))
                         .padding(horizontal = 11.dp, vertical = 5.dp),
@@ -230,7 +234,7 @@ fun PasswordRecoveryContent(
                 }
                 Spacer(Modifier.height(7.dp))
                 Text(
-                    "¿Olvidaste tu contraseña?",
+                    stringResource(R.string.forgot_password_title),
                     color = VozNavy,
                     fontWeight = FontWeight.Bold,
                     fontSize = 20.sp,
@@ -238,7 +242,7 @@ fun PasswordRecoveryContent(
                 )
                 Spacer(Modifier.height(3.dp))
                 Text(
-                    "Ingresa el correo asociado a tu cuenta de VozBarrial. Si está registrado, recibirás un enlace para restablecer la contraseña.",
+                    stringResource(R.string.forgot_password_subtitle),
                     color = VozMuted,
                     fontSize = 12.sp,
                     lineHeight = 15.sp,
@@ -255,20 +259,20 @@ fun PasswordRecoveryContent(
                     Text("ⓘ", color = Color(0xFF507BB6), fontSize = 12.sp)
                     Spacer(Modifier.width(5.dp))
                     Text(
-                        "Por seguridad, la respuesta no confirma si el correo pertenece a una cuenta.",
+                        stringResource(R.string.security_notice),
                         color = VozMuted,
                         fontSize = 12.sp,
                         lineHeight = 13.sp,
                     )
                 }
                 Spacer(Modifier.height(8.dp))
-                Text("Correo electrónico", Modifier.fillMaxWidth(), color = VozNavy, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.email_label), Modifier.fillMaxWidth(), color = VozNavy, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                 Spacer(Modifier.height(3.dp))
                 OutlinedTextField(
                     value = uiState.email,
                     onValueChange = onEmailChange,
                     modifier = Modifier.fillMaxWidth().height(56.dp),
-                    placeholder = { Text("Escribe tu correo electrónico", fontSize = 12.sp) },
+                    placeholder = { Text(stringResource(R.string.email_placeholder), fontSize = 12.sp) },
                     leadingIcon = { Icon(Icons.Default.Email, contentDescription = null, tint = VozNavy) },
                     singleLine = true,
                     enabled = !uiState.sending,
@@ -284,7 +288,7 @@ fun PasswordRecoveryContent(
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
                     Icon(Icons.Default.Security, contentDescription = null, tint = Color(0xFF52627A), modifier = Modifier.size(11.dp))
                     Spacer(Modifier.width(4.dp))
-                    Text("Usa el mismo correo que registraste en VozBarrial.", color = VozMuted, fontSize = 12.sp, lineHeight = 13.sp)
+                    Text(stringResource(R.string.use_registered_email), color = VozMuted, fontSize = 12.sp, lineHeight = 13.sp)
                 }
                 if (uiState.message.isNotBlank()) {
                     Spacer(Modifier.height(5.dp))
@@ -307,7 +311,7 @@ fun PasswordRecoveryContent(
                     if (uiState.sending) {
                         CircularProgressIndicator(modifier = Modifier.size(20.dp), color = Color.White, strokeWidth = 2.dp)
                     } else {
-                        Text("Enviar enlace de recuperación  ➤", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                        Text(stringResource(R.string.send_recovery_link), fontWeight = FontWeight.Bold, fontSize = 12.sp)
                     }
                 }
                 Spacer(Modifier.height(9.dp))
@@ -332,11 +336,11 @@ fun PasswordRecoveryContent(
                                 Text("?", color = Color(0xFF315C94), fontWeight = FontWeight.Bold, fontSize = 12.sp)
                             }
                             Spacer(Modifier.width(5.dp))
-                            Text("¿Qué pasará a continuación?", color = VozNavy, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                            Text(stringResource(R.string.what_happens_next), color = VozNavy, fontWeight = FontWeight.Bold, fontSize = 12.sp)
                         }
-                        RecoveryStep("1", "Si el correo está asociado a una cuenta, recibirás un enlace de recuperación.")
-                        RecoveryStep("2", "Abre el enlace del correo para continuar con el cambio de contraseña.")
-                        RecoveryStep("3", "El enlace es de un solo uso y puede caducar. Si deja de funcionar, solicita uno nuevo.")
+                        RecoveryStep("1", stringResource(R.string.recovery_step_1_box))
+                        RecoveryStep("2", stringResource(R.string.recovery_step_2_box))
+                        RecoveryStep("3", stringResource(R.string.recovery_step_3_box))
                         Row(
                             Modifier
                                 .fillMaxWidth()
@@ -346,7 +350,7 @@ fun PasswordRecoveryContent(
                         ) {
                             Text("✉", color = VozNavy, fontSize = 12.sp)
                             Spacer(Modifier.width(5.dp))
-                            Text("Si no aparece, revisa las carpetas de spam o promociones.", color = VozNavy, fontSize = 12.sp, lineHeight = 13.sp)
+                            Text(stringResource(R.string.spam_folder_notice), color = VozNavy, fontSize = 12.sp, lineHeight = 13.sp)
                         }
                     }
                 }

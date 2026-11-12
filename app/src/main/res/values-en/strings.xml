@@ -126,6 +126,10 @@
     <string name="status_resuelto">Resolved</string>
     <string name="status_rechazado">Rejected</string>
     <string name="status_eliminado">Deleted</string>
+    <string name="status_unknown">Unknown status</string>
+    <string name="can_correct_and_resubmit">You can correct and resubmit this report.</string>
+    <string name="rejection_is_final">This rejection is final.</string>
+    <string name="category_security">Security</string>
     <string name="category_emergencies">Medical Emergencies</string>
     <string name="category_infrastructure">Infrastructure &amp; Roads</string>
     <string name="category_pets">Pets &amp; Animals</string>
@@ -343,4 +347,83 @@
     <string name="progress_frames_fraction">%1$d/%2$d Frames</string>
     <string name="progress_coins_fraction">%1$d/%2$d Coins</string>
     <string name="progress_pts_format">%1$d/%2$d Pts</string>
+
+    <!-- Report Categories & Details -->
+    <string name="category_security_desc">Thefts, vandalism, suspicious activities</string>
+    <string name="category_emergencies_desc">Traffic accidents, first aid</string>
+    <string name="category_infrastructure_desc">Potholes, street damage, broken pavements</string>
+    <string name="category_pets_desc">Lost, found or endangered animals</string>
+    <string name="category_community_desc">Garbage, pollution or excessive noise</string>
+    <string name="category_lighting_desc">Broken lights, water or gas leaks</string>
+
+    <string name="relevance_minor">Minor</string>
+    <string name="relevance_low">Low</string>
+    <string name="relevance_moderate">Moderate</string>
+    <string name="relevance_high">High</string>
+    <string name="relevance_critical">Critical</string>
+    <string name="relevance_desc_format">%1$s priority based on %2$d supports.</string>
+    <string name="relevance_critical_desc">Critical level based on more than 80 supports and high urgency.</string>
+
+    <string name="time_just_now">Just now</string>
+    <string name="time_minutes_ago">%1$d %2$s ago</string>
+    <string name="time_hours_ago">%1$d %2$s ago</string>
+    <string name="time_days_ago">%1$d %2$s ago</string>
+    <string name="time_minute">minute</string>
+    <string name="time_minutes">minutes</string>
+    <string name="time_hour">hour</string>
+    <string name="time_hours">hours</string>
+    <string name="time_day">day</string>
+    <string name="time_days">days</string>
+    <string name="time_over_a_month">More than a month ago</string>
+
+    <!-- Report Creation UI -->
+    <string name="active_surveillance_network">Active Surveillance Network</string>
+    <string name="create_report_subtitle">Help improve the security and coexistence of your city for everyone\'s well-being.</string>
+    <string name="select_category">Select Category</string>
+    <string name="choose_most_suitable">Choose the most suitable</string>
+    <string name="required">Required</string>
+    <string name="photographic_evidence">Photographic Evidence</string>
+    <string name="min_1_max_3_photos">Min. 1, Max. 3 photos</string>
+    <string name="min_1_photo">Min. 1 photo</string>
+    <string name="upload_photo_format">Upload photo (%1$d/3)</string>
+    <string name="upload_photo_instructions">Direct capture with camera or gallery (JPG, PNG)</string>
+    <string name="incident_location">Incident Location</string>
+    <string name="gps_active">GPS Active</string>
+    <string name="location">Location</string>
+    <string name="tap_to_choose_map">Tap to choose point on map</string>
+    <string name="choose_on_map">⌖  Choose on map</string>
+    <string name="use_my_gps">◎  Use my GPS</string>
+    <string name="detailed_information">Detailed Information</string>
+    <string name="title_and_description">Title and description</string>
+    <string name="support_count_format">%1$d Supports</string>
+    <string name="photos_count_format">%1$d / %2$d photos</string>
+    <string name="no_description_provided">No detailed description provided for this report.</string>
+    <string name="photos_optional_format">Photos (%1$d/2 optional)</string>
+    <string name="default_report_title">Reported neighborhood incident</string>
+    <string name="supported_exclamation">Supported!</string>
+    <string name="support_action">Support</string>
+    <string name="today_time_fallback">Today, 14:32 hrs</string>
+
+    <!-- Password Recovery UI -->
+    <string name="recover_password_header">Recover password</string>
+    <string name="request_processed">✉  REQUEST PROCESSED</string>
+    <string name="check_your_email">Check your email</string>
+    <string name="recovery_email_sent_msg">If the email is associated with an account, you will receive a link to reset your password.</string>
+    <string name="to_continue">To continue</string>
+    <string name="recovery_step_1">Check your inbox and, if it doesn\'t appear, your spam or promotions folders.</string>
+    <string name="recovery_step_2">Open the email link and change your password on the page that opens.</string>
+    <string name="recovery_step_3">When finished, return to VozBarrial and log in with your new password.</string>
+    <string name="secure_account_recovery">✿  SECURE ACCOUNT RECOVERY</string>
+    <string name="forgot_password_title">Forgot your password?</string>
+    <string name="forgot_password_subtitle">Enter the email associated with your VozBarrial account. If registered, you will receive a link to reset your password.</string>
+    <string name="security_notice">For security, the response does not confirm whether the email belongs to an account.</string>
+    <string name="use_registered_email">Use the same email you registered with on VozBarrial.</string>
+    <string name="what_happens_next">What happens next?</string>
+    <string name="recovery_step_1_box">If the email is associated with an account, you will receive a recovery link.</string>
+    <string name="recovery_step_2_box">Open the email link to proceed with the password change.</string>
+    <string name="recovery_step_3_box">The link is single-use and may expire. If it stops working, request a new one.</string>
+    <string name="spam_folder_notice">If it doesn\'t appear, check your spam or promotions folders.</string>
+    <string name="email_empty_error">Enter your email address.</string>
+    <string name="network_error">No internet connection. Check your network.</string>
+    <string name="password_reset_error">Could not send email.</string>
 </resources>

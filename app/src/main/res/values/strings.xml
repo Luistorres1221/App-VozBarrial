@@ -125,6 +125,10 @@
     <string name="status_resuelto">Resuelto</string>
     <string name="status_rechazado">Rechazado</string>
     <string name="status_eliminado">Eliminado</string>
+    <string name="status_unknown">Estado desconocido</string>
+    <string name="can_correct_and_resubmit">Puedes corregir y reenviar este reporte.</string>
+    <string name="rejection_is_final">Este rechazo es final.</string>
+    <string name="category_security">Seguridad</string>
     <string name="category_emergencies">Emergencias Médicas</string>
     <string name="category_infrastructure">Infraestructura y Vías</string>
     <string name="category_pets">Mascotas y Animales</string>
@@ -337,4 +341,83 @@
     <string name="ach_supreme_guardian_desc">Alcanza o supera los 1,000 puntos de reputación</string>
     <string name="ach_community_hero_title">Héroe de la Comunidad</string>
     <string name="ach_community_hero_desc">Alcanza o supera los 2,000 puntos de reputación</string>
+
+    <!-- Report Categories & Details -->
+    <string name="category_security_desc">Robos, vandalismo, actividades sospechosas</string>
+    <string name="category_emergencies_desc">Accidentes viales, primeros auxilios</string>
+    <string name="category_infrastructure_desc">Baches, daños en calles, pavimentos rotos</string>
+    <string name="category_pets_desc">Animales perdidos, encontrados o en peligro</string>
+    <string name="category_community_desc">Basuras, polución o ruido excesivo</string>
+    <string name="category_lighting_desc">Postes sin luz, fugas de agua o gas</string>
+
+    <string name="relevance_minor">Menor</string>
+    <string name="relevance_low">Baja</string>
+    <string name="relevance_moderate">Moderado</string>
+    <string name="relevance_high">Alto</string>
+    <string name="relevance_critical">Crítico</string>
+    <string name="relevance_desc_format">Prioridad %1$s basada en %2$d apoyos.</string>
+    <string name="relevance_critical_desc">Nivel crítico basado en más de 80 apoyos y alta urgencia.</string>
+
+    <string name="time_just_now">Hace un momento</string>
+    <string name="time_minutes_ago">Hace %1$d %2$s</string>
+    <string name="time_hours_ago">Hace %1$d %2$s</string>
+    <string name="time_days_ago">Hace %1$d %2$s</string>
+    <string name="time_minute">minuto</string>
+    <string name="time_minutes">minutos</string>
+    <string name="time_hour">hora</string>
+    <string name="time_hours">horas</string>
+    <string name="time_day">día</string>
+    <string name="time_days">días</string>
+    <string name="time_over_a_month">Hace más de un mes</string>
+
+    <!-- Report Creation UI -->
+    <string name="active_surveillance_network">Red de Vigilancia Activa</string>
+    <string name="create_report_subtitle">Ayuda a mejorar la seguridad y convivencia de tu ciudad para bienestar de todos.</string>
+    <string name="select_category">Selecciona la Categoría</string>
+    <string name="choose_most_suitable">Elige la más adecuada</string>
+    <string name="required">Requerido</string>
+    <string name="photographic_evidence">Evidencia Fotográfica</string>
+    <string name="min_1_max_3_photos">Mín. 1, Máx. 3 fotos</string>
+    <string name="min_1_photo">Mín. 1 foto</string>
+    <string name="upload_photo_format">Subir fotografía (%1$d/3)</string>
+    <string name="upload_photo_instructions">Captura directa con cámara o galería (JPG, PNG)</string>
+    <string name="incident_location">Ubicación del Incidente</string>
+    <string name="gps_active">GPS Activo</string>
+    <string name="location">Ubicación</string>
+    <string name="tap_to_choose_map">Toca para elegir punto en el mapa</string>
+    <string name="choose_on_map">⌖  Elegir en mapa</string>
+    <string name="use_my_gps">◎  Usar mi GPS</string>
+    <string name="detailed_information">Información Detallada</string>
+    <string name="title_and_description">Título y descripción</string>
+    <string name="support_count_format">%1$d Apoyos</string>
+    <string name="photos_count_format">%1$d / %2$d fotos</string>
+    <string name="no_description_provided">Sin descripción detallada proporcionada para este reporte.</string>
+    <string name="photos_optional_format">Fotos (%1$d/2 opcional)</string>
+    <string name="default_report_title">Incidencia vecinal reportada</string>
+    <string name="supported_exclamation">¡Apoyado!</string>
+    <string name="support_action">Apoyar</string>
+    <string name="today_time_fallback">Hoy, 14:32 hrs</string>
+
+    <!-- Password Recovery UI -->
+    <string name="recover_password_header">Recuperar contraseña</string>
+    <string name="request_processed">✉  SOLICITUD PROCESADA</string>
+    <string name="check_your_email">Revisa tu correo</string>
+    <string name="recovery_email_sent_msg">Si el correo está asociado a una cuenta, recibirás un enlace para restablecer la contraseña.</string>
+    <string name="to_continue">Para continuar</string>
+    <string name="recovery_step_1">Revisa tu bandeja de entrada y, si no aparece, las carpetas de spam o promociones.</string>
+    <string name="recovery_step_2">Abre el enlace del correo y cambia tu contraseña en la página que se abre.</string>
+    <string name="recovery_step_3">Cuando termines, vuelve a VozBarrial e inicia sesión con tu nueva contraseña.</string>
+    <string name="secure_account_recovery">✿  RECUPERACIÓN SEGURA DE CUENTA</string>
+    <string name="forgot_password_title">¿Olvidaste tu contraseña?</string>
+    <string name="forgot_password_subtitle">Ingresa el correo asociado a tu cuenta de VozBarrial. Si está registrado, recibirás un enlace para restablecer la contraseña.</string>
+    <string name="security_notice">Por seguridad, la respuesta no confirma si el correo pertenece a una cuenta.</string>
+    <string name="use_registered_email">Usa el mismo correo que registraste en VozBarrial.</string>
+    <string name="what_happens_next">¿Qué pasará a continuación?</string>
+    <string name="recovery_step_1_box">Si el correo está asociado a una cuenta, recibirás un enlace de recuperación.</string>
+    <string name="recovery_step_2_box">Abre el enlace del correo para continuar con el cambio de contraseña.</string>
+    <string name="recovery_step_3_box">El enlace es de un solo uso y puede caducar. Si deja de funcionar, solicita uno nuevo.</string>
+    <string name="spam_folder_notice">If no aparece, revisa las carpetas de spam o promociones.</string>
+    <string name="email_empty_error">Escribe tu correo electrónico.</string>
+    <string name="network_error">Sin conexión a internet. Verifica tu red.</string>
+    <string name="password_reset_error">No se pudo enviar el correo.</string>
 </resources>

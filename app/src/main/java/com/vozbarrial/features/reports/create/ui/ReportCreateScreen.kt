@@ -38,6 +38,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -48,6 +49,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
+import com.vozbarrial.R
 import com.vozbarrial.features.reports.create.presentation.ReportCreateUiState
 import com.vozbarrial.features.reports.create.presentation.ReportCreateViewModel
 import com.vozbarrial.ui.theme.*
@@ -57,16 +59,19 @@ import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
 import java.util.Locale
 
-private data class ReportCategory(val name: String, val description: String, val icon: String)
+private data class ReportCategory(val id: String, val name: String, val description: String, val icon: String)
 
-private val reportCategories = listOf(
-    ReportCategory("Seguridad", "Robos, vandalismo, actividades sospechosas", "🛡"),
-    ReportCategory("Emergencias Médicas", "Accidentes viales, primeros auxilios", "✚"),
-    ReportCategory("Infraestructura y Vías", "Baches, daños en calles, pavimentos rotos", "🚧"),
-    ReportCategory("Mascotas y Animales", "Animales perdidos, encontrados o en peligro", "🐾"),
-    ReportCategory("Comunidad y Entorno", "Basuras, polución o ruido excesivo", "♧"),
-    ReportCategory("Alumbrado y Servicios", "Postes sin luz, fugas de agua o gas", "💡"),
-)
+@Composable
+private fun getReportCategories(): List<ReportCategory> {
+    return listOf(
+        ReportCategory("Seguridad", stringResource(R.string.category_security), stringResource(R.string.category_security_desc), "🛡"),
+        ReportCategory("Emergencias Médicas", stringResource(R.string.category_emergencies), stringResource(R.string.category_emergencies_desc), "✚"),
+        ReportCategory("Infraestructura y Vías", stringResource(R.string.category_infrastructure), stringResource(R.string.category_infrastructure_desc), "🚧"),
+        ReportCategory("Mascotas y Animales", stringResource(R.string.category_pets), stringResource(R.string.category_pets_desc), "🐾"),
+        ReportCategory("Comunidad y Entorno", stringResource(R.string.category_community), stringResource(R.string.category_community_desc), "♧"),
+        ReportCategory("Alumbrado y Servicios", stringResource(R.string.category_lighting), stringResource(R.string.category_lighting_desc), "💡"),
+    )
+}
 
 @Composable
 fun ReportCreateRoute(
@@ -143,6 +148,10 @@ fun ReportCreateContent(
     val context = LocalContext.current
     var menu by remember { mutableStateOf(false) }
     var showMapPicker by rememberSaveable { mutableStateOf(false) }
+    val reportCategories = getReportCategories()
+
+    val gpsActiveText = stringResource(R.string.gps_active)
+    val locationText = stringResource(R.string.location)
 
     Column(Modifier.fillMaxSize().background(VozBackground)) {
         Row(
@@ -150,10 +159,10 @@ fun ReportCreateContent(
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(onClick = onBack) {
-                Icon(Icons.Default.ArrowBack, "Volver", tint = VozNavy)
+                Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.back), tint = VozNavy)
             }
-            Text("VozBarrial", Modifier.weight(1f), color = VozNavy, fontWeight = FontWeight.Bold, fontSize = 13.sp)
-            Text("Reportar Incidente", color = VozNavy, fontWeight = FontWeight.Bold, fontSize = 10.sp)
+            Text(stringResource(R.string.app_name), Modifier.weight(1f), color = VozNavy, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+            Text(stringResource(R.string.report_incident), color = VozNavy, fontWeight = FontWeight.Bold, fontSize = 10.sp)
         }
 
         Column(
@@ -184,11 +193,11 @@ fun ReportCreateContent(
                             ) {
                                 Icon(Icons.Default.Security, null, tint = Color(0xFF047857), modifier = Modifier.size(13.dp))
                                 Spacer(Modifier.width(5.dp))
-                                Text("Red de Vigilancia Activa", color = Color(0xFF047857), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                Text(stringResource(R.string.active_vigilance_network), color = Color(0xFF047857), fontSize = 11.sp, fontWeight = FontWeight.Bold)
                             }
                         }
-                        Text("Crear Reporte\nCiudadano", color = VozNavy, fontSize = 22.sp, fontWeight = FontWeight.Bold, lineHeight = 26.sp)
-                        Text("Ayuda a mejorar la seguridad y convivencia de tu ciudad para bienestar de todos.", color = VozMuted, fontSize = 11.sp)
+                        Text(stringResource(R.string.create_citizen_report), color = VozNavy, fontSize = 22.sp, fontWeight = FontWeight.Bold, lineHeight = 26.sp)
+                        Text(stringResource(R.string.report_help_message), color = VozMuted, fontSize = 11.sp)
                     }
                     Box(
                         modifier = Modifier.size(46.dp).clip(CircleShape).background(VozNavy),
@@ -201,9 +210,9 @@ fun ReportCreateContent(
 
             Section(
                 number = "1",
-                title = "Selecciona la Categoría",
-                subtitle = "Elige la más adecuada",
-                badgeText = "Requerido",
+                title = stringResource(R.string.select_category),
+                subtitle = stringResource(R.string.choose_most_suitable),
+                badgeText = stringResource(R.string.required),
                 badgeColor = Color(0xFFFFEDD5),
                 badgeTextColor = Color(0xFFC2410C)
             ) {
@@ -215,7 +224,7 @@ fun ReportCreateContent(
                         colors = ButtonDefaults.outlinedButtonColors(containerColor = Color.White),
                         border = ButtonDefaults.outlinedButtonBorder
                     ) {
-                        val current = reportCategories.firstOrNull { it.name == uiState.category } ?: reportCategories[0]
+                        val current = reportCategories.firstOrNull { it.id == uiState.category } ?: reportCategories[0]
                         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                             Text(current.icon, fontSize = 17.sp)
                             Spacer(Modifier.width(9.dp))
@@ -239,7 +248,7 @@ fun ReportCreateContent(
                                         }
                                     }
                                 },
-                                onClick = { onSelectCategory(option.name); menu = false }
+                                onClick = { onSelectCategory(option.id); menu = false }
                             )
                         }
                     }
@@ -248,9 +257,9 @@ fun ReportCreateContent(
 
             Section(
                 number = "2",
-                title = "Evidencia Fotográfica",
-                subtitle = "Mín. 1, Máx. 3 fotos",
-                badgeText = "Mín. 1 foto",
+                title = stringResource(R.string.photographic_evidence),
+                subtitle = stringResource(R.string.min_1_max_3_photos),
+                badgeText = stringResource(R.string.min_1_photo),
                 badgeColor = Color(0xFFD1FAE5),
                 badgeTextColor = Color(0xFF047857)
             ) {
@@ -264,18 +273,18 @@ fun ReportCreateContent(
                             Icon(Icons.Default.CameraAlt, null, tint = VozNavy)
                         }
                         Text(
-                            "Subir fotografía (${uiState.photoUris.size}/3)",
+                            stringResource(R.string.upload_photo_format, uiState.photoUris.size),
                             color = VozNavy,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.SemiBold
                         )
                         Text(
-                            "Captura directa con cámara o galería (JPG, PNG)",
+                            stringResource(R.string.upload_photo_instructions),
                             color = VozMuted,
                             fontSize = 10.sp,
                             textAlign = TextAlign.Center
                         )
-                        Text("Almacenamiento seguro y cifrado", color = Color(0xFFE56722), fontSize = 9.sp)
+                        Text(stringResource(R.string.secure_encrypted_storage), color = Color(0xFFE56722), fontSize = 9.sp)
                     }
                 }
 
@@ -321,7 +330,7 @@ fun ReportCreateContent(
                                         .size(24.dp)
                                         .background(Color.Black.copy(alpha = 0.6f), CircleShape)
                                 ) {
-                                    Icon(Icons.Default.Close, contentDescription = "Eliminar", tint = Color.White, modifier = Modifier.size(14.dp))
+                                    Icon(Icons.Default.Close, contentDescription = stringResource(R.string.delete), tint = Color.White, modifier = Modifier.size(14.dp))
                                 }
                             }
                         }
@@ -331,9 +340,9 @@ fun ReportCreateContent(
 
             Section(
                 number = "3",
-                title = "Ubicación del Incidente",
-                subtitle = if (uiState.gpsActive) "GPS Activo" else "Ubicación",
-                badgeText = if (uiState.gpsActive) "GPS Activo" else "Ubicación",
+                title = stringResource(R.string.incident_location),
+                subtitle = if (uiState.gpsActive) gpsActiveText else locationText,
+                badgeText = if (uiState.gpsActive) gpsActiveText else locationText,
                 badgeColor = Color(0xFFFFEDD5),
                 badgeTextColor = Color(0xFFC2410C)
             ) {
@@ -348,9 +357,9 @@ fun ReportCreateContent(
                         contentAlignment = Alignment.Center
                     ) {
                         Text("⌁    ⌁      ⌁\n   ⌁     ⌁    ⌁", color = Color(0xFF91AFC0), fontSize = 26.sp, textAlign = TextAlign.Center)
-                        Text("Toca para elegir punto en el mapa", Modifier.align(Alignment.TopCenter).padding(top = 7.dp).background(VozNavy, RoundedCornerShape(20.dp)).padding(horizontal = 9.dp, vertical = 5.dp), color = Color.White, fontSize = 9.sp)
+                        Text(stringResource(R.string.tap_to_choose_map_point), Modifier.align(Alignment.TopCenter).padding(top = 7.dp).background(VozNavy, RoundedCornerShape(20.dp)).padding(horizontal = 9.dp, vertical = 5.dp), color = Color.White, fontSize = 9.sp)
                         Icon(Icons.Default.LocationOn, null, tint = Color(0xFFFF7629), modifier = Modifier.align(Alignment.Center).size(30.dp))
-                        Text("Abrir mapa  ↗", Modifier.align(Alignment.BottomEnd).padding(7.dp).background(Color.White, RoundedCornerShape(20.dp)).padding(6.dp), color = VozNavy, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.open_map), Modifier.align(Alignment.BottomEnd).padding(7.dp).background(Color.White, RoundedCornerShape(20.dp)).padding(6.dp), color = VozNavy, fontSize = 9.sp, fontWeight = FontWeight.Bold)
                     }
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(7.dp)) {
                         OutlinedButton(
@@ -364,7 +373,7 @@ fun ReportCreateContent(
                             contentPadding = PaddingValues(4.dp),
                             shape = RoundedCornerShape(8.dp)
                         ) {
-                            Text("⌖  Elegir en mapa", fontSize = 10.sp, color = VozNavy)
+                            Text(stringResource(R.string.choose_on_map), fontSize = 10.sp, color = VozNavy)
                         }
                         Button(
                             onClick = onRequestGps,
@@ -373,7 +382,7 @@ fun ReportCreateContent(
                             shape = RoundedCornerShape(8.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = VozNavy)
                         ) {
-                            Text("◎  Usar mi GPS", fontSize = 10.sp)
+                            Text(stringResource(R.string.use_my_gps), fontSize = 10.sp)
                         }
                     }
                     if (uiState.locationMessage.isNotBlank()) {
@@ -384,19 +393,19 @@ fun ReportCreateContent(
 
             Section(
                 number = "4",
-                title = "Información Detallada",
-                subtitle = "Título y descripción"
+                title = stringResource(R.string.detailed_information),
+                subtitle = stringResource(R.string.title_and_description)
             ) {
                 Column(verticalArrangement = Arrangement.spacedBy(9.dp)) {
                     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                        Text("Título del reporte", color = VozNavy, fontSize = 12.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+                        Text(stringResource(R.string.report_title_label), color = VozNavy, fontSize = 12.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
                         Text("${uiState.title.length}/60", color = VozMuted, fontSize = 10.sp)
                     }
                     OutlinedTextField(
                         value = uiState.title,
                         onValueChange = onUpdateTitle,
                         modifier = Modifier.fillMaxWidth(),
-                        placeholder = { Text("ej: Luminarias rotas en esquina de parque", fontSize = 12.sp, color = VozMuted) },
+                        placeholder = { Text(stringResource(R.string.report_title_placeholder), fontSize = 12.sp, color = VozMuted) },
                         singleLine = true,
                         shape = RoundedCornerShape(10.dp),
                         textStyle = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp, color = VozNavy),
@@ -411,14 +420,14 @@ fun ReportCreateContent(
                     Spacer(Modifier.height(4.dp))
 
                     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                        Text("Descripción de lo sucedido", color = VozNavy, fontSize = 12.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+                        Text(stringResource(R.string.report_description_label), color = VozNavy, fontSize = 12.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
                         Text("${uiState.description.length}/280", color = VozMuted, fontSize = 10.sp)
                     }
                     OutlinedTextField(
                         value = uiState.description,
                         onValueChange = onUpdateDescription,
                         modifier = Modifier.fillMaxWidth().height(100.dp),
-                        placeholder = { Text("Describe detalles relevantes: hora aproximada, puntos de referencia clave o si hay personas vulnerables en riesgo...", fontSize = 11.sp, color = VozMuted) },
+                        placeholder = { Text(stringResource(R.string.report_description_placeholder), fontSize = 11.sp, color = VozMuted) },
                         shape = RoundedCornerShape(10.dp),
                         textStyle = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp, color = VozNavy),
                         colors = OutlinedTextFieldDefaults.colors(
@@ -448,123 +457,43 @@ fun ReportCreateContent(
                     Icon(Icons.Default.Send, null)
                 }
                 Spacer(Modifier.width(7.dp))
-                Text(if (uiState.publishing) "Publicando…" else "Publicar Reporte Ciudadano", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                Text(if (uiState.publishing) stringResource(R.string.sending) else stringResource(R.string.send), fontWeight = FontWeight.Bold)
             }
         }
-
-        if (showMapPicker) {
-            ReportMapPicker(
-                initialLat = uiState.latitude,
-                initialLon = uiState.longitude,
-                onConfirm = { lat, lon ->
-                    onConfirmMapLocation(lat, lon)
-                    showMapPicker = false
-                },
-                onDismiss = { showMapPicker = false }
-            )
-        }
     }
-}
 
-@Composable
-private fun Section(
-    number: String,
-    title: String,
-    subtitle: String,
-    badgeText: String? = null,
-    badgeColor: Color = Color(0xFFFFEDD5),
-    badgeTextColor: Color = Color(0xFFC2410C),
-    content: @Composable () -> Unit
-) {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(14.dp),
-        color = Color.White,
-        shadowElevation = 1.dp
-    ) {
-        Column(Modifier.padding(13.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(Modifier.size(22.dp).clip(CircleShape).background(VozNavy), contentAlignment = Alignment.Center) {
-                    Text(number, color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold)
-                }
-                Spacer(Modifier.width(8.dp))
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(title, color = VozNavy, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                    Text(subtitle, color = VozMuted, fontSize = 9.sp)
-                }
-                if (badgeText != null) {
-                    Surface(
-                        shape = RoundedCornerShape(50),
-                        color = badgeColor
-                    ) {
-                        Text(
-                            text = badgeText,
-                            modifier = Modifier.padding(horizontal = 9.dp, vertical = 4.dp),
-                            color = badgeTextColor,
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                }
-            }
-            content()
-        }
-    }
-}
-
-@Composable
-private fun ReportMapPicker(initialLat: Double, initialLon: Double, onConfirm: (Double, Double) -> Unit, onDismiss: () -> Unit) {
-    var selectedLat by remember(initialLat) { mutableDoubleStateOf(initialLat) }
-    var selectedLon by remember(initialLon) { mutableDoubleStateOf(initialLon) }
-    var hasMoved by remember { mutableStateOf(false) }
-
-    Dialog(onDismissRequest = onDismiss) {
-        Surface(Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp), color = Color.White) {
-            Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("Elige la ubicación", color = VozNavy, fontSize = 16.sp, fontWeight = FontWeight.Bold)
-                Text("Arrastra el pin hasta el lugar exacto del incidente.", color = VozMuted, fontSize = 11.sp)
-                AndroidView(
-                    factory = { ctx ->
-                        org.osmdroid.config.Configuration.getInstance().load(ctx, ctx.getSharedPreferences("osm_prefs", Context.MODE_PRIVATE))
-                        MapView(ctx).apply {
-                            setTileSource(TileSourceFactory.MAPNIK)
-                            setMultiTouchControls(true)
-                            setBuiltInZoomControls(false)
-                            controller.setZoom(16.0)
-                            controller.setCenter(GeoPoint(initialLat, initialLon))
-
-                            val marker = Marker(this).apply {
-                                position = GeoPoint(initialLat, initialLon)
-                                setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
-                                isDraggable = true
-                                setOnMarkerDragListener(object : Marker.OnMarkerDragListener {
-                                    override fun onMarkerDrag(marker: Marker) {}
-                                    override fun onMarkerDragStart(marker: Marker) {}
-                                    override fun onMarkerDragEnd(marker: Marker) {
-                                        selectedLat = marker.position.latitude
-                                        selectedLon = marker.position.longitude
-                                        hasMoved = true
-                                    }
-                                })
+    if (showMapPicker) {
+        Dialog(onDismissRequest = { showMapPicker = false }) {
+            Surface(modifier = Modifier.fillMaxWidth().height(400.dp), shape = RoundedCornerShape(16.dp)) {
+                Box(Modifier.fillMaxSize()) {
+                    AndroidView(
+                        factory = { ctx ->
+                            org.osmdroid.config.Configuration.getInstance().load(ctx, ctx.getSharedPreferences("osmdroid", Context.MODE_PRIVATE))
+                            MapView(ctx).apply {
+                                setTileSource(TileSourceFactory.MAPNIK)
+                                setMultiTouchControls(true)
+                                controller.setZoom(16.0)
+                                controller.setCenter(GeoPoint(uiState.latitude, uiState.longitude))
+                                val marker = Marker(this).apply {
+                                    position = GeoPoint(uiState.latitude, uiState.longitude)
+                                    isDraggable = true
+                                    setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
+                                }
+                                overlays.add(marker)
+                                setOnTouchListener { v, _ ->
+                                    v.parent?.requestDisallowInterceptTouchEvent(true)
+                                    false
+                                }
                             }
-                            overlays.add(marker)
-                        }
-                    },
-                    modifier = Modifier.fillMaxWidth().height(390.dp).clip(RoundedCornerShape(12.dp))
-                )
-                Text(
-                    "Lat: ${String.format(Locale.US, "%.5f", selectedLat)} · Lon: ${String.format(Locale.US, "%.5f", selectedLon)}",
-                    color = VozMuted,
-                    fontSize = 10.sp
-                )
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedButton(onClick = onDismiss, modifier = Modifier.weight(1f)) { Text("Cancelar") }
+                        },
+                        modifier = Modifier.fillMaxSize()
+                    )
                     Button(
-                        onClick = { onConfirm(selectedLat, selectedLon) },
-                        modifier = Modifier.weight(1f),
+                        onClick = { showMapPicker = false },
+                        modifier = Modifier.align(Alignment.BottomCenter).padding(16.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = VozNavy)
                     ) {
-                        Text(if (hasMoved) "Usar este punto" else "Confirmar punto")
+                        Text(stringResource(R.string.dialog_understood))
                     }
                 }
             }
@@ -573,38 +502,57 @@ private fun ReportMapPicker(initialLat: Double, initialLon: Double, onConfirm: (
 }
 
 private fun requestReportLocation(context: Context, onLocation: (Location) -> Unit) {
-    val manager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
-    val fine = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
-    val providers = manager.getProviders(true).filter { it != "gps" || fine }
-    val cached = providers.mapNotNull { provider -> try { manager.getLastKnownLocation(provider) } catch (_: SecurityException) { null } }.maxByOrNull { it.time }
-    if (cached != null && System.currentTimeMillis() - cached.time < 30_000L) {
-        onLocation(cached)
-        return
-    }
-    var delivered = false
-    val listener = object : LocationListener {
-        override fun onLocationChanged(location: Location) {
-            if (!delivered) {
-                delivered = true
-                try { manager.removeUpdates(this) } catch (_: SecurityException) {}
-                onLocation(location)
+    val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as? LocationManager ?: return
+    try {
+        val fine = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+        val coarse = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
+        if (!fine && !coarse) return
+
+        val lastGps = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
+        val lastNet = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
+        val best = listOfNotNull(lastGps, lastNet).maxByOrNull { it.time }
+        if (best != null && System.currentTimeMillis() - best.time < 120000) {
+            onLocation(best)
+            return
+        }
+
+        val provider = if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) LocationManager.GPS_PROVIDER else LocationManager.NETWORK_PROVIDER
+        locationManager.requestSingleUpdate(provider, object : LocationListener {
+            override fun onLocationChanged(loc: Location) { onLocation(loc) }
+            override fun onProviderEnabled(p0: String) {}
+            override fun onProviderDisabled(p0: String) {}
+            override fun onStatusChanged(p0: String?, p1: Int, p2: Bundle?) {}
+        }, Looper.getMainLooper())
+    } catch (_: SecurityException) {}
+}
+
+@Composable
+private fun Section(number: String, title: String, subtitle: String, badgeText: String? = null, badgeColor: Color = Color.Transparent, badgeTextColor: Color = Color.Transparent, content: @Composable ColumnScope.() -> Unit) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(14.dp),
+        color = Color.White,
+        shadowElevation = 1.dp
+    ) {
+        Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(modifier = Modifier.size(24.dp).clip(CircleShape).background(VozBlueSurface), contentAlignment = Alignment.Center) {
+                        Text(number, color = VozNavy, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    }
+                    Spacer(Modifier.width(8.dp))
+                    Column {
+                        Text(title, color = VozNavy, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                        Text(subtitle, color = VozMuted, fontSize = 10.sp)
+                    }
+                }
+                if (badgeText != null) {
+                    Surface(shape = RoundedCornerShape(50), color = badgeColor) {
+                        Text(badgeText, modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp), color = badgeTextColor, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                    }
+                }
             }
+            content()
         }
-        @Deprecated("Deprecated by Android")
-        override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {}
-        override fun onProviderEnabled(provider: String) {}
-        override fun onProviderDisabled(provider: String) {}
     }
-    providers.forEach { provider ->
-        try {
-            manager.requestLocationUpdates(provider, 1000L, 0f, listener, Looper.getMainLooper())
-        } catch (_: SecurityException) {}
-    }
-    Handler(Looper.getMainLooper()).postDelayed({
-        if (!delivered) {
-            delivered = true
-            try { manager.removeUpdates(listener) } catch (_: SecurityException) {}
-            cached?.let(onLocation)
-        }
-    }, 4000L)
 }

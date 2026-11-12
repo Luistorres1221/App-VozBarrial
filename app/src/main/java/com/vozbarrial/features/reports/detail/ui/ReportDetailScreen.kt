@@ -28,6 +28,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -53,17 +54,27 @@ private val severityColors = listOf(
     Color(0xFFDC2626)
 )
 
+@Composable
 private fun getRelevanceInfo(votes: Int): RelevanceData {
+    val context = LocalContext.current
+    val min = context.getString(R.string.relevance_minor)
+    val low = context.getString(R.string.relevance_low)
+    val mod = context.getString(R.string.relevance_moderate)
+    val high = context.getString(R.string.relevance_high)
+    val crit = context.getString(R.string.relevance_critical)
+
     return when {
-        votes < 20 -> RelevanceData("Menor", 1, "Prioridad menor basada en $votes apoyos.", 1)
-        votes < 40 -> RelevanceData("Baja", 2, "Prioridad baja basada en $votes apoyos.", 2)
-        votes < 60 -> RelevanceData("Moderado", 3, "Prioridad moderada basada en $votes apoyos.", 3)
-        votes < 80 -> RelevanceData("Alto", 4, "Prioridad alta basada en $votes apoyos.", 4)
-        else -> RelevanceData("Crítico", 5, "Nivel crítico basado en más de 80 apoyos y alta urgencia.", 5)
+        votes < 20 -> RelevanceData(min, 1, context.getString(R.string.relevance_desc_format, min, votes), 1)
+        votes < 40 -> RelevanceData(low, 2, context.getString(R.string.relevance_desc_format, low, votes), 2)
+        votes < 60 -> RelevanceData(mod, 3, context.getString(R.string.relevance_desc_format, mod, votes), 3)
+        votes < 80 -> RelevanceData(high, 4, context.getString(R.string.relevance_desc_format, high, votes), 4)
+        else -> RelevanceData(crit, 5, context.getString(R.string.relevance_critical_desc), 5)
     }
 }
 
+@Composable
 private fun formatTimeAgo(timestamp: Long): String {
+    val context = LocalContext.current
     val now = System.currentTimeMillis()
     val diff = maxOf(0L, now - timestamp)
     val seconds = diff / 1000
@@ -72,11 +83,32 @@ private fun formatTimeAgo(timestamp: Long): String {
     val days = hours / 24
 
     return when {
-        seconds < 60 -> "Hace un momento"
-        minutes < 60 -> "Hace $minutes ${if (minutes == 1L) "minuto" else "minutos"}"
-        hours < 24 -> "Hace $hours ${if (hours == 1L) "hora" else "horas"}"
-        days < 30 -> "Hace $days ${if (days == 1L) "día" else "días"}"
-        else -> "Hace más de un mes"
+        seconds < 60 -> context.getString(R.string.time_just_now)
+        minutes < 60 -> {
+            val unit = context.getString(if (minutes == 1L) R.string.time_minute else R.string.time_minutes)
+            context.getString(R.string.time_minutes_ago, minutes, unit)
+        }
+        hours < 24 -> {
+            val unit = context.getString(if (hours == 1L) R.string.time_hour else R.string.time_hours)
+            context.getString(R.string.time_hours_ago, hours, unit)
+        }
+        days < 30 -> {
+            val unit = context.getString(if (days == 1L) R.string.time_day else R.string.time_days)
+            context.getString(R.string.time_days_ago, days, unit)
+        }
+        else -> context.getString(R.string.time_over_a_month)
+    }
+}
+
+@Composable
+private fun getLocalizedStatusLabel(status: ReportStatus): String {
+    return when (status) {
+        ReportStatus.POR_VERIFICAR -> stringResource(R.string.status_por_verificar)
+        ReportStatus.VERIFICADO -> stringResource(R.string.status_verificado)
+        ReportStatus.RESUELTO -> stringResource(R.string.status_resuelto)
+        ReportStatus.RECHAZADO -> stringResource(R.string.status_rechazado)
+        ReportStatus.ELIMINADO -> stringResource(R.string.status_eliminado)
+        ReportStatus.DESCONOCIDO -> stringResource(R.string.status_unknown)
     }
 }
 
@@ -145,17 +177,18 @@ private fun ReportDetailScreen(
         onAddPhoto(uri?.toString())
     }
 
-    val formattedDate = remember(report.timestamp) {
+    val todayFallback = stringResource(R.string.today_time_fallback)
+    val formattedDate = remember(report.timestamp, todayFallback) {
         try {
             val sdf = SimpleDateFormat("dd 'de' MMM yyyy, HH:mm", Locale.forLanguageTag("es-ES"))
             sdf.format(Date(report.timestamp))
         } catch (_: Exception) {
-            "Hoy, 14:32 hrs"
+            todayFallback
         }
     }
 
     val votes = uiState.supportCount
-    val relevanceData = remember(votes) { getRelevanceInfo(votes) }
+    val relevanceData = getRelevanceInfo(votes)
 
     Column(
         modifier = Modifier
@@ -173,15 +206,15 @@ private fun ReportDetailScreen(
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 IconButton(onClick = onBack, modifier = Modifier.size(36.dp)) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver", tint = VozNavy)
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back), tint = VozNavy)
                 }
                 Spacer(Modifier.width(8.dp))
-                Text("Detalle Incidencia", color = VozNavy, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                Text(stringResource(R.string.incident_detail), color = VozNavy, fontWeight = FontWeight.Bold, fontSize = 16.sp)
             }
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 if (canResolveReport) {
                     TextButton(onClick = onResolveReport, enabled = !isResolvingReport) {
-                        Text("Resuelto", color = VozGreen, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                        Text(stringResource(R.string.resolved), color = VozGreen, fontWeight = FontWeight.Bold, fontSize = 12.sp)
                     }
                 }
                 Surface(shape = CircleShape, color = Color(0xFFDCEBE7), modifier = Modifier.size(36.dp)) {
@@ -229,7 +262,7 @@ private fun ReportDetailScreen(
                         ReportStatus.ELIMINADO -> Color(0xFF64748B)
                         ReportStatus.DESCONOCIDO -> Color(0xFF64748B)
                     }
-                    val statusLabel = statusEnum.label
+                    val statusLabel = getLocalizedStatusLabel(statusEnum)
                     val statusIcon = when (statusEnum) {
                         ReportStatus.POR_VERIFICAR -> Icons.Default.Schedule
                         ReportStatus.VERIFICADO -> Icons.Default.CheckCircle
@@ -264,7 +297,7 @@ private fun ReportDetailScreen(
 
                     if (statusEnum == ReportStatus.RECHAZADO) {
                         Spacer(Modifier.height(10.dp))
-                        Text("Motivo del rechazo", color = VozNavy, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                        Text(stringResource(R.string.rejection_reason_label), color = VozNavy, fontWeight = FontWeight.Bold, fontSize = 12.sp)
                         report.rejectionReason?.takeIf { it.isNotBlank() }?.let {
                             Text(it, color = VozMuted, fontSize = 12.sp)
                         }
@@ -272,8 +305,8 @@ private fun ReportDetailScreen(
                             Text(it, color = VozMuted, fontSize = 12.sp)
                         }
                         Text(
-                            if (report.allowResubmit) "Puedes corregir y reenviar este reporte."
-                            else "Este rechazo es final.",
+                            if (report.allowResubmit) stringResource(R.string.can_correct_and_resubmit)
+                            else stringResource(R.string.rejection_is_final),
                             color = VozMuted,
                             fontSize = 11.sp
                         )
@@ -290,9 +323,9 @@ private fun ReportDetailScreen(
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Icon(Icons.Default.Warning, null, tint = Color(0xFFD97706), modifier = Modifier.size(16.dp))
                                 Spacer(Modifier.width(6.dp))
-                                Text("Nivel de Relevancia: ${relevanceData.level}", color = VozNavy, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                Text(stringResource(R.string.relevance_level, relevanceData.level), color = VozNavy, fontWeight = FontWeight.Bold, fontSize = 12.sp)
                                 Spacer(Modifier.weight(1f))
-                                Text("Severidad ${relevanceData.severity}/5", color = VozMuted, fontSize = 11.sp, fontWeight = FontWeight.Medium)
+                                Text(stringResource(R.string.severity_label, relevanceData.severity), color = VozMuted, fontSize = 11.sp, fontWeight = FontWeight.Medium)
                             }
                             Spacer(Modifier.height(8.dp))
                             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -320,7 +353,7 @@ private fun ReportDetailScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = report.title.ifBlank { "Incidencia vecinal reportada" },
+                            text = report.title.ifBlank { stringResource(R.string.default_report_title) },
                             color = VozNavy,
                             fontWeight = FontWeight.Bold,
                             fontSize = 20.sp,
@@ -343,7 +376,7 @@ private fun ReportDetailScreen(
                             )
                             Spacer(Modifier.width(6.dp))
                             Text(
-                                text = "${uiState.supportCount} Apoyos",
+                                text = stringResource(R.string.support_count_format, uiState.supportCount),
                                 color = if (uiState.isSupported) Color.White else VozNavy,
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Bold
@@ -386,7 +419,7 @@ private fun ReportDetailScreen(
                                     .padding(12.dp)
                             ) {
                                 Text(
-                                    text = "${pagerState.currentPage + 1} / ${imageUrls.size} fotos",
+                                    text = stringResource(R.string.photos_count_format, pagerState.currentPage + 1, imageUrls.size),
                                     modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
                                     color = Color.White,
                                     fontSize = 10.sp,
@@ -409,11 +442,11 @@ private fun ReportDetailScreen(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Box(Modifier.size(8.dp).clip(CircleShape).background(VozGreen))
                         Spacer(Modifier.width(8.dp))
-                        Text("Descripción del Incidente", color = VozNavy, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                        Text(stringResource(R.string.incident_description), color = VozNavy, fontWeight = FontWeight.Bold, fontSize = 14.sp)
                     }
                     Spacer(Modifier.height(10.dp))
                     Text(
-                        text = report.description.ifBlank { "Sin descripción detallada proporcionada para este reporte." },
+                        text = report.description.ifBlank { stringResource(R.string.no_description_provided) },
                         color = VozNavy,
                         fontSize = 13.sp,
                         lineHeight = 18.sp
@@ -447,10 +480,10 @@ private fun ReportDetailScreen(
                         Text(authorName, color = VozNavy, fontWeight = FontWeight.Bold, fontSize = 14.sp)
                         Text(com.vozbarrial.domain.model.Nivel.fromValue(report.authorNivel).displayName, color = VozGreen, fontSize = 11.sp, fontWeight = FontWeight.Medium)
                         Spacer(Modifier.height(2.dp))
-                        Text("Publicado $formattedDate", color = VozMuted, fontSize = 10.sp)
+                        Text(stringResource(R.string.published_time, formattedDate), color = VozMuted, fontSize = 10.sp)
                     }
                     Surface(shape = RoundedCornerShape(50), color = Color(0xFFEAF1F8)) {
-                        Text("Autor", modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp), color = VozNavy, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.author), modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp), color = VozNavy, fontSize = 10.sp, fontWeight = FontWeight.Bold)
                     }
                 }
             }
@@ -468,8 +501,8 @@ private fun ReportDetailScreen(
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                        Text("Aportes Ciudadanos (${uiState.contributions.size})", color = VozNavy, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                        Text("En vivo", color = VozGreen, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.citizen_contributions, uiState.contributions.size), color = VozNavy, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                        Text(stringResource(R.string.live_label), color = VozGreen, fontSize = 11.sp, fontWeight = FontWeight.Bold)
                     }
 
                     Spacer(Modifier.height(12.dp))
@@ -477,7 +510,7 @@ private fun ReportDetailScreen(
                     OutlinedTextField(
                         value = uiState.newContributionText,
                         onValueChange = onContributionChange,
-                        placeholder = { Text("Aporta datos, testigos o fotos adicionales...", fontSize = 12.sp) },
+                        placeholder = { Text(stringResource(R.string.contribution_placeholder), fontSize = 12.sp) },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
                         colors = OutlinedTextFieldDefaults.colors(
@@ -504,7 +537,7 @@ private fun ReportDetailScreen(
                                         onClick = { onRemovePhoto(index) },
                                         modifier = Modifier.align(Alignment.TopEnd).size(20.dp).background(Color.Black.copy(alpha = 0.5f), CircleShape)
                                     ) {
-                                        Icon(Icons.Default.Close, contentDescription = "Eliminar", tint = Color.White, modifier = Modifier.size(12.dp))
+                                        Icon(Icons.Default.Close, contentDescription = stringResource(R.string.delete), tint = Color.White, modifier = Modifier.size(12.dp))
                                     }
                                 }
                             }
@@ -529,7 +562,7 @@ private fun ReportDetailScreen(
                                 Icon(Icons.Default.CameraAlt, contentDescription = "Adjuntar foto", tint = if (uiState.contributionPhotoUris.size < 2) VozNavy else VozMuted)
                             }
                             Text(
-                                text = "Fotos (${uiState.contributionPhotoUris.size}/2 opcional)",
+                                text = stringResource(R.string.photos_optional_format, uiState.contributionPhotoUris.size),
                                 color = VozMuted,
                                 fontSize = 10.sp
                             )
@@ -544,9 +577,9 @@ private fun ReportDetailScreen(
                             if (uiState.isUploading) {
                                 CircularProgressIndicator(modifier = Modifier.size(16.dp), color = Color.White, strokeWidth = 2.dp)
                                 Spacer(Modifier.width(6.dp))
-                                Text("Enviando...", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                Text(stringResource(R.string.sending), color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                             } else {
-                                Text("Enviar", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                Text(stringResource(R.string.send), color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                                 Spacer(Modifier.width(6.dp))
                                 Icon(Icons.AutoMirrored.Filled.Send, contentDescription = null, tint = Color.White, modifier = Modifier.size(14.dp))
                             }

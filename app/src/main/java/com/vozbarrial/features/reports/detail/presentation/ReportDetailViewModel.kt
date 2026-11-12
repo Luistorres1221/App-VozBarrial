@@ -96,6 +96,38 @@ class ReportDetailViewModel : ViewModel() {
                     contrib?.copy(id = doc.id)
                 }
                 _uiState.update { it.copy(contributions = list) }
+
+                viewModelScope.launch(Dispatchers.IO) {
+                    try {
+                        val usersTask = firestore.collection("usuarios").get()
+                        val usersSnapshot = com.google.android.gms.tasks.Tasks.await(usersTask)
+                        val userMap = mutableMapOf<String, String>()
+                        for (doc in usersSnapshot.documents) {
+                            val name = doc.getString("name").orEmpty()
+                            val email = doc.getString("email").orEmpty()
+                            val nivel = doc.getString("nivel") ?: "novato"
+                            if (name.isNotBlank()) userMap[name.lowercase()] = nivel
+                            if (email.isNotBlank()) {
+                                userMap[email.substringBefore("@").lowercase()] = nivel
+                                userMap[email.lowercase()] = nivel
+                            }
+                        }
+
+                        val updatedList = list.map { c ->
+                            if (c.authorRole.isBlank() || c.authorRole.equals("Vecino", true) || c.authorRole.equals("Ciudadano", true)) {
+                                val key = c.authorName.lowercase()
+                                val nivel = userMap[key] ?: userMap[key.substringBefore(" ")] ?: "novato"
+                                val realRole = com.vozbarrial.domain.model.Nivel.fromValue(nivel).displayName
+                                c.copy(authorRole = realRole)
+                            } else {
+                                c
+                            }
+                        }
+                        withContext(Dispatchers.Main) {
+                            _uiState.update { it.copy(contributions = updatedList) }
+                        }
+                    } catch (_: Exception) {}
+                }
             }
     }
 
@@ -141,7 +173,28 @@ class ReportDetailViewModel : ViewModel() {
 
                 val user = FirebaseAuth.getInstance().currentUser
                 val email = user?.email.orEmpty()
+                val uid = user?.uid.orEmpty()
                 val resolvedAuthorName = authorName.ifBlank { email.substringBefore("@").ifBlank { "Vecino" } }
+
+                var userNivel = "novato"
+                try {
+                    val task = if (uid.isNotBlank()) {
+                        firestore.collection("usuarios").document(uid).get()
+                    } else if (email.isNotBlank()) {
+                        firestore.collection("usuarios").whereEqualTo("email", email).get()
+                    } else null
+
+                    if (task != null) {
+                        val snapshot = com.google.android.gms.tasks.Tasks.await(task)
+                        if (snapshot is com.google.firebase.firestore.DocumentSnapshot && snapshot.exists()) {
+                            userNivel = snapshot.getString("nivel") ?: "novato"
+                        } else if (snapshot is com.google.firebase.firestore.QuerySnapshot) {
+                            userNivel = snapshot.documents.firstOrNull()?.getString("nivel") ?: "novato"
+                        }
+                    }
+                } catch (_: Exception) {}
+
+                val resolvedRole = com.vozbarrial.domain.model.Nivel.fromValue(userNivel).displayName
 
                 val aportesRef = firestore.collection("reportes")
                     .document(reportId)
@@ -151,7 +204,7 @@ class ReportDetailViewModel : ViewModel() {
                 val contribution = Contribution(
                     id = contributionId,
                     authorName = resolvedAuthorName,
-                    authorRole = "Vecino",
+                    authorRole = resolvedRole,
                     content = currentText,
                     imageUrls = uploadedUrls,
                     timestamp = System.currentTimeMillis()

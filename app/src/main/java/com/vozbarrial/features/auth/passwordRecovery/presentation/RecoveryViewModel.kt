@@ -15,10 +15,15 @@ class RecoveryViewModel : ViewModel() {
         _uiState.value = _uiState.value.copy(email = value, message = "")
     }
 
-    fun requestReset(request: (String, (AuthOperationResult<Unit>) -> Unit) -> Unit) {
+    fun requestReset(
+        request: (String, (AuthOperationResult<Unit>) -> Unit) -> Unit,
+        emptyEmailMsg: String,
+        networkErrorMsg: String,
+        defaultErrorMsg: String
+    ) {
         val email = _uiState.value.email.trim()
         if (email.isBlank()) {
-            _uiState.value = _uiState.value.copy(message = "Escribe tu correo electrónico.")
+            _uiState.value = _uiState.value.copy(message = emptyEmailMsg)
             return
         }
         if (_uiState.value.sending) return
@@ -31,13 +36,13 @@ class RecoveryViewModel : ViewModel() {
                 }
                 is AuthOperationResult.Failure -> when (result.error) {
                     AuthError.NetworkUnavailable -> {
-                        _uiState.value = _uiState.value.copy(message = "Sin conexión a internet. Verifica tu red.")
+                        _uiState.value = _uiState.value.copy(message = networkErrorMsg)
                     }
                     AuthError.AccountNotFound -> {
                         _uiState.value = _uiState.value.copy(succeeded = true)
                     }
                     is AuthError.ProviderFailure -> {
-                        _uiState.value = _uiState.value.copy(message = result.error.message ?: "No se pudo enviar el correo.")
+                        _uiState.value = _uiState.value.copy(message = result.error.message ?: defaultErrorMsg)
                     }
                 }
             }

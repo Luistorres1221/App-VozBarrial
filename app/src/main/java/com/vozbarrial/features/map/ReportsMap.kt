@@ -717,7 +717,7 @@ internal fun SelectedReportCard(
                         Box(Modifier.size(6.dp).clip(CircleShape).background(badgeColor))
                         Spacer(Modifier.width(6.dp))
                         Text(
-                            text = report.category,
+                            text = getLocalizedCategoryName(report.category),
                             color = badgeColor,
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold
@@ -809,7 +809,7 @@ internal fun SelectedReportCard(
                 ) {
                     Icon(Icons.Default.Visibility, null, tint = VozNavy, modifier = Modifier.size(16.dp))
                     Spacer(Modifier.width(6.dp))
-                    Text("Ver reporte", color = VozNavy, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.view_report), color = VozNavy, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                 }
 
                 Button(
@@ -857,7 +857,7 @@ internal fun SelectedReportCard(
                     )
                     Spacer(Modifier.width(6.dp))
                     Text(
-                        text = if (isSupported) "¡Apoyado!" else "Apoyar",
+                        text = if (isSupported) stringResource(R.string.supported_exclamation) else stringResource(R.string.support_action),
                         color = if (isSupported) Color.White else VozNavy,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold
@@ -865,5 +865,18 @@ internal fun SelectedReportCard(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun getLocalizedCategoryName(category: String): String {
+    return when {
+        category.contains("seguridad", true) -> stringResource(R.string.category_security)
+        category.contains("emergencia", true) -> stringResource(R.string.category_emergencies)
+        category.contains("infraestructura", true) || category.contains("vías", true) -> stringResource(R.string.category_infrastructure)
+        category.contains("mascota", true) || category.contains("animal", true) -> stringResource(R.string.category_pets)
+        category.contains("comunidad", true) || category.contains("entorno", true) -> stringResource(R.string.category_community)
+        category.contains("alumbrado", true) || category.contains("servicio", true) -> stringResource(R.string.category_lighting)
+        else -> category
     }
 }
