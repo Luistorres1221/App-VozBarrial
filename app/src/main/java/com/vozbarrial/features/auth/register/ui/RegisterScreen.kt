@@ -28,7 +28,6 @@ import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
@@ -39,13 +38,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -55,6 +54,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.vozbarrial.R
 import com.vozbarrial.features.auth.register.presentation.RegisterUiState
 import com.vozbarrial.features.auth.register.presentation.RegisterViewModel
 import com.vozbarrial.ui.theme.*
@@ -67,6 +67,7 @@ fun RegisterRoute(
     onBack: () -> Unit,
     onLoginClick: () -> Unit,
     onAccountCreated: () -> Unit,
+    onShowTerms: () -> Unit,
     onCreateAccount: (name: String, email: String, password: String, (Boolean, String?) -> Unit) -> Unit,
     registerViewModel: RegisterViewModel = viewModel()
 ) {
@@ -83,7 +84,7 @@ fun RegisterRoute(
         onTogglePasswordVisibility = registerViewModel::togglePasswordVisibility,
         onTermsAcceptedChange = registerViewModel::setTermsAccepted,
         onAlertsEnabledChange = registerViewModel::setAlertsEnabled,
-        onShowTerms = registerViewModel::showTerms,
+        onShowTerms = onShowTerms,
         onSubmit = { registerViewModel.submit(onCreateAccount, onAccountCreated) }
     )
 }
@@ -103,7 +104,7 @@ fun RegisterContent(
     onTogglePasswordVisibility: () -> Unit,
     onTermsAcceptedChange: (Boolean) -> Unit,
     onAlertsEnabledChange: (Boolean) -> Unit,
-    onShowTerms: (Boolean) -> Unit,
+    onShowTerms: () -> Unit,
     onSubmit: () -> Unit,
 ) {
     Column(
@@ -115,35 +116,35 @@ fun RegisterContent(
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         RegisterHeader(onBack = onBack)
-        Text("Únete a tu comunidad", color = VozNavy, fontSize = 26.sp, fontWeight = FontWeight.Bold)
+        Text(stringResource(R.string.join_community), color = VozNavy, fontSize = 26.sp, fontWeight = FontWeight.Bold)
 
-        RegisterLabel("Nombre Completo")
+        RegisterLabel(stringResource(R.string.full_name_label))
         RegisterField(
             value = uiState.name,
             onValueChange = onNameChange,
-            placeholder = "ej. Carlos Mendoza",
+            placeholder = stringResource(R.string.full_name_placeholder),
             icon = { Icon(Icons.Default.Person, null, tint = VozMuted, modifier = Modifier.size(19.dp)) },
             keyboardType = KeyboardType.Text,
         )
 
-        RegisterLabel("Correo electrónico")
+        RegisterLabel(stringResource(R.string.email_label))
         RegisterField(
             value = uiState.email,
             onValueChange = onEmailChange,
-            placeholder = "ej. carlos.mendoza@correo.com",
+            placeholder = stringResource(R.string.email_placeholder_login),
             icon = { Icon(Icons.Default.MailOutline, null, tint = VozMuted, modifier = Modifier.size(19.dp)) },
             keyboardType = KeyboardType.Email,
         )
-        Text("Usaremos tu correo para validar tu cuenta y recuperar el acceso.", color = VozNavy, fontSize = 11.sp)
+        Text(stringResource(R.string.register_email_purpose), color = VozNavy, fontSize = 11.sp)
 
         Row(verticalAlignment = Alignment.CenterVertically) {
-            RegisterLabel("Contraseña segura", Modifier.weight(1f))
-            Text("Fortaleza: ${passwordStrengthLabel(uiState.password)}", color = VozMuted, fontSize = 11.sp)
+            RegisterLabel(stringResource(R.string.secure_password_label), Modifier.weight(1f))
+            Text(stringResource(R.string.password_strength, passwordStrengthLabel(uiState.password)), color = VozMuted, fontSize = 11.sp)
         }
         RegisterField(
             value = uiState.password,
             onValueChange = onPasswordChange,
-            placeholder = "Mínimo 8 caracteres",
+            placeholder = stringResource(R.string.password_placeholder),
             icon = { Icon(Icons.Default.Lock, null, tint = VozMuted, modifier = Modifier.size(18.dp)) },
             keyboardType = KeyboardType.Password,
             password = true,
@@ -161,14 +162,14 @@ fun RegisterContent(
         ) {
             Icon(Icons.Default.Security, null, tint = Color(0xFF5783C1), modifier = Modifier.size(16.dp))
             Spacer(Modifier.width(5.dp))
-            Text("Usa al menos 8 caracteres e incluye un número o un símbolo.", color = VozMuted, fontSize = 11.sp)
+            Text(stringResource(R.string.password_requirements), color = VozMuted, fontSize = 11.sp)
         }
 
-        RegisterLabel("Confirmar contraseña")
+        RegisterLabel(stringResource(R.string.confirm_password_label))
         RegisterField(
             value = uiState.confirmation,
             onValueChange = onConfirmationChange,
-            placeholder = "Escribe de nuevo tu contraseña",
+            placeholder = stringResource(R.string.confirm_password_placeholder),
             icon = { Icon(Icons.Default.Lock, null, tint = VozMuted, modifier = Modifier.size(18.dp)) },
             keyboardType = KeyboardType.Password,
             password = true,
@@ -179,13 +180,8 @@ fun RegisterContent(
         ConsentRow(
             checked = uiState.acceptedTerms,
             onCheckedChange = onTermsAcceptedChange,
-            text = "Acepto los términos cívicos de convivencia y veracidad de reportes.",
-            onTextClick = { onShowTerms(true) },
-        )
-        ConsentRow(
-            checked = uiState.receiveAlerts,
-            onCheckedChange = onAlertsEnabledChange,
-            text = "Recibir notificaciones sobre alertas de seguridad en mi sector.",
+            text = stringResource(R.string.terms_consent),
+            onTextClick = onShowTerms,
         )
 
         if (!uiState.error.isNullOrBlank()) {
@@ -205,7 +201,7 @@ fun RegisterContent(
             } else {
                 Icon(Icons.Default.PersonAdd, null, modifier = Modifier.size(18.dp))
                 Spacer(Modifier.width(7.dp))
-                Text("Crear Cuenta Comunitaria", fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.create_community_account), fontSize = 15.sp, fontWeight = FontWeight.Bold)
             }
         }
 
@@ -214,9 +210,9 @@ fun RegisterContent(
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text("¿Ya eres miembro? ", color = VozMuted, fontSize = 15.sp)
+            Text(stringResource(R.string.already_member), color = VozMuted, fontSize = 15.sp)
             Text(
-                "Inicia sesión",
+                stringResource(R.string.sign_in_link),
                 color = VozNavy,
                 fontSize = 15.sp,
                 fontWeight = FontWeight.Bold,
@@ -224,24 +220,6 @@ fun RegisterContent(
                 modifier = Modifier.clickable(onClick = onLoginClick),
             )
         }
-    }
-
-    if (uiState.showTerms) {
-        AlertDialog(
-            onDismissRequest = { onShowTerms(false) },
-            title = { Text("Normas de convivencia", color = VozNavy) },
-            text = { Text("Al crear tu cuenta, te comprometes a compartir información veraz, respetar a la comunidad y reportar situaciones de forma responsable.") },
-            confirmButton = {
-                TextButton(onClick = { onTermsAcceptedChange(true); onShowTerms(false) }) {
-                    Text("Aceptar")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { onShowTerms(false) }) {
-                    Text("Cerrar")
-                }
-            },
-        )
     }
 }
 
@@ -252,7 +230,7 @@ private fun RegisterHeader(onBack: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         IconButton(onClick = onBack, modifier = Modifier.size(34.dp)) {
-            Icon(Icons.Default.ArrowBack, contentDescription = "Volver", tint = VozNavy, modifier = Modifier.size(19.dp))
+            Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.back), tint = VozNavy, modifier = Modifier.size(19.dp))
         }
         Box(Modifier.size(28.dp).clip(CircleShape).background(VozNavy), contentAlignment = Alignment.Center) {
             Icon(Icons.Default.Person, null, tint = Color.White, modifier = Modifier.size(19.dp))
@@ -260,10 +238,10 @@ private fun RegisterHeader(onBack: () -> Unit) {
         }
         Spacer(Modifier.width(7.dp))
         Column(modifier = Modifier.weight(1f)) {
-            Text("VozBarrial", color = VozNavy, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-            Text("Registro", color = VozMuted, fontSize = 11.sp)
+            Text(stringResource(R.string.app_name), color = VozNavy, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.register_header_title), color = VozMuted, fontSize = 11.sp)
         }
-        Icon(Icons.Default.Security, contentDescription = "Registro seguro", tint = Color(0xFF43A696), modifier = Modifier.size(15.dp))
+        Icon(Icons.Default.Security, contentDescription = stringResource(R.string.register_secure_desc), tint = Color(0xFF43A696), modifier = Modifier.size(15.dp))
     }
 }
 
@@ -295,7 +273,7 @@ private fun RegisterField(
                 IconButton(onClick = onToggleVisibility, modifier = Modifier.size(32.dp)) {
                     Icon(
                         if (visible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                        contentDescription = if (visible) "Ocultar contraseña" else "Mostrar contraseña",
+                        contentDescription = if (visible) stringResource(R.string.hide_password) else stringResource(R.string.show_password),
                         tint = VozMuted,
                         modifier = Modifier.size(18.dp),
                     )
@@ -343,13 +321,14 @@ private fun StrengthBar(password: String) {
     }
 }
 
+@Composable
 private fun passwordStrengthLabel(password: String): String {
     val meetsRules = password.length >= 8 && password.any { it.isDigit() || !it.isLetterOrDigit() }
     return when {
-        password.isEmpty() -> "Baja"
-        meetsRules && password.length >= 12 -> "Alta"
-        meetsRules -> "Media"
-        else -> "Baja"
+        password.isEmpty() -> stringResource(R.string.strength_low)
+        meetsRules && password.length >= 12 -> stringResource(R.string.strength_high)
+        meetsRules -> stringResource(R.string.strength_medium)
+        else -> stringResource(R.string.strength_low)
     }
 }
 

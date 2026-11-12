@@ -87,6 +87,16 @@ fun AppNavGraph() {
 
     fun signOutAndReset() {
         FirebaseAuth.getInstance().signOut()
+        try {
+            val prefs = context.getSharedPreferences("voz_barrial_biometric_global", android.content.Context.MODE_PRIVATE)
+            val savedEmail = prefs.getString("saved_biometric_email", null)
+            if (!savedEmail.isNullOrBlank()) {
+                val biometricManager = com.vozbarrial.core.biometric.BiometricAuthManager(context, savedEmail)
+                biometricManager.clearBiometricData()
+            }
+            prefs.edit().clear().apply()
+        } catch (_: Exception) {}
+
         signedInName = ""
         signedInEmail = ""
         signedInPhoto = null
@@ -230,7 +240,11 @@ fun AppNavGraph() {
             onAccountCreated = {
                 navigationViewModel.goBack()
             },
+            onShowTerms = { navigationViewModel.navigate("terms") },
             onCreateAccount = ::createAccount
+        )
+        "terms" -> com.vozbarrial.features.auth.register.ui.TermsRoute(
+            onBack = { navigationViewModel.goBack() }
         )
         "map" -> ReportsMap(
             name = signedInName,

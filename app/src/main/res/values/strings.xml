@@ -420,4 +420,32 @@
     <string name="email_empty_error">Escribe tu correo electrónico.</string>
     <string name="network_error">Sin conexión a internet. Verifica tu red.</string>
     <string name="password_reset_error">No se pudo enviar el correo.</string>
+
+    <!-- Register UI -->
+    <string name="join_community">Únete a tu comunidad</string>
+    <string name="secure_password_label">Contraseña segura</string>
+    <string name="close">Cerrar</string>
+    <string name="confirm_password_label">Confirmar contraseña</string>
+    <string name="confirm_password_placeholder">Escribe de nuevo tu contraseña</string>
+    <string name="terms_consent">Acepto los términos cívicos de convivencia y veracidad de reportes.</string>
+    <string name="already_member">¿Ya eres miembro? </string>
+    <string name="sign_in_link">Inicia sesión</string>
+    <string name="terms_dialog_title">Normas de convivencia</string>
+    <string name="terms_dialog_text">Al crear tu cuenta, te comprometes a compartir información veraz, respetar a la comunidad y reportar situaciones de forma responsable.</string>
+    <string name="register_header_title">Registro</string>
+    <string name="register_secure_desc">Registro seguro</string>
+    <string name="strength_low">Baja</string>
+    <string name="strength_medium">Media</string>
+    <string name="strength_high">Alta</string>
+
+    <!-- Terms and Conditions Screen -->
+    <string name="terms_and_conditions_title">Términos y Condiciones Cívicos</string>
+    <string name="terms_section_1_title">1. Compromiso de Veracidad</string>
+    <string name="terms_section_1_content">Los usuarios se comprometen a publicar reportes basados en hechos reales y comprobables sobre la situación de su comunidad.</string>
+    <string name="terms_section_2_title">2. Respeto Comunitario</string>
+    <string name="terms_section_2_content">Se prohíbe el lenguaje ofensivo, la discriminación, el acoso o la difusión de información falsa o malintencionada.</string>
+    <string name="terms_section_3_title">3. Uso Responsable de Alertas</string>
+    <string name="terms_section_3_content">Las alertas y reportes deben reflejar incidentes legítimos que afecten la seguridad, infraestructura o bienestar barrial.</string>
+    <string name="terms_section_4_title">4. Privacidad y Seguridad</string>
+    <string name="terms_section_4_content">Tus datos personales y credenciales se manejan bajo estrictos estándares de seguridad y cifrado.</string>
 </resources>

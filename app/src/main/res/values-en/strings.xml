@@ -426,4 +426,32 @@
     <string name="email_empty_error">Enter your email address.</string>
     <string name="network_error">No internet connection. Check your network.</string>
     <string name="password_reset_error">Could not send email.</string>
+
+    <!-- Register UI -->
+    <string name="join_community">Join your community</string>
+    <string name="secure_password_label">Secure password</string>
+    <string name="close">Close</string>
+    <string name="confirm_password_label">Confirm password</string>
+    <string name="confirm_password_placeholder">Enter your password again</string>
+    <string name="terms_consent">I accept the civic coexistence and report veracity terms.</string>
+    <string name="already_member">Already a member? </string>
+    <string name="sign_in_link">Sign in</string>
+    <string name="terms_dialog_title">Rules of coexistence</string>
+    <string name="terms_dialog_text">By creating your account, you commit to sharing truthful information, respecting the community, and reporting situations responsibly.</string>
+    <string name="register_header_title">Register</string>
+    <string name="register_secure_desc">Secure registration</string>
+    <string name="strength_low">Low</string>
+    <string name="strength_medium">Medium</string>
+    <string name="strength_high">High</string>
+
+    <!-- Terms and Conditions Screen -->
+    <string name="terms_and_conditions_title">Civic Terms and Conditions</string>
+    <string name="terms_section_1_title">1. Truthfulness Commitment</string>
+    <string name="terms_section_1_content">Users commit to publishing reports based on real and verifiable facts about their community\'s situation.</string>
+    <string name="terms_section_2_title">2. Community Respect</string>
+    <string name="terms_section_2_content">Offensive language, discrimination, harassment, or the dissemination of false or malicious information is prohibited.</string>
+    <string name="terms_section_3_title">3. Responsible Use of Alerts</string>
+    <string name="terms_section_3_content">Alerts and reports must reflect legitimate incidents affecting security, infrastructure, or neighborhood well-being.</string>
+    <string name="terms_section_4_title">4. Privacy and Security</string>
+    <string name="terms_section_4_content">Your personal data and credentials are handled under strict security and encryption standards.</string>
 </resources>
