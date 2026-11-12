@@ -286,4 +286,61 @@
     <string name="contribution_placeholder">Contribute data, witnesses or additional photos…</string>
     <string name="sending">Sending...</string>
     <string name="send">Send</string>
+
+    <!-- Community Notifications -->
+    <string name="notification_achievement_title">Achievement: %1$s</string>
+    <string name="notification_claimed">Claimed</string>
+    <string name="notification_available">Available to claim!</string>
+    <string name="notification_report_update_title">Report Update</string>
+
+    <!-- Achievements -->
+    <string name="ach_first_report_title">First Citizen Report</string>
+    <string name="ach_first_report_desc">Publish your first report on the civic map</string>
+    <string name="ach_active_guardian_title">Active Guardian</string>
+    <string name="ach_active_guardian_desc">Publish at least 3 citizen reports</string>
+    <string name="ach_star_reporter_title">Star Reporter</string>
+    <string name="ach_star_reporter_desc">Publish 5 or more reports in the app</string>
+    <string name="ach_inexhaustible_voice_title">Inexhaustible Voice</string>
+    <string name="ach_inexhaustible_voice_desc">Publish 10 citizen reports</string>
+    <string name="ach_neighborhood_chronicler_title">Neighborhood Chronicler</string>
+    <string name="ach_neighborhood_chronicler_desc">Publish 15 reports in the community</string>
+    <string name="ach_definitive_voice_title">Definitive Voice</string>
+    <string name="ach_definitive_voice_desc">Publish 20 citizen reports</string>
+    <string name="ach_first_success_title">First Success</string>
+    <string name="ach_first_success_desc">Get at least 1 report verified or resolved</string>
+    <string name="ach_civic_solver_title">Civic Solver</string>
+    <string name="ach_civic_solver_desc">Get 3 reports verified or resolved</string>
+    <string name="ach_community_impact_title">Community Impact</string>
+    <string name="ach_community_impact_desc">Get 5 reports verified or resolved</string>
+    <string name="ach_solution_leader_title">Solution Leader</string>
+    <string name="ach_solution_leader_desc">Get 10 reports verified or resolved</string>
+    <string name="ach_neighborhood_support_title">Neighborhood Support</string>
+    <string name="ach_neighborhood_support_desc">Accumulate 10 total votes on your reports</string>
+    <string name="ach_backed_voice_title">Backed Voice</string>
+    <string name="ach_backed_voice_desc">Accumulate 25 votes on your reports</string>
+    <string name="ach_civic_popularity_title">Civic Popularity</string>
+    <string name="ach_civic_popularity_desc">Accumulate 50 votes on your reports</string>
+    <string name="ach_store_collector_title">Civic Collector</string>
+    <string name="ach_store_collector_desc">Acquire frames in the community store</string>
+    <string name="ach_community_stylist_title">Community Stylist</string>
+    <string name="ach_community_stylist_desc">Own at least 3 different frames</string>
+    <string name="ach_elite_wardrobe_title">Elite Wardrobe</string>
+    <string name="ach_elite_wardrobe_desc">Own at least 5 different frames</string>
+    <string name="ach_civic_saver_title">Civic Saver</string>
+    <string name="ach_civic_saver_desc">Accumulate 100 or more coins in your wallet</string>
+    <string name="ach_neighborhood_tycoon_title">Neighborhood Tycoon</string>
+    <string name="ach_neighborhood_tycoon_desc">Accumulate 250 or more coins in your wallet</string>
+    <string name="ach_committed_citizen_title">Model Citizen</string>
+    <string name="ach_committed_citizen_desc">Reach or exceed 300 reputation points</string>
+    <string name="ach_supreme_guardian_title">Supreme Guardian</string>
+    <string name="ach_supreme_guardian_desc">Reach or exceed 1,000 reputation points</string>
+    <string name="ach_community_hero_title">Community Hero</string>
+    <string name="ach_community_hero_desc">Reach or exceed 2,000 reputation points</string>
+    <string name="progress_completed_fraction">%1$d/%2$d Completed</string>
+    <string name="progress_reports_fraction">%1$d/%2$d Reports</string>
+    <string name="progress_verified_fraction">%1$d/%2$d Verified</string>
+    <string name="progress_votes_fraction">%1$d/%2$d Votes</string>
+    <string name="progress_frames_fraction">%1$d/%2$d Frames</string>
+    <string name="progress_coins_fraction">%1$d/%2$d Coins</string>
+    <string name="progress_pts_format">%1$d/%2$d Pts</string>
 </resources>

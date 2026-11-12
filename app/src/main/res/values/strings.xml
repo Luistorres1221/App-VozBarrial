@@ -280,4 +280,61 @@
     <string name="contribution_placeholder">Aporta datos, testigos o fotos adicionales…</string>
     <string name="sending">Enviando…</string>
     <string name="send">Enviar</string>
+
+    <!-- Community Notifications -->
+    <string name="notification_achievement_title">Logro: %1$s</string>
+    <string name="notification_claimed">Reclamado</string>
+    <string name="notification_available">¡Disponible para reclamar!</string>
+    <string name="notification_report_update_title">Actualización de Reporte</string>
+    <string name="progress_completed_fraction">%1$d/%2$d Completado</string>
+    <string name="progress_reports_fraction">%1$d/%2$d Reportes</string>
+    <string name="progress_verified_fraction">%1$d/%2$d Verificados</string>
+    <string name="progress_votes_fraction">%1$d/%2$d Votos</string>
+    <string name="progress_frames_fraction">%1$d/%2$d Marcos</string>
+    <string name="progress_coins_fraction">%1$d/%2$d Monedas</string>
+    <string name="progress_pts_format">%1$d/%2$d Pts</string>
+
+    <!-- Achievements -->
+    <string name="ach_first_report_title">Primer Reporte Ciudadano</string>
+    <string name="ach_first_report_desc">Publica tu primer reporte en el mapa cívico</string>
+    <string name="ach_active_guardian_title">Guardián Activo</string>
+    <string name="ach_active_guardian_desc">Publica al menos 3 reportes ciudadanos</string>
+    <string name="ach_star_reporter_title">Reportero Estrella</string>
+    <string name="ach_star_reporter_desc">Publica 5 o más reportes en la app</string>
+    <string name="ach_inexhaustible_voice_title">Voz Inagotable</string>
+    <string name="ach_inexhaustible_voice_desc">Publica 10 reportes ciudadanos</string>
+    <string name="ach_neighborhood_chronicler_title">Cronista del Barrio</string>
+    <string name="ach_neighborhood_chronicler_desc">Publica 15 reportes en la comunidad</string>
+    <string name="ach_definitive_voice_title">Voz Definitiva</string>
+    <string name="ach_definitive_voice_desc">Publica 20 reportes ciudadanos</string>
+    <string name="ach_first_success_title">Primer Éxito</string>
+    <string name="ach_first_success_desc">Logra que al menos 1 reporte sea verificado o resuelto</string>
+    <string name="ach_civic_solver_title">Solucionador Cívico</string>
+    <string name="ach_civic_solver_desc">Logra que 3 reportes sean verificados o resueltos</string>
+    <string name="ach_community_impact_title">Impacto Comunitario</string>
+    <string name="ach_community_impact_desc">Logra que 5 reportes sean verificados o resueltos</string>
+    <string name="ach_solution_leader_title">Líder de Soluciones</string>
+    <string name="ach_solution_leader_desc">Logra que 10 reportes sean verificados o resueltos</string>
+    <string name="ach_neighborhood_support_title">Apoyo Vecinal</string>
+    <string name="ach_neighborhood_support_desc">Acumula 10 votos totales en tus reportes</string>
+    <string name="ach_backed_voice_title">Voz Respaldada</string>
+    <string name="ach_backed_voice_desc">Acumula 25 votos en tus reportes</string>
+    <string name="ach_civic_popularity_title">Popularidad Cívica</string>
+    <string name="ach_civic_popularity_desc">Acumula 50 votos en tus reportes</string>
+    <string name="ach_store_collector_title">Coleccionista Cívico</string>
+    <string name="ach_store_collector_desc">Adquiere marcos en la tienda de la comunidad</string>
+    <string name="ach_community_stylist_title">Estilista Comunitario</string>
+    <string name="ach_community_stylist_desc">Posee al menos 3 marcos diferentes</string>
+    <string name="ach_elite_wardrobe_title">Guardarropa de Élite</string>
+    <string name="ach_elite_wardrobe_desc">Posee al menos 5 marcos diferentes</string>
+    <string name="ach_civic_saver_title">Ahorrador Cívico</string>
+    <string name="ach_civic_saver_desc">Acumula 100 o más monedas en tu cartera</string>
+    <string name="ach_neighborhood_tycoon_title">Magnate Vecinal</string>
+    <string name="ach_neighborhood_tycoon_desc">Acumula 250 o más monedas en tu cartera</string>
+    <string name="ach_committed_citizen_title">Ciudadano Ejemplar</string>
+    <string name="ach_committed_citizen_desc">Alcanza o supera los 300 puntos de reputación</string>
+    <string name="ach_supreme_guardian_title">Guardián Supremo</string>
+    <string name="ach_supreme_guardian_desc">Alcanza o supera los 1,000 puntos de reputación</string>
+    <string name="ach_community_hero_title">Héroe de la Comunidad</string>
+    <string name="ach_community_hero_desc">Alcanza o supera los 2,000 puntos de reputación</string>
 </resources>

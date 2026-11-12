@@ -29,6 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -54,176 +55,82 @@ data class Achievement(
     val progressText: (ProfileUiState) -> String
 )
 
-private val achievementsList = listOf(
-    Achievement(
-        id = "first_report",
-        title = "Primer Reporte Ciudadano",
-        description = "Publica tu primer reporte en el mapa cívico",
-        reward = 50,
-        isUnlocked = { it.reports.isNotEmpty() },
-        progressText = { if (it.reports.isNotEmpty()) "1/1 Completado" else "0/1 Reportes" }
-    ),
-    Achievement(
-        id = "active_guardian",
-        title = "Guardián Activo",
-        description = "Publica al menos 3 reportes ciudadanos",
-        reward = 75,
-        isUnlocked = { it.reports.size >= 3 },
-        progressText = { "${it.reports.size.coerceAtMost(3)}/3 Reportes" }
-    ),
-    Achievement(
-        id = "star_reporter",
-        title = "Reportero Estrella",
-        description = "Publica 5 o más reportes en la app",
-        reward = 100,
-        isUnlocked = { it.reports.size >= 5 },
-        progressText = { "${it.reports.size.coerceAtMost(5)}/5 Reportes" }
-    ),
-    Achievement(
-        id = "inexhaustible_voice",
-        title = "Voz Inagotable",
-        description = "Publica 10 reportes ciudadanos",
-        reward = 125,
-        isUnlocked = { it.reports.size >= 10 },
-        progressText = { "${it.reports.size.coerceAtMost(10)}/10 Reportes" }
-    ),
-    Achievement(
-        id = "neighborhood_chronicler",
-        title = "Cronista del Barrio",
-        description = "Publica 15 reportes en la comunidad",
-        reward = 150,
-        isUnlocked = { it.reports.size >= 15 },
-        progressText = { "${it.reports.size.coerceAtMost(15)}/15 Reportes" }
-    ),
-    Achievement(
-        id = "definitive_voice",
-        title = "Voz Definitiva",
-        description = "Publica 20 reportes ciudadanos",
-        reward = 150,
-        isUnlocked = { it.reports.size >= 20 },
-        progressText = { "${it.reports.size.coerceAtMost(20)}/20 Reportes" }
-    ),
-    Achievement(
-        id = "first_success",
-        title = "Primer Éxito",
-        description = "Logra que al menos 1 reporte sea verificado o resuelto",
-        reward = 75,
-        isUnlocked = { it.verifiedCount >= 1 },
-        progressText = { if (it.verifiedCount >= 1) "1/1 Completado" else "0/1 Verificados" }
-    ),
-    Achievement(
-        id = "civic_solver",
-        title = "Solucionador Cívico",
-        description = "Logra que 3 reportes sean verificados o resueltos",
-        reward = 100,
-        isUnlocked = { it.verifiedCount >= 3 },
-        progressText = { "${it.verifiedCount.coerceAtMost(3)}/3 Verificados" }
-    ),
-    Achievement(
-        id = "community_impact",
-        title = "Impacto Comunitario",
-        description = "Logra que 5 reportes sean verificados o resueltos",
-        reward = 125,
-        isUnlocked = { it.verifiedCount >= 5 },
-        progressText = { "${it.verifiedCount.coerceAtMost(5)}/5 Verificados" }
-    ),
-    Achievement(
-        id = "solution_leader",
-        title = "Líder de Soluciones",
-        description = "Logra que 10 reportes sean verificados o resueltos",
-        reward = 150,
-        isUnlocked = { it.verifiedCount >= 10 },
-        progressText = { "${it.verifiedCount.coerceAtMost(10)}/10 Verificados" }
-    ),
-    Achievement(
-        id = "neighborhood_support",
-        title = "Apoyo Vecinal",
-        description = "Acumula 10 votos totales en tus reportes",
-        reward = 75,
-        isUnlocked = { it.totalVotes >= 10 },
-        progressText = { "${it.totalVotes.coerceAtMost(10)}/10 Votos" }
-    ),
-    Achievement(
-        id = "backed_voice",
-        title = "Voz Respaldada",
-        description = "Acumula 25 votos en tus reportes",
-        reward = 100,
-        isUnlocked = { it.totalVotes >= 25 },
-        progressText = { "${it.totalVotes.coerceAtMost(25)}/25 Votos" }
-    ),
-    Achievement(
-        id = "civic_popularity",
-        title = "Popularidad Cívica",
-        description = "Acumula 50 votos en tus reportes",
-        reward = 125,
-        isUnlocked = { it.totalVotes >= 50 },
-        progressText = { "${it.totalVotes.coerceAtMost(50)}/50 Votos" }
-    ),
-    Achievement(
-        id = "store_collector",
-        title = "Coleccionista Cívico",
-        description = "Adquiere marcos en la tienda de la comunidad",
-        reward = 75,
-        isUnlocked = { it.ownedFrames.size > 1 },
-        progressText = { if (it.ownedFrames.size > 1) "Adquirido" else "0/1 Marcos" }
-    ),
-    Achievement(
-        id = "community_stylist",
-        title = "Estilista Comunitario",
-        description = "Posee al menos 3 marcos diferentes",
-        reward = 100,
-        isUnlocked = { it.ownedFrames.size >= 3 },
-        progressText = { "${it.ownedFrames.size.coerceAtMost(3)}/3 Marcos" }
-    ),
-    Achievement(
-        id = "elite_wardrobe",
-        title = "Guardarropa de Élite",
-        description = "Posee al menos 5 marcos diferentes",
-        reward = 125,
-        isUnlocked = { it.ownedFrames.size >= 5 },
-        progressText = { "${it.ownedFrames.size.coerceAtMost(5)}/5 Marcos" }
-    ),
-    Achievement(
-        id = "civic_saver",
-        title = "Ahorrador Cívico",
-        description = "Acumula 100 o más monedas en tu cartera",
-        reward = 75,
-        isUnlocked = { it.monedas >= 100 },
-        progressText = { "${it.monedas.coerceAtMost(100)}/100 Monedas" }
-    ),
-    Achievement(
-        id = "neighborhood_tycoon",
-        title = "Magnate Vecinal",
-        description = "Acumula 250 o más monedas en tu cartera",
-        reward = 100,
-        isUnlocked = { it.monedas >= 250 },
-        progressText = { "${it.monedas.coerceAtMost(250)}/250 Monedas" }
-    ),
-    Achievement(
-        id = "committed_citizen",
-        title = "Ciudadano Ejemplar",
-        description = "Alcanza o supera los 300 puntos de reputación",
-        reward = 100,
-        isUnlocked = { it.points >= 300 },
-        progressText = { "${it.points}/300 Pts" }
-    ),
-    Achievement(
-        id = "supreme_guardian",
-        title = "Guardián Supremo",
-        description = "Alcanza o supera los 1,000 puntos de reputación",
-        reward = 150,
-        isUnlocked = { it.points >= 1000 },
-        progressText = { "${it.points.coerceAtMost(1000)}/1000 Pts" }
-    ),
-    Achievement(
-        id = "community_hero",
-        title = "Héroe de la Comunidad",
-        description = "Alcanza o supera los 2,000 puntos de reputación",
-        reward = 200,
-        isUnlocked = { it.points >= 2000 },
-        progressText = { "${it.points.coerceAtMost(2000)}/2000 Pts" }
+@Composable
+private fun getAchievementsList(): List<Achievement> {
+    val context = LocalContext.current
+    val ach1Title = stringResource(R.string.ach_first_report_title)
+    val ach1Desc = stringResource(R.string.ach_first_report_desc)
+    val ach2Title = stringResource(R.string.ach_active_guardian_title)
+    val ach2Desc = stringResource(R.string.ach_active_guardian_desc)
+    val ach3Title = stringResource(R.string.ach_star_reporter_title)
+    val ach3Desc = stringResource(R.string.ach_star_reporter_desc)
+    val ach4Title = stringResource(R.string.ach_inexhaustible_voice_title)
+    val ach4Desc = stringResource(R.string.ach_inexhaustible_voice_desc)
+    val ach5Title = stringResource(R.string.ach_neighborhood_chronicler_title)
+    val ach5Desc = stringResource(R.string.ach_neighborhood_chronicler_desc)
+    val ach6Title = stringResource(R.string.ach_definitive_voice_title)
+    val ach6Desc = stringResource(R.string.ach_definitive_voice_desc)
+    val ach7Title = stringResource(R.string.ach_first_success_title)
+    val ach7Desc = stringResource(R.string.ach_first_success_desc)
+    val ach8Title = stringResource(R.string.ach_civic_solver_title)
+    val ach8Desc = stringResource(R.string.ach_civic_solver_desc)
+    val ach9Title = stringResource(R.string.ach_community_impact_title)
+    val ach9Desc = stringResource(R.string.ach_community_impact_desc)
+    val ach10Title = stringResource(R.string.ach_solution_leader_title)
+    val ach10Desc = stringResource(R.string.ach_solution_leader_desc)
+    val ach11Title = stringResource(R.string.ach_neighborhood_support_title)
+    val ach11Desc = stringResource(R.string.ach_neighborhood_support_desc)
+    val ach12Title = stringResource(R.string.ach_backed_voice_title)
+    val ach12Desc = stringResource(R.string.ach_backed_voice_desc)
+    val ach13Title = stringResource(R.string.ach_civic_popularity_title)
+    val ach13Desc = stringResource(R.string.ach_civic_popularity_desc)
+    val ach14Title = stringResource(R.string.ach_store_collector_title)
+    val ach14Desc = stringResource(R.string.ach_store_collector_desc)
+    val ach15Title = stringResource(R.string.ach_community_stylist_title)
+    val ach15Desc = stringResource(R.string.ach_community_stylist_desc)
+    val ach16Title = stringResource(R.string.ach_elite_wardrobe_title)
+    val ach16Desc = stringResource(R.string.ach_elite_wardrobe_desc)
+    val ach17Title = stringResource(R.string.ach_civic_saver_title)
+    val ach17Desc = stringResource(R.string.ach_civic_saver_desc)
+    val ach18Title = stringResource(R.string.ach_neighborhood_tycoon_title)
+    val ach18Desc = stringResource(R.string.ach_neighborhood_tycoon_desc)
+    val ach19Title = stringResource(R.string.ach_committed_citizen_title)
+    val ach19Desc = stringResource(R.string.ach_committed_citizen_desc)
+    val ach20Title = stringResource(R.string.ach_supreme_guardian_title)
+    val ach20Desc = stringResource(R.string.ach_supreme_guardian_desc)
+    val ach21Title = stringResource(R.string.ach_community_hero_title)
+    val ach21Desc = stringResource(R.string.ach_community_hero_desc)
+
+    val progressComp = context.getString(R.string.progress_completed_fraction, 1, 1)
+    val progressRep01 = context.getString(R.string.progress_reports_fraction, 0, 1)
+    val acquiredText = stringResource(R.string.acquired)
+    val progressFrame01 = context.getString(R.string.progress_frames_fraction, 0, 1)
+    val progressVer01 = context.getString(R.string.progress_verified_fraction, 0, 1)
+
+    return listOf(
+        Achievement("first_report", ach1Title, ach1Desc, 50, { it.reports.isNotEmpty() }, { if (it.reports.isNotEmpty()) progressComp else progressRep01 }),
+        Achievement("active_guardian", ach2Title, ach2Desc, 75, { it.reports.size >= 3 }, { context.getString(R.string.progress_reports_fraction, it.reports.size.coerceAtMost(3), 3) }),
+        Achievement("star_reporter", ach3Title, ach3Desc, 100, { it.reports.size >= 5 }, { context.getString(R.string.progress_reports_fraction, it.reports.size.coerceAtMost(5), 5) }),
+        Achievement("inexhaustible_voice", ach4Title, ach4Desc, 125, { it.reports.size >= 10 }, { context.getString(R.string.progress_reports_fraction, it.reports.size.coerceAtMost(10), 10) }),
+        Achievement("neighborhood_chronicler", ach5Title, ach5Desc, 150, { it.reports.size >= 15 }, { context.getString(R.string.progress_reports_fraction, it.reports.size.coerceAtMost(15), 15) }),
+        Achievement("definitive_voice", ach6Title, ach6Desc, 150, { it.reports.size >= 20 }, { context.getString(R.string.progress_reports_fraction, it.reports.size.coerceAtMost(20), 20) }),
+        Achievement("first_success", ach7Title, ach7Desc, 75, { it.verifiedCount >= 1 }, { if (it.verifiedCount >= 1) progressComp else progressVer01 }),
+        Achievement("civic_solver", ach8Title, ach8Desc, 100, { it.verifiedCount >= 3 }, { context.getString(R.string.progress_verified_fraction, it.verifiedCount.coerceAtMost(3), 3) }),
+        Achievement("community_impact", ach9Title, ach9Desc, 125, { it.verifiedCount >= 5 }, { context.getString(R.string.progress_verified_fraction, it.verifiedCount.coerceAtMost(5), 5) }),
+        Achievement("solution_leader", ach10Title, ach10Desc, 150, { it.verifiedCount >= 10 }, { context.getString(R.string.progress_verified_fraction, it.verifiedCount.coerceAtMost(10), 10) }),
+        Achievement("neighborhood_support", ach11Title, ach11Desc, 75, { it.totalVotes >= 10 }, { context.getString(R.string.progress_votes_fraction, it.totalVotes.coerceAtMost(10), 10) }),
+        Achievement("backed_voice", ach12Title, ach12Desc, 100, { it.totalVotes >= 25 }, { context.getString(R.string.progress_votes_fraction, it.totalVotes.coerceAtMost(25), 25) }),
+        Achievement("civic_popularity", ach13Title, ach13Desc, 125, { it.totalVotes >= 50 }, { context.getString(R.string.progress_votes_fraction, it.totalVotes.coerceAtMost(50), 50) }),
+        Achievement("store_collector", ach14Title, ach14Desc, 75, { it.ownedFrames.size > 1 }, { if (it.ownedFrames.size > 1) acquiredText else progressFrame01 }),
+        Achievement("community_stylist", ach15Title, ach15Desc, 100, { it.ownedFrames.size >= 3 }, { context.getString(R.string.progress_frames_fraction, it.ownedFrames.size.coerceAtMost(3), 3) }),
+        Achievement("elite_wardrobe", ach16Title, ach16Desc, 125, { it.ownedFrames.size >= 5 }, { context.getString(R.string.progress_frames_fraction, it.ownedFrames.size.coerceAtMost(5), 5) }),
+        Achievement("civic_saver", ach17Title, ach17Desc, 75, { it.monedas >= 100 }, { context.getString(R.string.progress_coins_fraction, it.monedas.coerceAtMost(100), 100) }),
+        Achievement("neighborhood_tycoon", ach18Title, ach18Desc, 100, { it.monedas >= 250 }, { context.getString(R.string.progress_coins_fraction, it.monedas.coerceAtMost(250), 250) }),
+        Achievement("committed_citizen", ach19Title, ach19Desc, 100, { it.points >= 300 }, { context.getString(R.string.progress_pts_format, it.points, 300) }),
+        Achievement("supreme_guardian", ach20Title, ach20Desc, 150, { it.points >= 1000 }, { context.getString(R.string.progress_pts_format, it.points.coerceAtMost(1000), 1000) }),
+        Achievement("community_hero", ach21Title, ach21Desc, 200, { it.points >= 2000 }, { context.getString(R.string.progress_pts_format, it.points.coerceAtMost(2000), 2000) })
     )
-)
+}
 
 data class CommunityNotification(
     val id: String,
@@ -312,6 +219,7 @@ fun CommunityRoute(
         viewModel.updateProfileData(page, name, profilePhoto, points, monedas, nivel, reports, ownedFrames, claimedAchievements, availableFilters)
     }
 
+    val achievementsList = getAchievementsList()
     val unclaimedUnlockedCount = achievementsList.count { it.isUnlocked(uiState) && it.id !in claimedAchievements }
     val currentActivityCount = unclaimedUnlockedCount + uiState.reports.sumOf { it.votes } + uiState.reports.count { it.status != "POR_VERIFICAR" }
     var lastViewedCount by rememberSaveable { mutableIntStateOf(-1) }
@@ -388,16 +296,27 @@ fun CommunityContent(
         }
     }
 
-    val notificationsList = remember(uiState.reports, uiState.claimedAchievements) {
+    val achievementsList = getAchievementsList()
+    val achievementTitleFormat = stringResource(R.string.notification_achievement_title)
+    val claimedText = stringResource(R.string.notification_claimed)
+    val availableText = stringResource(R.string.notification_available)
+    val reportUpdateTitle = stringResource(R.string.notification_report_update_title)
+    val verifiedStr = stringResource(R.string.status_verificado)
+    val resueltoStr = stringResource(R.string.status_resuelto)
+    val rechazadoStr = stringResource(R.string.status_rechazado)
+    val eliminadoStr = stringResource(R.string.status_eliminado)
+
+    val notificationsList = remember(uiState.reports, uiState.claimedAchievements, achievementTitleFormat, claimedText, availableText, reportUpdateTitle, verifiedStr, resueltoStr, rechazadoStr, eliminadoStr, achievementsList) {
         val list = mutableListOf<CommunityNotification>()
         achievementsList.forEach { achievement ->
             if (achievement.isUnlocked(uiState)) {
                 val isClaimed = achievement.id in uiState.claimedAchievements
+                val notifTitle = String.format(java.util.Locale.getDefault(), achievementTitleFormat, achievement.title)
                 list.add(
                     CommunityNotification(
                         id = "ach_${achievement.id}",
-                        title = "Logro: ${achievement.title}",
-                        description = "${achievement.description} (+${achievement.reward} Pts) • ${if (isClaimed) "Reclamado" else "¡Disponible para reclamar!"}",
+                        title = notifTitle,
+                        description = "${achievement.description} (+${achievement.reward} Pts) • ${if (isClaimed) claimedText else availableText}",
                         type = "Logros",
                         icon = Icons.Default.EmojiEvents,
                         color = Color(0xFFD97706)
@@ -419,11 +338,20 @@ fun CommunityContent(
                 )
             }
             if (!report.status.equals("POR_VERIFICAR", true)) {
+                val statusEnum = ReportStatus.fromString(report.status)
+                val statusLabel = when (statusEnum) {
+                    ReportStatus.POR_VERIFICAR -> ""
+                    ReportStatus.VERIFICADO -> verifiedStr
+                    ReportStatus.RESUELTO -> resueltoStr
+                    ReportStatus.RECHAZADO -> rechazadoStr
+                    ReportStatus.ELIMINADO -> eliminadoStr
+                    else -> report.status
+                }
                 list.add(
                     CommunityNotification(
                         id = "status_${report.id}",
-                        title = "Actualización de Reporte",
-                        description = "Tu reporte '${report.title}' cambió a estado: ${report.status}.",
+                        title = reportUpdateTitle,
+                        description = "Tu reporte '${report.title}' cambió a estado: $statusLabel.",
                         type = "Reportes",
                         icon = Icons.Default.Verified,
                         color = Color(0xFF3188E8)
@@ -857,14 +785,25 @@ fun CommunityContent(
                 }
                 "activity" -> {
                     item {
+                        val filterAll = stringResource(R.string.filter_all_label)
+                        val filterAchievements = stringResource(R.string.filter_achievements)
+                        val filterVotes = stringResource(R.string.filter_votes)
+                        val filterReports = stringResource(R.string.filter_reports)
+
+                        val filterMap = listOf(
+                            "Todas" to filterAll,
+                            "Logros" to filterAchievements,
+                            "Votos" to filterVotes,
+                            "Reportes" to filterReports
+                        )
                         Row(
                             horizontalArrangement = Arrangement.spacedBy(6.dp),
                             modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(vertical = 4.dp)
                         ) {
-                            uiState.availableFilters.forEach { filter ->
-                                val isSelected = uiState.activityFilter == filter || (uiState.activityFilter.isBlank() && filter == "Todas")
+                            filterMap.forEach { (internalKey, displayName) ->
+                                val isSelected = uiState.activityFilter == internalKey || (uiState.activityFilter.isBlank() && internalKey == "Todas")
                                 Surface(
-                                    modifier = Modifier.height(34.dp).clickable { onFilterSelected(filter) },
+                                    modifier = Modifier.height(34.dp).clickable { onFilterSelected(internalKey) },
                                     shape = RoundedCornerShape(50),
                                     color = if (isSelected) Color(0xFF08223A) else Color.White,
                                     shadowElevation = if (isSelected) 3.dp else 1.dp,
@@ -874,7 +813,7 @@ fun CommunityContent(
                                         contentAlignment = Alignment.Center
                                     ) {
                                         Text(
-                                            text = filter,
+                                            text = displayName,
                                             color = if (isSelected) Color.White else VozNavy,
                                             fontSize = 12.sp,
                                             fontWeight = FontWeight.Bold
