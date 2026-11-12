@@ -39,9 +39,9 @@ data class ProfileUiState(
     val filteredActivityReports: List<Report>
         get() = sortedReports.filter { report ->
             when (activityFilter) {
-                "Por verificar" -> report.status.equals("POR_VERIFICAR", true)
-                "Aprobados", "Verificados", "Verificado" -> report.status.equals("VERIFICADO", true) || report.status.equals("RESUELTO", true)
-                "Rechazado" -> report.status.equals("RECHAZADO", true)
+                "Por verificar", "To verify" -> report.status.equals("POR_VERIFICAR", true)
+                "Aprobados", "Verificados", "Verificado", "Approved" -> report.status.equals("VERIFICADO", true) || report.status.equals("RESUELTO", true)
+                "Rechazados", "Rechazado", "Rejected" -> report.status.equals("RECHAZADO", true)
                 else -> true
             }
         }

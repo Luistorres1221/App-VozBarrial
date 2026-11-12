@@ -67,6 +67,7 @@
     <string name="biometric_saved_toast">Fingerprint access saved for future logins!</string>
     <string name="biometric_register_hint">Sign in with your email and password at least once to register your fingerprint.</string>
     <string name="biometric_verify_error">Could not verify fingerprint or it was canceled. Use your password.</string>
+    <string name="biometric_reinstall_error">Log in with your email address and password once to register your fingerprint.</string>
     <string name="biometric_title_activate">Enable Biometric Access</string>
     <string name="biometric_subtitle_activate">Confirm your fingerprint to enable quick login</string>
     <string name="biometric_title_login">Sign in with Fingerprint</string>
@@ -119,6 +120,46 @@
     <string name="welcome_screen_badge">ACTIVE COMMUNITY</string>
     <string name="welcome_screen_footer">Secure Citizen Participation · VozBarrial</string>
 
+    <!-- Report Statuses and Categories -->
+    <string name="status_por_verificar">To verify</string>
+    <string name="status_verificado">Verified</string>
+    <string name="status_resuelto">Resolved</string>
+    <string name="status_rechazado">Rejected</string>
+    <string name="status_eliminado">Deleted</string>
+    <string name="category_emergencies">Medical Emergencies</string>
+    <string name="category_infrastructure">Infrastructure &amp; Roads</string>
+    <string name="category_pets">Pets &amp; Animals</string>
+    <string name="category_community">Community &amp; Environment</string>
+    <string name="category_lighting">Lighting &amp; Utilities</string>
+
+    <!-- Levels and Publication Filters -->
+    <string name="level_novato">Rookie</string>
+    <string name="level_colaborador">Collaborator</string>
+    <string name="level_guardian">Guardian</string>
+    <string name="level_heroe">Hero</string>
+    <string name="filter_to_verify">To verify</string>
+    <string name="filter_rejected">Rejected</string>
+    <string name="my_publications">My Publications</string>
+    <string name="total_count_format">%1$d in total</string>
+
+    <!-- Profile & User -->
+    <string name="citizen_profile">Citizen Profile</string>
+    <string name="created_reports">Created Reports</string>
+    <string name="total_published">Total published</string>
+    <string name="verified">Verified</string>
+    <string name="approved_stat">Approved</string>
+    <string name="effectiveness">%1$d%% effectiveness</string>
+    <string name="neighborhood_votes">Neighborhood Votes</string>
+    <string name="neighborhood_votes_subtitle">"It\'s important"</string>
+    <string name="status_actual">Current</string>
+    <string name="status_completed">Completed</string>
+    <string name="status_next">Next</string>
+    <string name="points_to_collaborator">%1$d pts to Collaborator</string>
+    <string name="points_to_guardian">%1$d pts to Guardian</string>
+    <string name="points_to_hero">%1$d pts to Hero</string>
+    <string name="max_level_reached">Maximum level reached</string>
+    <string name="unlocked_badge_format">%1$d/%2$d Unlocked</string>
+
     <!-- Frames & Store -->
     <string name="acquired_frames">Acquired Frames</string>
     <string name="no_frames_inventory">You have no frames in your inventory. Redeem some in the store!</string>
@@ -129,6 +170,19 @@
     <string name="coin_store">Coin Store</string>
     <string name="store_dialog_title">Frames Store</string>
     <string name="missing_coins">Missing %1$d Coins</string>
+    <string name="frames">Frames</string>
+    <string name="current_progress">Current progress</string>
+    <string name="civic_badges_title">Civic Badges &amp; Achievements</string>
+    <string name="civic_badges_subtitle">Discover your earned medals, progress to Hero, and rewards.</string>
+    <string name="points_achievements_title">Points Achievements &amp; Rewards</string>
+    <string name="points_achievements_subtitle">Complete achievements to earn points and level up.</string>
+    <string name="filter_all_label">All</string>
+    <string name="filter_achievements">Achievements</string>
+    <string name="filter_votes">Votes</string>
+    <string name="filter_reports">Reports</string>
+    <string name="claim">Claim</string>
+    <string name="completed">Completed ✓</string>
+    <string name="locked">Locked</string>
 
     <!-- Map & Radar -->
     <string name="distance_label">Distance (%1$s)</string>

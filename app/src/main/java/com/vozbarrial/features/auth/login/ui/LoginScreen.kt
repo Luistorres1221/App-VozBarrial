@@ -107,7 +107,7 @@ fun AuthRoute(
             formViewModel.submitLogin(
                 signIn = onLogin,
                 onAuthenticated = onAuthenticated,
-                onSuccessfulAuth = { email, password ->
+                onSuccessfulAuth = { email, password, onDone ->
                     if (activity != null) {
                         val prefs = context.getSharedPreferences("voz_barrial_biometric_global", android.content.Context.MODE_PRIVATE)
                         prefs.edit().putString("saved_biometric_email", email).apply()
@@ -119,8 +119,13 @@ fun AuthRoute(
                                 if (success) {
                                     android.widget.Toast.makeText(context, context.getString(R.string.biometric_saved_toast), android.widget.Toast.LENGTH_SHORT).show()
                                 }
+                                onDone()
                             }
+                        } else {
+                            onDone()
                         }
+                    } else {
+                        onDone()
                     }
                 }
             )
@@ -140,11 +145,13 @@ fun AuthRoute(
                         formViewModel.submitLogin(
                             signIn = onLogin,
                             onAuthenticated = onAuthenticated,
-                            onSuccessfulAuth = { _, _ -> }
+                            onSuccessfulAuth = { _, _, onDone -> onDone() }
                         )
                     },
                     onError = {
-                        formViewModel.showDialog(context.getString(R.string.biometric_verify_error))
+                        prefs.edit().remove("saved_biometric_email").apply()
+                        biometricManager.clearBiometricData()
+                        formViewModel.showDialog(context.getString(R.string.biometric_reinstall_error))
                     }
                 )
             }

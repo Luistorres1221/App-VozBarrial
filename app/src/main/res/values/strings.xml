@@ -67,6 +67,7 @@
     <string name="biometric_saved_toast">¡Acceso con huella guardado para futuros inicios de sesión!</string>
     <string name="biometric_register_hint">Inicia sesión con tu correo y contraseña al menos una vez para registrar tu huella dactilar.</string>
     <string name="biometric_verify_error">No se pudo verificar la huella o fue cancelada. Usa tu contraseña.</string>
+    <string name="biometric_reinstall_error">Inicia sesión con tu correo y contraseña una vez para registrar tu huella dactilar.</string>
     <string name="biometric_title_activate">Activar acceso biométrico</string>
     <string name="biometric_subtitle_activate">Confirma tu huella para habilitar el inicio de sesión rápido</string>
     <string name="biometric_title_login">Iniciar sesión con huella</string>
@@ -117,7 +118,43 @@
     <string name="welcome_screen_badge">COMUNIDAD ACTIVA</string>
     <string name="welcome_screen_footer">Participación Ciudadana Segura · VozBarrial</string>
 
-    <!-- Marcos y Tienda -->
+    <!-- Niveles y Filtros de Publicaciones -->
+    <!-- Estados y Categorías de Reportes -->
+    <string name="status_por_verificar">Por verificar</string>
+    <string name="status_verificado">Verificado</string>
+    <string name="status_resuelto">Resuelto</string>
+    <string name="status_rechazado">Rechazado</string>
+    <string name="status_eliminado">Eliminado</string>
+    <string name="category_emergencies">Emergencias Médicas</string>
+    <string name="category_infrastructure">Infraestructura y Vías</string>
+    <string name="category_pets">Mascotas y Animales</string>
+    <string name="category_community">Comunidad y Entorno</string>
+    <string name="category_lighting">Alumbrado y Servicios</string>
+
+    <string name="level_novato">Novato</string>
+    <string name="level_colaborador">Colaborador</string>
+    <string name="level_guardian">Guardián</string>
+    <string name="level_heroe">Héroe</string>
+    <string name="filter_to_verify">Por verificar</string>
+    <string name="filter_rejected">Rechazados</string>
+    <string name="my_publications">Mis Publicaciones</string>
+    <string name="total_count_format">%1$d en total</string>
+    <string name="citizen_profile">Perfil Ciudadano</string>
+    <string name="created_reports">Reportes Creados</string>
+    <string name="total_published">Total publicado</string>
+    <string name="verified">Verificados</string>
+    <string name="approved_stat">Aprobados</string>
+    <string name="effectiveness">%1$d%% efectividad</string>
+    <string name="neighborhood_votes">Votos Vecinales</string>
+    <string name="neighborhood_votes_subtitle">"Es importante"</string>
+    <string name="status_actual">Actual</string>
+    <string name="status_completed">Completado</string>
+    <string name="status_next">Próximo</string>
+    <string name="points_to_collaborator">%1$d pts para Colaborador</string>
+    <string name="points_to_guardian">%1$d pts para Guardián</string>
+    <string name="points_to_hero">%1$d pts para Héroe</string>
+    <string name="max_level_reached">Nivel máximo alcanzado</string>
+    <string name="unlocked_badge_format">%1$d/%2$d Desbloqueadas</string>
     <string name="acquired_frames">Marcos Adquiridos</string>
     <string name="no_frames_inventory">No tienes marcos en tu inventario. ¡Canjea algunos en la tienda!</string>
     <string name="testing_frame">Probando: %1$s</string>
@@ -127,6 +164,19 @@
     <string name="coin_store">Tienda de Monedas</string>
     <string name="store_dialog_title">Tienda de Marcos</string>
     <string name="missing_coins">Faltan %1$d Monedas</string>
+    <string name="frames">Marcos</string>
+    <string name="current_progress">Progreso actual</string>
+    <string name="civic_badges_title">Insignias y Logros Cívicos</string>
+    <string name="civic_badges_subtitle">Descubre tus medallas ganadas, progreso a Héroe y recompensas.</string>
+    <string name="points_achievements_title">Logros y Recompensas de Puntos</string>
+    <string name="points_achievements_subtitle">Completa logros para ganar puntos y subir de nivel.</string>
+    <string name="filter_all_label">Todas</string>
+    <string name="filter_achievements">Logros</string>
+    <string name="filter_votes">Votos</string>
+    <string name="filter_reports">Reportes</string>
+    <string name="claim">Reclamar</string>
+    <string name="completed">Completado ✓</string>
+    <string name="locked">Bloqueado</string>
 
     <!-- Mapa y Radar -->
     <string name="distance_label">Distancia (%1$s)</string>

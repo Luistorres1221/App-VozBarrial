@@ -25,7 +25,7 @@ class LoginViewModel : ViewModel() {
     fun submitLogin(
         signIn: (String, String, (Boolean) -> Unit) -> Unit,
         onAuthenticated: (String) -> Unit,
-        onSuccessfulAuth: (String, String) -> Unit = { _, _ -> }
+        onSuccessfulAuth: (String, String, () -> Unit) -> Unit = { _, _, onDone -> onDone() }
     ) {
         val form = _uiState.value
         val cleanEmail = form.email.trim()
@@ -48,8 +48,9 @@ class LoginViewModel : ViewModel() {
                 success = false,
             )
             if (authenticated) {
-                onSuccessfulAuth(cleanEmail, form.password)
-                onAuthenticated(cleanEmail)
+                onSuccessfulAuth(cleanEmail, form.password) {
+                    onAuthenticated(cleanEmail)
+                }
             }
         }
     }

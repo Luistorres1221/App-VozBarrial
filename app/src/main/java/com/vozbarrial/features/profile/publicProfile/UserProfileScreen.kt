@@ -21,10 +21,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.vozbarrial.R
 import com.vozbarrial.domain.model.Nivel
 import com.vozbarrial.domain.model.Report
 import com.vozbarrial.domain.model.ReportStatus
@@ -121,21 +123,32 @@ fun UserProfileScreen(
         else -> 4
     }
 
+    val novatoStr = stringResource(R.string.level_novato)
+    val collabStr = stringResource(R.string.level_colaborador)
+    val guardianStr = stringResource(R.string.level_guardian)
+    val heroeStr = stringResource(R.string.level_heroe)
+
     val levelName = when (levelNum) {
-        1 -> "Novato"
-        2 -> "Colaborador"
-        3 -> "Guardián"
-        else -> "Héroe Comunitario"
+        1 -> novatoStr
+        2 -> collabStr
+        3 -> guardianStr
+        else -> heroeStr
     }
 
+    val ptsCollab = stringResource(R.string.points_to_collaborator, 251 - points)
+    val ptsGuard = stringResource(R.string.points_to_guardian, 801 - points)
+    val ptsHero = stringResource(R.string.points_to_hero, 2001 - points)
+    val maxLevel = stringResource(R.string.max_level_reached)
+
     val (progress, remainingText) = when {
-        points <= 250 -> Pair(points / 250f, "${251 - points} pts para Colaborador")
-        points <= 800 -> Pair((points - 251f) / (800f - 251f), "${801 - points} pts para Guardián")
-        points <= 2000 -> Pair((points - 801f) / (2000f - 801f), "${2001 - points} pts para Héroe")
-        else -> Pair(1.0f, "¡Nivel máximo alcanzado!")
+        points <= 250 -> Pair(points / 250f, ptsCollab)
+        points <= 800 -> Pair((points - 251f) / (800f - 251f), ptsGuard)
+        points <= 2000 -> Pair((points - 801f) / (2000f - 801f), ptsHero)
+        else -> Pair(1.0f, maxLevel)
     }
 
     val efectividad = if (createdCount > 0) (verifiedCount * 100) / createdCount else 0
+    val effectivenessText = stringResource(R.string.effectiveness, efectividad)
 
     Column(
         modifier = Modifier
@@ -157,7 +170,7 @@ fun UserProfileScreen(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 IconButton(onClick = onBack, modifier = Modifier.size(36.dp)) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver", tint = VozNavy)
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back), tint = VozNavy)
                 }
                 Box(
                     modifier = Modifier.size(28.dp).clip(CircleShape).background(VozNavy),
@@ -165,7 +178,7 @@ fun UserProfileScreen(
                 ) {
                     Icon(Icons.Default.Shield, null, tint = Color.White, modifier = Modifier.size(16.dp))
                 }
-                Text("Perfil Ciudadano", color = VozNavy, fontWeight = FontWeight.Bold, fontSize = 16.sp, modifier = Modifier.weight(1f))
+                Text(stringResource(R.string.citizen_profile), color = VozNavy, fontWeight = FontWeight.Bold, fontSize = 16.sp, modifier = Modifier.weight(1f))
                 if (!photo.isNullOrBlank()) {
                     AsyncImage(model = photo, contentDescription = null, modifier = Modifier.size(32.dp).clip(CircleShape), contentScale = ContentScale.Crop)
                 } else {
@@ -266,7 +279,7 @@ fun UserProfileScreen(
 
                 Spacer(Modifier.height(12.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("Progreso actual", color = VozMuted, fontSize = 11.sp)
+                    Text(stringResource(R.string.current_progress), color = VozMuted, fontSize = 11.sp)
                     Text(remainingText, color = Color(0xFFD97706), fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
                 }
                 Spacer(Modifier.height(6.dp))
@@ -287,10 +300,10 @@ fun UserProfileScreen(
 
                 // Milestones list
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    MilestoneItem("1. Novato", "0 - 250 pts", levelNum > 1, levelNum == 1)
-                    MilestoneItem("2. Colaborador", "251 - 800 pts", levelNum > 2, levelNum == 2)
-                    MilestoneItem("3. Guardián", "801 - 2,000 pts", levelNum > 3, levelNum == 3)
-                    MilestoneItem("4. Héroe Comunitario", "2,001+ pts", false, levelNum == 4)
+                    MilestoneItem("1. $novatoStr", "0 - 250 pts", levelNum > 1, levelNum == 1)
+                    MilestoneItem("2. $collabStr", "251 - 800 pts", levelNum > 2, levelNum == 2)
+                    MilestoneItem("3. $guardianStr", "801 - 2,000 pts", levelNum > 3, levelNum == 3)
+                    MilestoneItem("4. $heroeStr", "2,001+ pts", false, levelNum == 4)
                 }
             }
         }
@@ -305,25 +318,25 @@ fun UserProfileScreen(
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             StatCard(
-                title = "Reportes Creados",
+                title = stringResource(R.string.created_reports),
                 value = createdCount.toString(),
-                subtitle = "Total publicado",
+                subtitle = stringResource(R.string.total_published),
                 icon = Icons.Default.Campaign,
                 tint = Color(0xFF3B82F6),
                 modifier = Modifier.weight(1f)
             )
             StatCard(
-                title = "Verificados",
+                title = stringResource(R.string.approved_stat),
                 value = verifiedCount.toString(),
-                subtitle = "$efectividad% efectividad",
+                subtitle = effectivenessText,
                 icon = Icons.Default.CheckCircle,
                 tint = Color(0xFF10B981),
                 modifier = Modifier.weight(1f)
             )
             StatCard(
-                title = "Votos Vecinales",
+                title = stringResource(R.string.neighborhood_votes),
                 value = totalVotes.toString(),
-                subtitle = "\"Es importante\"",
+                subtitle = stringResource(R.string.neighborhood_votes_subtitle),
                 icon = Icons.Default.Favorite,
                 tint = Color(0xFFF97316),
                 modifier = Modifier.weight(1f)
@@ -334,6 +347,10 @@ fun UserProfileScreen(
 
 @Composable
 private fun MilestoneItem(title: String, subtitle: String, completed: Boolean, isActual: Boolean = false) {
+    val actualText = stringResource(R.string.status_actual)
+    val completedText = stringResource(R.string.status_completed)
+    val nextText = stringResource(R.string.status_next)
+
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
@@ -361,7 +378,7 @@ private fun MilestoneItem(title: String, subtitle: String, completed: Boolean, i
                 color = if (isActual) Color(0xFF1D4ED8) else if (completed) Color(0xFFDCFCE7) else Color(0xFFE2E8F0)
             ) {
                 Text(
-                    text = if (isActual) "Actual" else if (completed) "Completado" else "Próximo",
+                    text = if (isActual) actualText else if (completed) completedText else nextText,
                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
                     color = if (isActual) Color.White else if (completed) Color(0xFF16A34A) else VozMuted,
                     fontSize = 9.sp,

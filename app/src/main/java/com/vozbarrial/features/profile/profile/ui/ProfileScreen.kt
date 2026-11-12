@@ -467,16 +467,20 @@ fun CommunityContent(
         ) {
             when (uiState.currentPage) {
                 "profile" -> {
-                    val currentLevelName = Nivel.fromValue(uiState.nivel).displayName
-                    val levelNum = when (Nivel.fromValue(uiState.nivel)) {
-                        Nivel.NOVATO -> 1
-                        Nivel.COLABORADOR -> 2
-                        Nivel.GUARDIAN -> 3
-                        Nivel.HEROE -> 4
-                    }
-
                     // 1. Profile Header Card
                     item {
+                        val currentLevelName = when (Nivel.fromValue(uiState.nivel)) {
+                            Nivel.NOVATO -> stringResource(R.string.level_novato)
+                            Nivel.COLABORADOR -> stringResource(R.string.level_colaborador)
+                            Nivel.GUARDIAN -> stringResource(R.string.level_guardian)
+                            Nivel.HEROE -> stringResource(R.string.level_heroe)
+                        }
+                        val levelNum = when (Nivel.fromValue(uiState.nivel)) {
+                            Nivel.NOVATO -> 1
+                            Nivel.COLABORADOR -> 2
+                            Nivel.GUARDIAN -> 3
+                            Nivel.HEROE -> 4
+                        }
                         Card(colors = CardDefaults.cardColors(containerColor = Color.White), shape = RoundedCornerShape(16.dp)) {
                             Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -521,7 +525,7 @@ fun CommunityContent(
                                     ) {
                                         Icon(Icons.Default.Edit, null, tint = VozNavy, modifier = Modifier.size(14.dp))
                                         Spacer(Modifier.width(2.dp))
-                                        Text("Editar", color = VozNavy, fontSize = 11.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+                                        Text(stringResource(R.string.edit), color = VozNavy, fontSize = 11.sp, fontWeight = FontWeight.Bold, maxLines = 1)
                                     }
                                     Button(
                                         onClick = { onNavigate("frames") },
@@ -532,7 +536,7 @@ fun CommunityContent(
                                     ) {
                                         Icon(Icons.Default.Collections, null, tint = VozNavy, modifier = Modifier.size(14.dp))
                                         Spacer(Modifier.width(2.dp))
-                                        Text("Marcos", color = VozNavy, fontSize = 11.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+                                        Text(stringResource(R.string.frames), color = VozNavy, fontSize = 11.sp, fontWeight = FontWeight.Bold, maxLines = 1)
                                     }
                                     Button(
                                         onClick = { onNavigate("store") },
@@ -543,7 +547,7 @@ fun CommunityContent(
                                     ) {
                                         Icon(Icons.Default.Store, null, tint = Color(0xFF0D9488), modifier = Modifier.size(14.dp))
                                         Spacer(Modifier.width(2.dp))
-                                        Text("Tienda", color = Color(0xFF0D9488), fontSize = 11.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+                                        Text(stringResource(R.string.store), color = Color(0xFF0D9488), fontSize = 11.sp, fontWeight = FontWeight.Bold, maxLines = 1)
                                     }
                                 }
                             }
@@ -552,6 +556,18 @@ fun CommunityContent(
 
                     // 2. Level & Progress Card
                     item {
+                        val levelNum = when (Nivel.fromValue(uiState.nivel)) {
+                            Nivel.NOVATO -> 1
+                            Nivel.COLABORADOR -> 2
+                            Nivel.GUARDIAN -> 3
+                            Nivel.HEROE -> 4
+                        }
+                        val currentLevelName = when (Nivel.fromValue(uiState.nivel)) {
+                            Nivel.NOVATO -> stringResource(R.string.level_novato)
+                            Nivel.COLABORADOR -> stringResource(R.string.level_colaborador)
+                            Nivel.GUARDIAN -> stringResource(R.string.level_guardian)
+                            Nivel.HEROE -> stringResource(R.string.level_heroe)
+                        }
                         Card(colors = CardDefaults.cardColors(containerColor = Color.White), shape = RoundedCornerShape(16.dp)) {
                             Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                                 Row(
@@ -573,18 +589,23 @@ fun CommunityContent(
                                     }
                                 }
 
+                                val ptsCollab = stringResource(R.string.points_to_collaborator, 251 - uiState.points)
+                                val ptsGuard = stringResource(R.string.points_to_guardian, 801 - uiState.points)
+                                val ptsHero = stringResource(R.string.points_to_hero, 2001 - uiState.points)
+                                val maxLevel = stringResource(R.string.max_level_reached)
+
                                 val (progress, remainingText) = when {
-                                    uiState.points <= 250 -> Triple(uiState.points / 250f, "${251 - uiState.points} pts para Colaborador", "Colaborador")
-                                    uiState.points <= 800 -> Triple((uiState.points - 251f) / (800f - 251f), "${801 - uiState.points} pts para Guardián", "Guardián")
-                                    uiState.points <= 2000 -> Triple((uiState.points - 801f) / (2000f - 801f), "${2001 - uiState.points} pts para Héroe", "Héroe")
-                                    else -> Triple(1.0f, "¡Nivel máximo alcanzado!", "Nivel Máximo")
+                                    uiState.points <= 250 -> Triple(uiState.points / 250f, ptsCollab, "Colaborador")
+                                    uiState.points <= 800 -> Triple((uiState.points - 251f) / (800f - 251f), ptsGuard, "Guardián")
+                                    uiState.points <= 2000 -> Triple((uiState.points - 801f) / (2000f - 801f), ptsHero, "Héroe")
+                                    else -> Triple(1.0f, maxLevel, "Nivel Máximo")
                                 }
 
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
-                                    Text("Progreso actual", color = VozMuted, fontSize = 11.sp)
+                                    Text(stringResource(R.string.current_progress), color = VozMuted, fontSize = 11.sp)
                                     Text(remainingText, color = VozNavy, fontSize = 11.sp, fontWeight = FontWeight.Bold)
                                 }
 
@@ -597,11 +618,15 @@ fun CommunityContent(
 
                                 // Levels breakdown
                                 val levelsList = listOf(
-                                    Triple("Novato", "0 - 250 pts", 1),
-                                    Triple("Colaborador", "251 - 800 pts", 2),
-                                    Triple("Guardián", "801 - 2,000 pts", 3),
-                                    Triple("Héroe", "2,001+ pts", 4),
+                                    Triple(stringResource(R.string.level_novato), "0 - 250 pts", 1),
+                                    Triple(stringResource(R.string.level_colaborador), "251 - 800 pts", 2),
+                                    Triple(stringResource(R.string.level_guardian), "801 - 2,000 pts", 3),
+                                    Triple(stringResource(R.string.level_heroe), "2,001+ pts", 4),
                                 )
+
+                                val actualText = stringResource(R.string.status_actual)
+                                val completedText = stringResource(R.string.status_completed)
+                                val nextText = stringResource(R.string.status_next)
 
                                 levelsList.forEach { (title, range, lNum) ->
                                     val isCurrent = levelNum == lNum
@@ -634,7 +659,7 @@ fun CommunityContent(
                                                 color = if (isCurrent) VozNavy else if (isCompleted) Color(0xFFD3F9E8) else Color(0xFFE5E7EB)
                                             ) {
                                                 Text(
-                                                    text = if (isCurrent) "Actual" else if (isCompleted) "Completado" else "Próximo",
+                                                    text = if (isCurrent) actualText else if (isCompleted) completedText else nextText,
                                                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
                                                     color = if (isCurrent) Color.White else if (isCompleted) VozGreen else VozMuted,
                                                     fontSize = 10.sp,
@@ -652,21 +677,21 @@ fun CommunityContent(
                     item {
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
                             SummaryTile(
-                                label = "Reportes Creados",
+                                label = stringResource(R.string.created_reports),
                                 value = uiState.reports.size.toString(),
-                                subtitle = "Total publicado",
+                                subtitle = stringResource(R.string.total_published),
                                 modifier = Modifier.weight(1f)
                             )
                             SummaryTile(
-                                label = "Aprobados",
+                                label = stringResource(R.string.approved_stat),
                                 value = uiState.verifiedCount.toString(),
-                                subtitle = "${uiState.effectivenessPercentage}% efectividad",
+                                subtitle = stringResource(R.string.effectiveness, uiState.effectivenessPercentage),
                                 modifier = Modifier.weight(1f)
                             )
                             SummaryTile(
-                                label = "Votos Vecinales",
+                                label = stringResource(R.string.neighborhood_votes),
                                 value = uiState.totalVotes.toString(),
-                                subtitle = "Es importante",
+                                subtitle = stringResource(R.string.neighborhood_votes_subtitle),
                                 modifier = Modifier.weight(1f)
                             )
                         }
@@ -690,14 +715,14 @@ fun CommunityContent(
                                 }
                                 Spacer(Modifier.width(12.dp))
                                 Column(modifier = Modifier.weight(1f)) {
-                                    Text("Insignias y Logros Cívicos", color = VozNavy, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                                    Text(stringResource(R.string.civic_badges_title), color = VozNavy, fontWeight = FontWeight.Bold, fontSize = 14.sp)
                                     Spacer(Modifier.height(2.dp))
                                     val unlockedCount = achievementsList.count { it.isUnlocked(uiState) }
                                     Surface(shape = RoundedCornerShape(50), color = Color(0xFFD3F9E8)) {
-                                        Text("$unlockedCount/${achievementsList.size} Desbloqueadas", modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp), color = VozGreen, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                                        Text(stringResource(R.string.unlocked_badge_format, unlockedCount, achievementsList.size), modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp), color = VozGreen, fontSize = 9.sp, fontWeight = FontWeight.Bold)
                                     }
                                     Spacer(Modifier.height(4.dp))
-                                    Text("Descubre tus medallas ganadas, progreso a Héroe y recompensas.", color = VozMuted, fontSize = 11.sp)
+                                    Text(stringResource(R.string.civic_badges_subtitle), color = VozMuted, fontSize = 11.sp)
                                 }
                                 Icon(Icons.AutoMirrored.Filled.ArrowForward, null, tint = VozNavy, modifier = Modifier.size(18.dp))
                             }
@@ -713,36 +738,41 @@ fun CommunityContent(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                "Mis Publicaciones",
+                                stringResource(R.string.my_publications),
                                 color = VozNavy,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 15.sp
                             )
                             Text(
-                                "${uiState.reports.size} en total",
+                                stringResource(R.string.total_count_format, uiState.reports.size),
                                 color = VozMuted,
                                 fontSize = 12.sp
                             )
                         }
                         Spacer(Modifier.height(6.dp))
+                        val filterAll = stringResource(R.string.filter_all_label)
+                        val filterToVerify = stringResource(R.string.filter_to_verify)
+                        val filterApproved = stringResource(R.string.approved_stat)
+                        val filterRejected = stringResource(R.string.filter_rejected)
+
                         val filterOptions = listOf(
-                            "Todas" to uiState.reports.size,
-                            "Por verificar" to uiState.reports.count { it.status.equals("POR_VERIFICAR", true) },
-                            "Aprobados" to uiState.reports.count { it.status.equals("VERIFICADO", true) || it.status.equals("RESUELTO", true) },
-                            "Rechazados" to uiState.reports.count { it.status.equals("RECHAZADO", true) }
+                            Triple(filterAll, "Todas", uiState.reports.size),
+                            Triple(filterToVerify, "Por verificar", uiState.reports.count { it.status.equals("POR_VERIFICAR", true) }),
+                            Triple(filterApproved, "Aprobados", uiState.reports.count { it.status.equals("VERIFICADO", true) || it.status.equals("RESUELTO", true) }),
+                            Triple(filterRejected, "Rechazados", uiState.reports.count { it.status.equals("RECHAZADO", true) })
                         )
                         androidx.compose.foundation.lazy.LazyRow(
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            items(filterOptions) { (filterName, count) ->
-                                val isSelected = uiState.activityFilter == filterName || (uiState.activityFilter.isBlank() && filterName == "Todas")
+                            items(filterOptions) { (displayName, internalKey, count) ->
+                                val isSelected = uiState.activityFilter == internalKey || (uiState.activityFilter.isBlank() && internalKey == "Todas")
                                 Surface(
-                                    modifier = Modifier.clickable { onFilterSelected(filterName) },
+                                    modifier = Modifier.clickable { onFilterSelected(internalKey) },
                                     shape = RoundedCornerShape(50),
                                     color = if (isSelected) Color(0xFF071C2D) else Color(0xFFEAF1F8)
                                 ) {
                                     Text(
-                                        text = "$filterName ($count)",
+                                        text = "$displayName ($count)",
                                         modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
                                         color = if (isSelected) Color.White else VozNavy,
                                         fontSize = 12.sp,
@@ -816,7 +846,7 @@ fun CommunityContent(
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     Icon(Icons.AutoMirrored.Filled.Logout, null, tint = VozNavy, modifier = Modifier.size(20.dp))
                                     Spacer(Modifier.width(12.dp))
-                                    Text("Cerrar sesión", color = VozNavy, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                                    Text(stringResource(R.string.sign_out), color = VozNavy, fontWeight = FontWeight.Bold, fontSize = 14.sp)
                                 }
                                 Icon(Icons.AutoMirrored.Filled.ArrowForward, null, tint = VozMuted, modifier = Modifier.size(18.dp))
                             }
@@ -890,8 +920,8 @@ fun CommunityContent(
                     }
                     item {
                         Spacer(Modifier.height(4.dp))
-                        Text("Logros y Recompensas de Puntos", color = VozNavy, fontWeight = FontWeight.Bold, fontSize = 15.sp)
-                        Text("Completa logros para ganar puntos y subir de nivel.", color = VozMuted, fontSize = 11.sp)
+                        Text(stringResource(R.string.points_achievements_title), color = VozNavy, fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                        Text(stringResource(R.string.points_achievements_subtitle), color = VozMuted, fontSize = 11.sp)
                     }
                     items(achievementsList, key = { it.id }) { achievement ->
                         val unlocked = achievement.isUnlocked(uiState)
@@ -966,8 +996,11 @@ fun CommunityContent(
                                         disabledContentColor = if (claimed) VozGreen else Color(0xFF9CA3AF)
                                     )
                                 ) {
+                                    val completedText = stringResource(R.string.completed)
+                                    val claimText = stringResource(R.string.claim)
+                                    val lockedText = stringResource(R.string.locked)
                                     Text(
-                                        text = if (claimed) "Completado ✓" else if (unlocked) "Reclamar" else "Bloqueado",
+                                        text = if (claimed) completedText else if (unlocked) claimText else lockedText,
                                         fontSize = 10.sp,
                                         fontWeight = FontWeight.Bold
                                     )
@@ -1068,7 +1101,15 @@ private fun ReportCard(report: Report, onEdit: (() -> Unit)? = null, onDelete: (
         Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(report.title, Modifier.weight(1f), color = VozNavy, fontWeight = FontWeight.Bold)
-                val statusLabel = ReportStatus.fromString(report.status).label
+                val statusEnum = ReportStatus.fromString(report.status)
+                val statusLabel = when (statusEnum) {
+                    ReportStatus.POR_VERIFICAR -> stringResource(R.string.status_por_verificar)
+                    ReportStatus.VERIFICADO -> stringResource(R.string.status_verificado)
+                    ReportStatus.RESUELTO -> stringResource(R.string.status_resuelto)
+                    ReportStatus.RECHAZADO -> stringResource(R.string.status_rechazado)
+                    ReportStatus.ELIMINADO -> stringResource(R.string.status_eliminado)
+                    else -> statusEnum.label
+                }
                 Text(
                     statusLabel,
                     Modifier.background(VozBlueSurface, RoundedCornerShape(50.dp)).padding(horizontal = 8.dp, vertical = 4.dp),
@@ -1076,7 +1117,16 @@ private fun ReportCard(report: Report, onEdit: (() -> Unit)? = null, onDelete: (
                     fontSize = 10.sp,
                 )
             }
-            Text(report.category, color = VozGreen, fontSize = 12.sp)
+            val localizedCategory = when {
+                report.category.contains("seguridad", true) -> stringResource(R.string.filter_security)
+                report.category.contains("emergencia", true) -> stringResource(R.string.category_emergencies)
+                report.category.contains("infraestructura", true) || report.category.contains("vías", true) -> stringResource(R.string.category_infrastructure)
+                report.category.contains("mascota", true) || report.category.contains("animal", true) -> stringResource(R.string.category_pets)
+                report.category.contains("comunidad", true) || report.category.contains("entorno", true) -> stringResource(R.string.filter_community)
+                report.category.contains("alumbrado", true) || report.category.contains("servicio", true) -> stringResource(R.string.category_lighting)
+                else -> report.category
+            }
+            Text(localizedCategory, color = VozGreen, fontSize = 12.sp)
             Text(report.description, color = VozMuted, fontSize = 13.sp)
             Row(
                 Modifier.fillMaxWidth(),
