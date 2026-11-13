@@ -71,10 +71,16 @@ fun PasswordRecoveryRoute(
     val emptyEmailMsg = stringResource(R.string.email_empty_error)
     val networkErrorMsg = stringResource(R.string.network_error)
     val defaultErrorMsg = stringResource(R.string.password_reset_error)
+    val exit = {
+        recoveryViewModel.reset()
+        onBack()
+    }
+
+    androidx.activity.compose.BackHandler(onBack = exit)
 
     PasswordRecoveryContent(
         uiState = uiState,
-        onBack = onBack,
+        onBack = exit,
         onEmailChange = recoveryViewModel::updateEmail,
         onRequestReset = { recoveryViewModel.requestReset(onRequestPasswordReset, emptyEmailMsg, networkErrorMsg, defaultErrorMsg) }
     )

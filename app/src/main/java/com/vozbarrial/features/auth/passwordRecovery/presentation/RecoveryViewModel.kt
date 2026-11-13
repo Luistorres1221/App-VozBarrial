@@ -11,6 +11,10 @@ class RecoveryViewModel : ViewModel() {
     private val _uiState = MutableStateFlow(RecoveryUiState())
     val uiState: StateFlow<RecoveryUiState> = _uiState.asStateFlow()
 
+    fun reset() {
+        _uiState.value = RecoveryUiState()
+    }
+
     fun updateEmail(value: String) {
         _uiState.value = _uiState.value.copy(email = value, message = "")
     }
