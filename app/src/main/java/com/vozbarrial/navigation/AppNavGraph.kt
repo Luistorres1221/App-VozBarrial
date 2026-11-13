@@ -90,8 +90,9 @@ fun AppNavGraph() {
         try {
             val prefs = context.getSharedPreferences("voz_barrial_biometric_global", android.content.Context.MODE_PRIVATE)
             val savedEmail = prefs.getString("saved_biometric_email", null)
-            if (!savedEmail.isNullOrBlank()) {
-                val biometricManager = com.vozbarrial.core.biometric.BiometricAuthManager(context, savedEmail)
+            val savedUid = prefs.getString("saved_biometric_uid", savedEmail)
+            if (!savedUid.isNullOrBlank() || !savedEmail.isNullOrBlank()) {
+                val biometricManager = com.vozbarrial.core.biometric.BiometricAuthManager(context, savedUid ?: savedEmail.orEmpty())
                 biometricManager.clearBiometricData()
             }
             prefs.edit().clear().apply()
@@ -181,6 +182,11 @@ fun AppNavGraph() {
         val currentUser = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
         if (currentUser != null) {
             reportsViewModel.startObserving()
+            signedInName = email.substringBefore("@")
+            signedInEmail = email
+            signedInUid = currentUser.uid
+            navigationViewModel.navigate("map", clearStack = true)
+
             com.google.firebase.firestore.FirebaseFirestore.getInstance()
                 .collection("usuarios")
                 .document(currentUser.uid)
@@ -199,18 +205,10 @@ fun AppNavGraph() {
                         ownedFramesText = usuario.ownedFrames.joinToString("|")
                         claimedAchievements = usuario.claimedAchievements
 
-                        val destination = if (usuario.role == UserRole.ADMIN) "adminMap" else "map"
-                        navigationViewModel.navigate(destination, clearStack = true)
-                    } else {
-                        signedInName = email.substringBefore("@")
-                        signedInEmail = email
-                        navigationViewModel.navigate("map", clearStack = true)
+                        if (usuario.role == UserRole.ADMIN) {
+                            navigationViewModel.navigate("adminMap", clearStack = true)
+                        }
                     }
-                }
-                .addOnFailureListener {
-                    signedInName = email.substringBefore("@")
-                    signedInEmail = email
-                    navigationViewModel.navigate("map", clearStack = true)
                 }
         }
     }

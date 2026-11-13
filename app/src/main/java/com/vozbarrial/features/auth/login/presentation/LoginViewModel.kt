@@ -41,6 +41,7 @@ class LoginViewModel : ViewModel() {
         }
         _uiState.value = form.copy(loading = true, message = "", success = false)
         signIn(cleanEmail, form.password) { authenticated ->
+            val capturedPassword = form.password
             _uiState.value = _uiState.value.copy(
                 loading = false,
                 password = if (authenticated) "" else _uiState.value.password,
@@ -48,7 +49,7 @@ class LoginViewModel : ViewModel() {
                 success = false,
             )
             if (authenticated) {
-                onSuccessfulAuth(cleanEmail, form.password) {
+                onSuccessfulAuth(cleanEmail, capturedPassword) {
                     onAuthenticated(cleanEmail)
                 }
             }

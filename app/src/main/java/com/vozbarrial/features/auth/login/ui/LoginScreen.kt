@@ -109,12 +109,16 @@ fun AuthRoute(
                 onAuthenticated = onAuthenticated,
                 onSuccessfulAuth = { email, password, onDone ->
                     if (activity != null) {
+                        val currentUid = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid?.ifBlank { null } ?: email
                         val prefs = context.getSharedPreferences("voz_barrial_biometric_global", android.content.Context.MODE_PRIVATE)
-                        prefs.edit().putString("saved_biometric_email", email).apply()
+                        prefs.edit()
+                            .putString("saved_biometric_email", email)
+                            .putString("saved_biometric_uid", currentUid)
+                            .apply()
 
-                        val bioPrefs = context.getSharedPreferences("biometric_prefs_$email", android.content.Context.MODE_PRIVATE)
+                        val bioPrefs = context.getSharedPreferences("biometric_prefs_$currentUid", android.content.Context.MODE_PRIVATE)
                         if (!bioPrefs.contains("encrypted_data")) {
-                            val biometricManager = com.vozbarrial.core.biometric.BiometricAuthManager(context, email)
+                            val biometricManager = com.vozbarrial.core.biometric.BiometricAuthManager(context, currentUid)
                             biometricManager.encryptAndSaveCredentials(activity, password) { success ->
                                 if (success) {
                                     android.widget.Toast.makeText(context, context.getString(R.string.biometric_saved_toast), android.widget.Toast.LENGTH_SHORT).show()
@@ -133,10 +137,11 @@ fun AuthRoute(
         onBiometricLogin = {
             val prefs = context.getSharedPreferences("voz_barrial_biometric_global", android.content.Context.MODE_PRIVATE)
             val savedEmail = prefs.getString("saved_biometric_email", null)
+            val savedUid = prefs.getString("saved_biometric_uid", savedEmail)
             if (savedEmail.isNullOrBlank()) {
                 formViewModel.showDialog(context.getString(R.string.biometric_register_hint))
             } else if (activity != null) {
-                val biometricManager = com.vozbarrial.core.biometric.BiometricAuthManager(context, savedEmail)
+                val biometricManager = com.vozbarrial.core.biometric.BiometricAuthManager(context, savedUid ?: savedEmail)
                 biometricManager.decryptCredentials(
                     activity = activity,
                     onSuccess = { password ->
@@ -149,7 +154,7 @@ fun AuthRoute(
                         )
                     },
                     onError = {
-                        prefs.edit().remove("saved_biometric_email").apply()
+                        prefs.edit().remove("saved_biometric_email").remove("saved_biometric_uid").apply()
                         biometricManager.clearBiometricData()
                         formViewModel.showDialog(context.getString(R.string.biometric_reinstall_error))
                     }

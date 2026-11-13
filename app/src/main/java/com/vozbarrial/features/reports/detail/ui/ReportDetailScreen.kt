@@ -44,8 +44,6 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-private data class RelevanceData(val level: String, val severity: Int, val desc: String, val bars: Int)
-
 private val severityColors = listOf(
     Color(0xFF10B981),
     Color(0xFF84CC16),
@@ -53,24 +51,6 @@ private val severityColors = listOf(
     Color(0xFFEA580C),
     Color(0xFFDC2626)
 )
-
-@Composable
-private fun getRelevanceInfo(votes: Int): RelevanceData {
-    val context = LocalContext.current
-    val min = context.getString(R.string.relevance_minor)
-    val low = context.getString(R.string.relevance_low)
-    val mod = context.getString(R.string.relevance_moderate)
-    val high = context.getString(R.string.relevance_high)
-    val crit = context.getString(R.string.relevance_critical)
-
-    return when {
-        votes < 20 -> RelevanceData(min, 1, context.getString(R.string.relevance_desc_format, min, votes), 1)
-        votes < 40 -> RelevanceData(low, 2, context.getString(R.string.relevance_desc_format, low, votes), 2)
-        votes < 60 -> RelevanceData(mod, 3, context.getString(R.string.relevance_desc_format, mod, votes), 3)
-        votes < 80 -> RelevanceData(high, 4, context.getString(R.string.relevance_desc_format, high, votes), 4)
-        else -> RelevanceData(crit, 5, context.getString(R.string.relevance_critical_desc), 5)
-    }
-}
 
 @Composable
 private fun formatTimeAgo(timestamp: Long): String {
@@ -173,6 +153,7 @@ private fun ReportDetailScreen(
     onToggleSupport: () -> Unit
 ) {
     val report = uiState.report
+    val context = LocalContext.current
     val photoPickerLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         onAddPhoto(uri?.toString())
     }
@@ -188,7 +169,9 @@ private fun ReportDetailScreen(
     }
 
     val votes = uiState.supportCount
-    val relevanceData = getRelevanceInfo(votes)
+    val relevanceData = remember(votes, context) {
+        com.vozbarrial.domain.model.calculateRelevance(votes) { resId, args -> context.getString(resId, *args.toTypedArray()) }
+    }
 
     Column(
         modifier = Modifier

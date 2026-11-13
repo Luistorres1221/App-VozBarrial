@@ -30,7 +30,10 @@ class ReportsRepository(
     override fun observeReports(onChange: (List<Report>) -> Unit) {
         if (listener != null) return
 
-        listener = firestore.collection(REPORTS).addSnapshotListener { snapshot, _ ->
+        listener = firestore.collection(REPORTS).addSnapshotListener { snapshot, error ->
+            if (error != null) {
+                return@addSnapshotListener
+            }
             val documents = snapshot?.documents ?: return@addSnapshotListener
             onChange(documents.mapNotNull { it.toObject(Report::class.java)?.copy(id = it.id) })
         }

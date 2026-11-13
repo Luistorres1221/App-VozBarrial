@@ -137,7 +137,53 @@ fun AdminReportsMap(
     var mapViewInstance by remember { mutableStateOf<MapView?>(null) }
 
     var currentUserLocation by remember {
-        mutableStateOf<GeoPoint?>(GeoPoint(4.60971, -74.08175))
+        mutableStateOf<GeoPoint?>(
+            try {
+                val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as? android.location.LocationManager
+                val last = try {
+                    locationManager?.getLastKnownLocation(android.location.LocationManager.GPS_PROVIDER)
+                        ?: locationManager?.getLastKnownLocation(android.location.LocationManager.NETWORK_PROVIDER)
+                } catch (_: SecurityException) {
+                    null
+                }
+                if (last != null) GeoPoint(last.latitude, last.longitude) else GeoPoint(38.8951, -77.0364)
+            } catch (_: Exception) {
+                GeoPoint(38.8951, -77.0364)
+            }
+        )
+    }
+
+    DisposableEffect(hasLocationPermission) {
+        val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as? android.location.LocationManager
+        val listener = android.location.LocationListener { location ->
+            currentUserLocation = GeoPoint(location.latitude, location.longitude)
+        }
+        try {
+            locationManager?.requestLocationUpdates(
+                android.location.LocationManager.GPS_PROVIDER,
+                2000L,
+                2f,
+                listener
+            )
+            locationManager?.requestLocationUpdates(
+                android.location.LocationManager.NETWORK_PROVIDER,
+                2000L,
+                2f,
+                listener
+            )
+            val last = locationManager?.getLastKnownLocation(android.location.LocationManager.GPS_PROVIDER)
+                ?: locationManager?.getLastKnownLocation(android.location.LocationManager.NETWORK_PROVIDER)
+            if (last != null) {
+                currentUserLocation = GeoPoint(last.latitude, last.longitude)
+                mapViewInstance?.controller?.setCenter(GeoPoint(last.latitude, last.longitude))
+            }
+        } catch (_: SecurityException) {}
+
+        onDispose {
+            try {
+                locationManager?.removeUpdates(listener)
+            } catch (_: SecurityException) {}
+        }
     }
 
     val pendingCount = reports.count { ReportStatus.fromString(it.status) == ReportStatus.POR_VERIFICAR }
@@ -158,8 +204,24 @@ fun AdminReportsMap(
                     setTileSource(TileSourceFactory.MAPNIK)
                     setMultiTouchControls(true)
                     setBuiltInZoomControls(false)
-                    controller.setZoom(15.0)
-                    controller.setCenter(GeoPoint(4.60971, -74.08175))
+
+                    val locationManager = ctx.getSystemService(Context.LOCATION_SERVICE) as? android.location.LocationManager
+                    val lastKnown = try {
+                        locationManager?.getLastKnownLocation(android.location.LocationManager.GPS_PROVIDER)
+                            ?: locationManager?.getLastKnownLocation(android.location.LocationManager.NETWORK_PROVIDER)
+                    } catch (_: SecurityException) {
+                        null
+                    } catch (_: Exception) {
+                        null
+                    }
+
+                    if (lastKnown != null) {
+                        controller.setZoom(15.0)
+                        controller.setCenter(GeoPoint(lastKnown.latitude, lastKnown.longitude))
+                    } else {
+                        controller.setZoom(14.0)
+                        controller.setCenter(GeoPoint(38.8951, -77.0364))
+                    }
 
                     val locationOverlay = MyLocationNewOverlay(GpsMyLocationProvider(ctx), this).apply {
                         enableMyLocation()
