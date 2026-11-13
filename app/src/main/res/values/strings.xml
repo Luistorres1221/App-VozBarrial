@@ -253,6 +253,11 @@
     <string name="moderator">Moderador</string>
     <string name="reports_resolution_title">Resolución de Reportes</string>
     <string name="resolved">Resuelto</string>
+    <string name="admin_pending_count">%1$d pendientes</string>
+    <string name="admin_pending_reports_in_community">Hay %1$d reportes por verificar en la comunidad:</string>
+    <string name="admin_resolution_summary">Gestión de soluciones vecinales y reportes resueltos (%1$d totales).</string>
+    <string name="admin_notifications_message">Tienes %1$d reportes pendientes de revisión y verificación oficial.</string>
+    <string name="admin_moderation_panel_message">Como Administrador / Moderador, supervisas la seguridad y veracidad de los reportes en VozBarrial.</string>
 
     <!-- Crear / Editar / Detalle Reporte -->
     <string name="report_incident">Reportar Incidente</string>

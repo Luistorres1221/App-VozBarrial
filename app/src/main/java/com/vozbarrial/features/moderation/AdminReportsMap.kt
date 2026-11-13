@@ -36,6 +36,7 @@ import androidx.compose.ui.zIndex
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -197,6 +198,8 @@ fun AdminReportsMap(
         }
     }
 
+    val allDistanceLabel = stringResource(R.string.filter_all)
+
     Box(modifier = Modifier.fillMaxSize().background(VozBackground)) {
         AndroidView(
             modifier = Modifier.fillMaxSize(),
@@ -333,13 +336,13 @@ fun AdminReportsMap(
                         Row(Modifier.padding(horizontal = 10.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
                             Icon(Icons.Default.LocationOn, null, tint = VozNavy, modifier = Modifier.size(14.dp))
                             Spacer(Modifier.width(4.dp))
-                            Text("Distancia ($distance)", fontSize = 10.sp, color = VozNavy, fontWeight = FontWeight.Medium)
+                            Text(stringResource(R.string.distance_label, if (distance == "Todos") allDistanceLabel else distance), fontSize = 10.sp, color = VozNavy, fontWeight = FontWeight.Medium)
                         }
                     }
                     DropdownMenu(expanded = distanceMenu, onDismissRequest = { distanceMenu = false }) {
                         listOf("500 m", "1.5 km", "3 km", "5 km", "Todos").forEach { option ->
                             DropdownMenuItem(
-                                text = { Text(option) },
+                                text = { Text(if (option == "Todos") allDistanceLabel else option) },
                                 onClick = { distance = option; distanceMenu = false },
                             )
                         }
@@ -354,7 +357,7 @@ fun AdminReportsMap(
                 ) {
                     Box(Modifier.size(7.dp).clip(CircleShape).background(VozGreen))
                     Spacer(Modifier.width(5.dp))
-                    Text("Radar Activo", color = VozGreen, fontSize = 10.sp, fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(R.string.active_radar), color = VozGreen, fontSize = 10.sp, fontWeight = FontWeight.SemiBold)
                 }
             }
         }
@@ -370,7 +373,7 @@ fun AdminReportsMap(
             horizontalArrangement = Arrangement.spacedBy(5.dp),
         ) {
             MapFilter(
-                text = "Todos",
+                text = stringResource(R.string.filter_all),
                 count = distanceFilteredReports.size,
                 selected = selectedCategory == "TODOS",
                 iconVector = Icons.Default.Layers,
@@ -378,7 +381,7 @@ fun AdminReportsMap(
                 onClick = { selectedCategory = "TODOS" }
             )
             MapFilter(
-                text = "Seguridad",
+                text = stringResource(R.string.filter_security),
                 count = distanceFilteredReports.count { it.category.contains("seguridad", true) },
                 selected = selectedCategory == "Seguridad",
                 iconRes = R.drawable.ic_pin_security,
@@ -388,7 +391,7 @@ fun AdminReportsMap(
                 }
             )
             MapFilter(
-                text = "Emergencias",
+                text = stringResource(R.string.filter_emergencies),
                 count = distanceFilteredReports.count { it.category.contains("emergencia", true) },
                 selected = selectedCategory == "Emergencias Médicas",
                 iconRes = R.drawable.ic_pin_emergencias,
@@ -399,7 +402,7 @@ fun AdminReportsMap(
                 }
             )
             MapFilter(
-                text = "Infraestructura",
+                text = stringResource(R.string.filter_infrastructure),
                 count = distanceFilteredReports.count {
                     it.category.contains(
                         "infraestructura",
@@ -415,7 +418,7 @@ fun AdminReportsMap(
                 }
             )
             MapFilter(
-                text = "Mascotas",
+                text = stringResource(R.string.filter_pets),
                 count = distanceFilteredReports.count {
                     it.category.contains(
                         "mascota",
@@ -431,7 +434,7 @@ fun AdminReportsMap(
                 }
             )
             MapFilter(
-                text = "Comunidad",
+                text = stringResource(R.string.filter_community),
                 count = distanceFilteredReports.count {
                     it.category.contains(
                         "comunidad",
@@ -447,7 +450,7 @@ fun AdminReportsMap(
                 }
             )
             MapFilter(
-                text = "Alumbrado",
+                text = stringResource(R.string.filter_lighting),
                 count = distanceFilteredReports.count {
                     it.category.contains(
                         "alumbrado",
@@ -518,8 +521,8 @@ fun AdminReportsMap(
                             Icon(Icons.Default.Check, null, tint = Color.White, modifier = Modifier.size(20.dp))
                         }
                         Column(modifier = Modifier.weight(1f)) {
-                            Text("Verificación", color = VozNavy, fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                            Text("$pendingCount pendientes", color = Color(0xFF16A34A), fontSize = 10.sp, fontWeight = FontWeight.Medium)
+                            Text(stringResource(R.string.verification), color = VozNavy, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                            Text(stringResource(R.string.admin_pending_count, pendingCount), color = Color(0xFF16A34A), fontSize = 10.sp, fontWeight = FontWeight.Medium)
                         }
                     }
                 }
@@ -546,8 +549,8 @@ fun AdminReportsMap(
                             Icon(Icons.Default.CheckCircle, null, tint = Color.White, modifier = Modifier.size(20.dp))
                         }
                         Column(modifier = Modifier.weight(1f)) {
-                            Text("Resolución", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                            Text("Solución vecinal", color = Color(0xFF93C5FD), fontSize = 10.sp, fontWeight = FontWeight.Medium)
+                            Text(stringResource(R.string.resolution), color = Color.White, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                            Text(stringResource(R.string.neighborhood_solution), color = Color(0xFF93C5FD), fontSize = 10.sp, fontWeight = FontWeight.Medium)
                         }
                     }
                 }
@@ -558,14 +561,14 @@ fun AdminReportsMap(
     if (showPendingDialog) {
         AlertDialog(
             onDismissRequest = { showPendingDialog = false },
-            title = { Text("Reportes Pendientes de Verificación", color = VozNavy, fontWeight = FontWeight.Bold) },
+            title = { Text(stringResource(R.string.pending_verification_reports), color = VozNavy, fontWeight = FontWeight.Bold) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     val pendingList = reports.filter { ReportStatus.fromString(it.status) == ReportStatus.POR_VERIFICAR }
                     if (pendingList.isEmpty()) {
-                        Text("No hay reportes pendientes de verificación.", color = VozMuted, fontSize = 12.sp)
+                        Text(stringResource(R.string.no_pending_verification), color = VozMuted, fontSize = 12.sp)
                     } else {
-                        Text("Hay ${pendingList.size} reportes por verificar en la comunidad:", fontSize = 11.sp, color = VozNavy)
+                        Text(stringResource(R.string.admin_pending_reports_in_community, pendingList.size), fontSize = 11.sp, color = VozNavy)
                         pendingList.take(5).forEach { r ->
                             Surface(
                                 modifier = Modifier.fillMaxWidth().clickable {
@@ -584,39 +587,39 @@ fun AdminReportsMap(
                     }
                 }
             },
-            confirmButton = { TextButton(onClick = { showPendingDialog = false }) { Text("Cerrar") } }
+            confirmButton = { TextButton(onClick = { showPendingDialog = false }) { Text(stringResource(R.string.close)) } }
         )
     }
 
     if (showResolutionDialog) {
         AlertDialog(
             onDismissRequest = { showResolutionDialog = false },
-            title = { Text("Resolución y Soluciones Vecinales", color = VozNavy, fontWeight = FontWeight.Bold) },
+            title = { Text(stringResource(R.string.resolution_neighborhood_solutions), color = VozNavy, fontWeight = FontWeight.Bold) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     val resolvedList = reports.filter { ReportStatus.fromString(it.status) == ReportStatus.RESUELTO || ReportStatus.fromString(it.status) == ReportStatus.VERIFICADO }
-                    Text("Gestión de soluciones vecinales y reportes resueltos (${resolvedList.size} totales).", fontSize = 11.sp, color = VozNavy)
+                    Text(stringResource(R.string.admin_resolution_summary, resolvedList.size), fontSize = 11.sp, color = VozNavy)
                 }
             },
-            confirmButton = { TextButton(onClick = { showResolutionDialog = false }) { Text("Cerrar") } }
+            confirmButton = { TextButton(onClick = { showResolutionDialog = false }) { Text(stringResource(R.string.close)) } }
         )
     }
 
     if (showNotifications) {
         AlertDialog(
             onDismissRequest = { showNotifications = false },
-            title = { Text("Notificaciones de Administrador", color = VozNavy) },
-            text = { Text("Tienes $pendingCount reportes pendientes de revisión y verificación oficial.") },
-            confirmButton = { TextButton(onClick = { showNotifications = false }) { Text("Entendido") } }
+            title = { Text(stringResource(R.string.admin_notifications), color = VozNavy) },
+            text = { Text(stringResource(R.string.admin_notifications_message, pendingCount)) },
+            confirmButton = { TextButton(onClick = { showNotifications = false }) { Text(stringResource(R.string.dialog_understood)) } }
         )
     }
 
     if (showPoints) {
         AlertDialog(
             onDismissRequest = { showPoints = false },
-            title = { Text("Panel de Moderación", color = VozNavy) },
-            text = { Text("Como Administrador / Moderador, supervisas la seguridad y veracidad de los reportes en VozBarrial.") },
-            confirmButton = { TextButton(onClick = { showPoints = false }) { Text("Entendido") } }
+            title = { Text(stringResource(R.string.moderation_panel), color = VozNavy) },
+            text = { Text(stringResource(R.string.admin_moderation_panel_message)) },
+            confirmButton = { TextButton(onClick = { showPoints = false }) { Text(stringResource(R.string.dialog_understood)) } }
         )
     }
 }
@@ -646,7 +649,7 @@ private fun AdminMapHeader(
             modifier = Modifier.clickable(onClick = onProfile)
         )
         Column(modifier = Modifier.weight(1f).clickable(onClick = onProfile)) {
-            Text("¡Hola, ${name.substringBefore('%').substringBefore(' ')}!", color = VozNavy, fontWeight = FontWeight.Bold, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(stringResource(R.string.greeting_format, name.substringBefore('%').substringBefore(' ')), color = VozNavy, fontWeight = FontWeight.Bold, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Surface(
                     shape = RoundedCornerShape(50),
@@ -658,7 +661,7 @@ private fun AdminMapHeader(
                     ) {
                         Box(Modifier.size(6.dp).clip(CircleShape).background(Color(0xFF087A55)))
                         Spacer(Modifier.width(3.dp))
-                        Text("Moderador", color = Color(0xFF087A55), fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.moderator), color = Color(0xFF087A55), fontSize = 9.sp, fontWeight = FontWeight.Bold)
                     }
                 }
             }
@@ -672,7 +675,7 @@ private fun AdminMapHeader(
         }
         IconButton(onClick = onNotifications, modifier = Modifier.size(34.dp)) {
             Box(contentAlignment = Alignment.TopEnd) {
-                Icon(Icons.Default.Notifications, contentDescription = "Notificaciones", tint = VozNavy, modifier = Modifier.size(21.dp))
+                Icon(Icons.Default.Notifications, contentDescription = stringResource(R.string.notifications_title), tint = VozNavy, modifier = Modifier.size(21.dp))
                 if (hasUnreadNotifications) {
                     Box(Modifier.size(7.dp).clip(CircleShape).background(Color(0xFFE35454)))
                 }

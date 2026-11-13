@@ -259,6 +259,11 @@
     <string name="moderator">Moderator</string>
     <string name="reports_resolution_title">Reports Resolution</string>
     <string name="resolved">Resolved</string>
+    <string name="admin_pending_count">%1$d pending</string>
+    <string name="admin_pending_reports_in_community">There are %1$d reports to verify in the community:</string>
+    <string name="admin_resolution_summary">Management of neighborhood solutions and resolved reports (%1$d total).</string>
+    <string name="admin_notifications_message">You have %1$d reports pending review and official verification.</string>
+    <string name="admin_moderation_panel_message">As Administrator / Moderator, you oversee the safety and truthfulness of reports in VozBarrial.</string>
 
     <!-- Create / Edit / Detail Report -->
     <string name="report_incident">Report Incident</string>
