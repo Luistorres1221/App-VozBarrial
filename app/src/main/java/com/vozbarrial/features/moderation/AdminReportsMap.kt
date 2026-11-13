@@ -74,8 +74,9 @@ fun AdminReportsMap(
         true
     }
 
-    val reports = remember(communityReports) {
-        communityReports.map { report ->
+    val communityReportsSnapshot = communityReports.toList()
+    val reports = remember(communityReportsSnapshot) {
+        communityReportsSnapshot.map { report ->
             CommunityReport(
                 report.id,
                 report.title,
