@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -88,7 +89,7 @@ fun AdminModerationScreen(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 IconButton(onClick = onBack, modifier = Modifier.size(36.dp)) {
-                    Icon(Icons.Default.ArrowBack, contentDescription = "Volver", tint = VozNavy, modifier = Modifier.size(20.dp))
+                    Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.back), tint = VozNavy, modifier = Modifier.size(20.dp))
                 }
                 Box(
                     modifier = Modifier.size(28.dp).clip(CircleShape).background(VozNavy),
@@ -97,8 +98,8 @@ fun AdminModerationScreen(
                     Icon(Icons.Default.LocationOn, null, tint = Color.White, modifier = Modifier.size(16.dp))
                 }
                 Column(modifier = Modifier.weight(1f)) {
-                    Text("Panel de Moderación", color = VozNavy, fontWeight = FontWeight.Bold, fontSize = 13.sp)
-                    Text("VozBarrial", color = VozMuted, fontSize = 10.sp)
+                    Text(stringResource(R.string.moderation_panel), color = VozNavy, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                    Text(stringResource(R.string.app_name), color = VozMuted, fontSize = 10.sp)
                 }
                 UserAvatarWithFrame(
                     profilePhoto = profilePhoto,
@@ -123,21 +124,21 @@ fun AdminModerationScreen(
             val rejectedCount = reports.count { ReportStatus.fromString(it.status) == ReportStatus.RECHAZADO }
 
             ModerationTabButton(
-                title = "Pendientes",
+                title = stringResource(R.string.admin_tab_pending),
                 count = pendingCount,
                 selected = selectedTab == "Pendientes",
                 onClick = { selectedTab = "Pendientes" },
                 modifier = Modifier.weight(1f)
             )
             ModerationTabButton(
-                title = "Aprobados",
+                title = stringResource(R.string.approved_stat),
                 count = approvedCount,
                 selected = selectedTab == "Aprobados",
                 onClick = { selectedTab = "Aprobados" },
                 modifier = Modifier.weight(1f)
             )
             ModerationTabButton(
-                title = "Rechazos",
+                title = stringResource(R.string.admin_tab_rejections),
                 count = rejectedCount,
                 selected = selectedTab == "Rechazados",
                 onClick = { selectedTab = "Rechazados" },
@@ -156,14 +157,14 @@ fun AdminModerationScreen(
             horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             MapFilter(
-                text = "Todos",
+                text = stringResource(R.string.filter_all),
                 count = reports.size,
                 selected = selectedCategory == "TODOS",
                 iconVector = Icons.Default.Map,
                 onClick = { selectedCategory = "TODOS" }
             )
             MapFilter(
-                text = "Seguridad",
+                text = stringResource(R.string.filter_security),
                 count = reports.count { it.category.contains("seguridad", true) },
                 selected = selectedCategory == "Seguridad",
                 iconRes = R.drawable.ic_pin_security,
@@ -172,7 +173,7 @@ fun AdminModerationScreen(
                 }
             )
             MapFilter(
-                text = "Infraestructura",
+                text = stringResource(R.string.filter_infrastructure),
                 count = reports.count {
                     it.category.contains(
                         "infraestructura",
@@ -198,7 +199,7 @@ fun AdminModerationScreen(
                     .padding(40.dp),
                 contentAlignment = Alignment.Center
             ) {
-                Text("No hay reportes en esta sección.", color = VozMuted, fontSize = 12.sp)
+                Text(stringResource(R.string.no_reports_section), color = VozMuted, fontSize = 12.sp)
             }
         } else {
             Column(
@@ -243,7 +244,7 @@ private fun ModerationTabButton(
             horizontalArrangement = Arrangement.Center
         ) {
             Text(
-                text = "$title $count",
+                text = stringResource(R.string.admin_tab_with_count, title, count),
                 color = if (selected) Color.White else VozNavy,
                 fontSize = 11.sp,
                 fontWeight = FontWeight.Bold,
@@ -321,7 +322,7 @@ private fun ModerationReportCard(
                 Icon(Icons.Default.LocationOn, null, tint = Color(0xFFE34652), modifier = Modifier.size(12.dp))
                 Spacer(Modifier.width(2.dp))
                 Text(
-                    text = report.place.ifBlank { "Ubicación comunitaria" },
+                    text = report.place.ifBlank { stringResource(R.string.admin_community_location) },
                     color = VozMuted,
                     fontSize = 11.sp,
                     maxLines = 1,
@@ -346,7 +347,7 @@ private fun ModerationReportCard(
                     if (!firstImg.isNullOrBlank()) {
                         AsyncImage(
                             model = firstImg,
-                            contentDescription = "Evidencia",
+                            contentDescription = stringResource(R.string.admin_evidence),
                             modifier = Modifier.size(56.dp).clip(RoundedCornerShape(8.dp)),
                             contentScale = ContentScale.Crop
                         )
@@ -355,7 +356,7 @@ private fun ModerationReportCard(
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(Icons.Default.Check, null, tint = Color(0xFF16A34A), modifier = Modifier.size(12.dp))
                             Spacer(Modifier.width(4.dp))
-                            Text("Validaciones barriales activas", color = Color(0xFF16A34A), fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.active_neighborhood_validations), color = Color(0xFF16A34A), fontSize = 10.sp, fontWeight = FontWeight.Bold)
                         }
                         Spacer(Modifier.height(2.dp))
                         Text(
@@ -385,8 +386,8 @@ private fun ModerationReportCard(
                         Text(report.authorName.take(1).uppercase(), fontWeight = FontWeight.Bold, fontSize = 11.sp, color = VozNavy)
                     }
                     Column {
-                        Text(report.authorName.ifBlank { "Ciudadano" }, fontWeight = FontWeight.Bold, fontSize = 11.sp, color = VozNavy, maxLines = 1)
-                        Text("Colaborador Activo", fontSize = 9.sp, color = VozMuted)
+                        Text(report.authorName.ifBlank { stringResource(R.string.admin_default_citizen) }, fontWeight = FontWeight.Bold, fontSize = 11.sp, color = VozNavy, maxLines = 1)
+                        Text(stringResource(R.string.active_collaborator), fontSize = 9.sp, color = VozMuted)
                     }
                 }
 
@@ -398,7 +399,7 @@ private fun ModerationReportCard(
                 ) {
                     Icon(Icons.Default.Map, null, tint = VozNavy, modifier = Modifier.size(14.dp))
                     Spacer(Modifier.width(4.dp))
-                    Text("Mapa", fontSize = 10.sp, color = VozNavy)
+                    Text(stringResource(R.string.map_label), fontSize = 10.sp, color = VozNavy)
                 }
             }
 
@@ -416,7 +417,7 @@ private fun ModerationReportCard(
                     modifier = Modifier.weight(1f).height(38.dp),
                     shape = RoundedCornerShape(8.dp)
                 ) {
-                    Text("Ver Info", fontSize = 11.sp, color = VozNavy)
+                    Text(stringResource(R.string.view_info), fontSize = 11.sp, color = VozNavy)
                 }
                 if (showModerationActions) {
                     OutlinedButton(
@@ -425,7 +426,7 @@ private fun ModerationReportCard(
                         shape = RoundedCornerShape(8.dp),
                         colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFDC2626))
                     ) {
-                        Text("Rechazar", fontSize = 11.sp)
+                        Text(stringResource(R.string.reject), fontSize = 11.sp)
                     }
                     Button(
                         onClick = onApprove,
@@ -435,7 +436,7 @@ private fun ModerationReportCard(
                     ) {
                         Icon(Icons.Default.Check, null, modifier = Modifier.size(14.dp))
                         Spacer(Modifier.width(4.dp))
-                        Text("Aprobar", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.approve), fontSize = 11.sp, fontWeight = FontWeight.Bold)
                     }
                 }
             }
