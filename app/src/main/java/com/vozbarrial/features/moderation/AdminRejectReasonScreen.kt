@@ -25,11 +25,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.vozbarrial.R
 import com.vozbarrial.domain.model.Report
 import com.vozbarrial.features.map.formatTimeAgo
 import com.vozbarrial.ui.components.UserAvatarWithFrame
@@ -44,23 +46,26 @@ fun AdminRejectReasonScreen(
     onBack: () -> Unit,
     onConfirm: (reason: String, explanation: String, allowResubmit: Boolean) -> Unit
 ) {
+    // Se muestran y se guardan en Firestore los textos traducidos; el estado guarda solo el índice
     val criteriaOptions = listOf(
-        "Información insuficiente o foto borrosa" to "No es legible el daño ni la ubicación exacta",
-        "Reporte duplicado" to "Ya existe un ticket abierto idéntico",
-        "Fuera de jurisdicción comunitaria" to "Corresponde a propiedad privada o autopista",
-        "Contenido ofensivo o inapropiado" to "Infracción a pautas de convivencia cívica",
-        "Otro motivo puntual" to "Especificación manual libre"
+        stringResource(R.string.admin_criterion_insufficient_info) to stringResource(R.string.admin_criterion_insufficient_info_desc),
+        stringResource(R.string.admin_criterion_duplicate) to stringResource(R.string.admin_criterion_duplicate_desc),
+        stringResource(R.string.admin_criterion_out_of_jurisdiction) to stringResource(R.string.admin_criterion_out_of_jurisdiction_desc),
+        stringResource(R.string.admin_criterion_offensive) to stringResource(R.string.admin_criterion_offensive_desc),
+        stringResource(R.string.admin_criterion_other) to stringResource(R.string.admin_criterion_other_desc)
     )
 
-    var selectedCriterion by rememberSaveable { mutableStateOf(criteriaOptions[0].first) }
+    var selectedCriterionIndex by rememberSaveable { mutableIntStateOf(0) }
+    val selectedCriterion = criteriaOptions[selectedCriterionIndex.coerceIn(criteriaOptions.indices)]
     var expandedDropdown by rememberSaveable { mutableStateOf(false) }
+    val defaultExplanation = if (report != null)
+        stringResource(R.string.admin_reject_default_explanation, report.authorName.substringBefore(' '))
+    else ""
     var explanation by rememberSaveable(report?.id) {
-        mutableStateOf(
-            if (report != null)
-                "Hola ${report.authorName.substringBefore(' ')}, gracias por tu compromiso. La fotografía adjunta no permite verificar con claridad el detalle del incidente reportado. Por favor, toma una nueva foto con mayor visibilidad."
-            else ""
-        )
+        mutableStateOf(defaultExplanation)
     }
+    val betterPhotoText = stringResource(R.string.admin_suggestion_better_photo_text)
+    val municipalChannelText = stringResource(R.string.admin_suggestion_municipal_channel_text)
     var allowResubmit by rememberSaveable { mutableStateOf(true) }
 
     Column(
@@ -84,7 +89,7 @@ fun AdminRejectReasonScreen(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 IconButton(onClick = onBack, modifier = Modifier.size(36.dp)) {
-                    Icon(Icons.Default.ArrowBack, contentDescription = "Volver", tint = VozNavy, modifier = Modifier.size(20.dp))
+                    Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.back), tint = VozNavy, modifier = Modifier.size(20.dp))
                 }
                 Box(
                     modifier = Modifier.size(28.dp).clip(CircleShape).background(VozNavy),
@@ -93,8 +98,8 @@ fun AdminRejectReasonScreen(
                     Icon(Icons.Default.LocationOn, null, tint = Color.White, modifier = Modifier.size(16.dp))
                 }
                 Column(modifier = Modifier.weight(1f)) {
-                    Text("Moderación", color = VozNavy, fontWeight = FontWeight.Bold, fontSize = 13.sp)
-                    Text("VozBarrial", color = VozMuted, fontSize = 10.sp)
+                    Text(stringResource(R.string.admin_moderation), color = VozNavy, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                    Text(stringResource(R.string.app_name), color = VozMuted, fontSize = 10.sp)
                 }
                 UserAvatarWithFrame(
                     profilePhoto = profilePhoto,
@@ -116,8 +121,8 @@ fun AdminRejectReasonScreen(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                Text("Motivo del Rechazo", color = VozNavy, fontWeight = FontWeight.Bold, fontSize = 18.sp)
-                Text("Revisión de veracidad y normativas cívicas", color = VozMuted, fontSize = 11.sp)
+                Text(stringResource(R.string.rejection_reason), color = VozNavy, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                Text(stringResource(R.string.rejection_review_subtitle), color = VozMuted, fontSize = 11.sp)
             }
             Surface(
                 shape = RoundedCornerShape(8.dp),
@@ -154,7 +159,7 @@ fun AdminRejectReasonScreen(
                     if (!firstImg.isNullOrBlank()) {
                         AsyncImage(
                             model = firstImg,
-                            contentDescription = "Evidencia",
+                            contentDescription = stringResource(R.string.admin_evidence),
                             modifier = Modifier.size(54.dp).clip(RoundedCornerShape(10.dp)),
                             contentScale = ContentScale.Crop
                         )
@@ -172,7 +177,7 @@ fun AdminRejectReasonScreen(
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(Icons.Default.Schedule, null, tint = VozMuted, modifier = Modifier.size(11.dp))
                             Spacer(Modifier.width(3.dp))
-                            Text("Enviado ${formatTimeAgo(report.timestamp)}", fontSize = 10.sp, color = VozMuted)
+                            Text(stringResource(R.string.admin_sent_time, formatTimeAgo(report.timestamp)), fontSize = 10.sp, color = VozMuted)
                         }
                     }
                 }
@@ -188,9 +193,9 @@ fun AdminRejectReasonScreen(
             verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("Criterio de Inadmisibilidad *", color = VozNavy, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                Text(stringResource(R.string.inadmissibility_criterion), color = VozNavy, fontWeight = FontWeight.Bold, fontSize = 13.sp)
                 Spacer(Modifier.width(4.dp))
-                Text("Paso 1 de 2", color = VozMuted, fontSize = 10.sp)
+                Text(stringResource(R.string.step_1_of_2), color = VozMuted, fontSize = 10.sp)
             }
 
             // Selected criterion dropdown box
@@ -209,14 +214,13 @@ fun AdminRejectReasonScreen(
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text(selectedCriterion, fontWeight = FontWeight.Bold, fontSize = 12.sp, color = VozNavy)
+                            Text(selectedCriterion.first, fontWeight = FontWeight.Bold, fontSize = 12.sp, color = VozNavy)
                             Surface(shape = RoundedCornerShape(50), color = Color(0xFFE2E8F0)) {
-                                Text("Seleccionado", modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp), fontSize = 9.sp, fontWeight = FontWeight.Bold, color = VozNavy)
+                                Text(stringResource(R.string.admin_selected), modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp), fontSize = 9.sp, fontWeight = FontWeight.Bold, color = VozNavy)
                             }
                         }
                         Spacer(Modifier.height(2.dp))
-                        val desc = criteriaOptions.firstOrNull { it.first == selectedCriterion }?.second.orEmpty()
-                        Text(desc, fontSize = 11.sp, color = VozMuted)
+                        Text(selectedCriterion.second, fontSize = 11.sp, color = VozMuted)
                     }
                     Icon(if (expandedDropdown) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown, null, tint = VozNavy)
                 }
@@ -235,14 +239,14 @@ fun AdminRejectReasonScreen(
                         modifier = Modifier.padding(8.dp),
                         verticalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
-                        Text("CRITERIOS DISPONIBLES", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = VozMuted, modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp).align(Alignment.Start))
-                        criteriaOptions.forEach { (title, subtitle) ->
-                            val isSelected = selectedCriterion == title
+                        Text(stringResource(R.string.available_criteria), fontSize = 10.sp, fontWeight = FontWeight.Bold, color = VozMuted, modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp).align(Alignment.Start))
+                        criteriaOptions.forEachIndexed { index, (title, subtitle) ->
+                            val isSelected = selectedCriterionIndex == index
                             Surface(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .clickable {
-                                        selectedCriterion = title
+                                        selectedCriterionIndex = index
                                         expandedDropdown = false
                                     },
                                 shape = RoundedCornerShape(8.dp),
@@ -282,10 +286,10 @@ fun AdminRejectReasonScreen(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("Explicación para el vecino *", color = VozNavy, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                Text(stringResource(R.string.explanation_for_neighbor), color = VozNavy, fontWeight = FontWeight.Bold, fontSize = 13.sp)
                 Text("${explanation.length} / 500", color = VozMuted, fontSize = 10.sp)
             }
-            Text("Este texto se enviará inmediatamente como mensaje orientativo para guiar al vecino sobre cómo corregir o encauzar su reporte.", color = VozMuted, fontSize = 10.sp, lineHeight = 14.sp)
+            Text(stringResource(R.string.admin_explanation_hint), color = VozMuted, fontSize = 10.sp, lineHeight = 14.sp)
 
             OutlinedTextField(
                 value = explanation,
@@ -310,14 +314,14 @@ fun AdminRejectReasonScreen(
                     .horizontalScroll(rememberScrollState()),
                 horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                Text("Sugerencias:", color = VozMuted, fontSize = 10.sp, modifier = Modifier.align(Alignment.CenterVertically))
+                Text(stringResource(R.string.suggestions), color = VozMuted, fontSize = 10.sp, modifier = Modifier.align(Alignment.CenterVertically))
                 SuggestionChip(
-                    onClick = { explanation += " Por favor, toma una foto con mayor iluminación." },
-                    label = { Text("+ Pedir mejor foto", fontSize = 10.sp) }
+                    onClick = { explanation += " $betterPhotoText" },
+                    label = { Text(stringResource(R.string.admin_suggestion_better_photo), fontSize = 10.sp) }
                 )
                 SuggestionChip(
-                    onClick = { explanation += " Te recomendamos contactar al canal municipal correspondiente." },
-                    label = { Text("+ Indicar canal municipal", fontSize = 10.sp) }
+                    onClick = { explanation += " $municipalChannelText" },
+                    label = { Text(stringResource(R.string.admin_suggestion_municipal_channel), fontSize = 10.sp) }
                 )
             }
         }
@@ -344,8 +348,8 @@ fun AdminRejectReasonScreen(
                     onCheckedChange = { allowResubmit = it }
                 )
                 Column(modifier = Modifier.weight(1f)) {
-                    Text("Permitir al ciudadano corregir y reenviar", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = VozNavy)
-                    Text("El reporte pasará a estado 'Borrador editable' en su perfil vecinal.", fontSize = 10.sp, color = VozMuted)
+                    Text(stringResource(R.string.allow_citizen_correct_resubmit), fontWeight = FontWeight.Bold, fontSize = 12.sp, color = VozNavy)
+                    Text(stringResource(R.string.report_editable_draft_hint), fontSize = 10.sp, color = VozMuted)
                 }
             }
         }
@@ -360,7 +364,7 @@ fun AdminRejectReasonScreen(
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             Button(
-                onClick = { onConfirm(selectedCriterion, explanation, allowResubmit) },
+                onClick = { onConfirm(selectedCriterion.first, explanation, allowResubmit) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(48.dp),
@@ -369,7 +373,7 @@ fun AdminRejectReasonScreen(
             ) {
                 Icon(Icons.Default.Block, null, modifier = Modifier.size(18.dp))
                 Spacer(Modifier.width(8.dp))
-                Text("Confirmar Rechazo", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                Text(stringResource(R.string.confirm_rejection), fontWeight = FontWeight.Bold, fontSize = 13.sp)
             }
 
             TextButton(
@@ -378,7 +382,7 @@ fun AdminRejectReasonScreen(
                     .fillMaxWidth()
                     .height(40.dp)
             ) {
-                Text("Cancelar y volver a la revisión", color = Color(0xFF45628A), fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                Text(stringResource(R.string.cancel_return_to_review), color = Color(0xFF45628A), fontWeight = FontWeight.Bold, fontSize = 12.sp)
             }
         }
     }

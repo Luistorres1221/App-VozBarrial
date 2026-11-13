@@ -270,6 +270,24 @@
     <string name="admin_community_location">Community location</string>
     <string name="admin_evidence">Evidence</string>
     <string name="admin_default_citizen">Citizen</string>
+    <string name="admin_moderation">Moderation</string>
+    <string name="admin_sent_time">Sent %1$s</string>
+    <string name="admin_explanation_hint">This text will be sent immediately as a guidance message to help the neighbor correct or redirect their report.</string>
+    <string name="admin_suggestion_better_photo">+ Request better photo</string>
+    <string name="admin_suggestion_better_photo_text">Please take a photo with better lighting.</string>
+    <string name="admin_suggestion_municipal_channel">+ Suggest municipal channel</string>
+    <string name="admin_suggestion_municipal_channel_text">We recommend contacting the corresponding municipal channel.</string>
+    <string name="admin_reject_default_explanation">Hello %1$s, thank you for your commitment. The attached photo does not allow us to clearly verify the details of the reported incident. Please take a new photo with better visibility.</string>
+    <string name="admin_criterion_insufficient_info">Insufficient information or blurry photo</string>
+    <string name="admin_criterion_insufficient_info_desc">The damage or exact location is not legible</string>
+    <string name="admin_criterion_duplicate">Duplicate report</string>
+    <string name="admin_criterion_duplicate_desc">An identical open ticket already exists</string>
+    <string name="admin_criterion_out_of_jurisdiction">Outside community jurisdiction</string>
+    <string name="admin_criterion_out_of_jurisdiction_desc">Corresponds to private property or highway</string>
+    <string name="admin_criterion_offensive">Offensive or inappropriate content</string>
+    <string name="admin_criterion_offensive_desc">Violation of civic coexistence guidelines</string>
+    <string name="admin_criterion_other">Other specific reason</string>
+    <string name="admin_criterion_other_desc">Free manual specification</string>
 
     <!-- Create / Edit / Detail Report -->
     <string name="report_incident">Report Incident</string>

@@ -264,6 +264,24 @@
     <string name="admin_community_location">Ubicación comunitaria</string>
     <string name="admin_evidence">Evidencia</string>
     <string name="admin_default_citizen">Ciudadano</string>
+    <string name="admin_moderation">Moderación</string>
+    <string name="admin_sent_time">Enviado %1$s</string>
+    <string name="admin_explanation_hint">Este texto se enviará inmediatamente como mensaje orientativo para guiar al vecino sobre cómo corregir o encauzar su reporte.</string>
+    <string name="admin_suggestion_better_photo">+ Pedir mejor foto</string>
+    <string name="admin_suggestion_better_photo_text">Por favor, toma una foto con mayor iluminación.</string>
+    <string name="admin_suggestion_municipal_channel">+ Indicar canal municipal</string>
+    <string name="admin_suggestion_municipal_channel_text">Te recomendamos contactar al canal municipal correspondiente.</string>
+    <string name="admin_reject_default_explanation">Hola %1$s, gracias por tu compromiso. La fotografía adjunta no permite verificar con claridad el detalle del incidente reportado. Por favor, toma una nueva foto con mayor visibilidad.</string>
+    <string name="admin_criterion_insufficient_info">Información insuficiente o foto borrosa</string>
+    <string name="admin_criterion_insufficient_info_desc">No es legible el daño ni la ubicación exacta</string>
+    <string name="admin_criterion_duplicate">Reporte duplicado</string>
+    <string name="admin_criterion_duplicate_desc">Ya existe un ticket abierto idéntico</string>
+    <string name="admin_criterion_out_of_jurisdiction">Fuera de jurisdicción comunitaria</string>
+    <string name="admin_criterion_out_of_jurisdiction_desc">Corresponde a propiedad privada o autopista</string>
+    <string name="admin_criterion_offensive">Contenido ofensivo o inapropiado</string>
+    <string name="admin_criterion_offensive_desc">Infracción a pautas de convivencia cívica</string>
+    <string name="admin_criterion_other">Otro motivo puntual</string>
+    <string name="admin_criterion_other_desc">Especificación manual libre</string>
 
     <!-- Crear / Editar / Detalle Reporte -->
     <string name="report_incident">Reportar Incidente</string>
