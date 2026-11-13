@@ -193,7 +193,7 @@ fun ReportsMap(name: String, profilePhoto: String? = null, equippedFrame: String
         else -> Double.MAX_VALUE
     }
 
-    val distanceFilteredReports = remember(reports, distance, currentUserLocation, myLoc) {
+    val distanceFilteredReports = remember(reports, distance, currentUserLocation, myLoc, hasLocationPermission) {
         reports.filter { report ->
             val statusEnum = ReportStatus.fromString(report.status)
             if (statusEnum == ReportStatus.RECHAZADO || statusEnum == ReportStatus.ELIMINADO) return@filter false
@@ -204,7 +204,7 @@ fun ReportsMap(name: String, profilePhoto: String? = null, equippedFrame: String
                 if (elapsed > fifteenMinutes) return@filter false
             }
 
-            if (myLoc != null && maxMeters < Double.MAX_VALUE) {
+            if (hasLocationPermission && myLoc != null && maxMeters < Double.MAX_VALUE) {
                 val reportPoint = GeoPoint(report.latitude, report.longitude)
                 val distanceMeters = myLoc.distanceToAsDouble(reportPoint)
                 distanceMeters <= maxMeters

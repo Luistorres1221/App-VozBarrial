@@ -32,8 +32,7 @@ class ReportsRepository(
 
         listener = firestore.collection(REPORTS).addSnapshotListener { snapshot, error ->
             if (error != null) {
-                listener?.remove()
-                listener = null
+                android.util.Log.e("ReportsRepository", "Error observing reports: ${error.message}", error)
                 return@addSnapshotListener
             }
             val documents = snapshot?.documents ?: return@addSnapshotListener
