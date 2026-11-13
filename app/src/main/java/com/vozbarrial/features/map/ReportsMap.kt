@@ -144,9 +144,9 @@ fun ReportsMap(name: String, profilePhoto: String? = null, equippedFrame: String
                 } catch (_: SecurityException) {
                     null
                 }
-                if (last != null) GeoPoint(last.latitude, last.longitude) else GeoPoint(4.60971, -74.08175)
+                if (last != null) GeoPoint(last.latitude, last.longitude) else GeoPoint(38.8951, -77.0364)
             } catch (_: Exception) {
-                GeoPoint(4.60971, -74.08175)
+                GeoPoint(38.8951, -77.0364)
             }
         )
     }
@@ -238,7 +238,7 @@ fun ReportsMap(name: String, profilePhoto: String? = null, equippedFrame: String
                         controller.setCenter(GeoPoint(lastKnown.latitude, lastKnown.longitude))
                     } else {
                         controller.setZoom(14.0)
-                        controller.setCenter(GeoPoint(4.60971, -74.08175))
+                        controller.setCenter(GeoPoint(38.8951, -77.0364))
                     }
 
                     val locationOverlay = MyLocationNewOverlay(GpsMyLocationProvider(ctx), this).apply {

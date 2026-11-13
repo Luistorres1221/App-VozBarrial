@@ -20,9 +20,7 @@ class ReportsViewModel : ViewModel() {
     val reports = mutableStateListOf<Report>()
 
     init {
-        if (com.google.firebase.auth.FirebaseAuth.getInstance().currentUser != null) {
-            startObserving()
-        }
+        startObserving()
     }
 
     fun startObserving() {
