@@ -208,10 +208,12 @@ fun AdminModerationScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 filteredReports.forEach { report ->
+                    val canModerate = ReportStatus.fromString(report.status) == ReportStatus.POR_VERIFICAR
                     ModerationReportCard(
                         report = report,
                         onViewInfo = { onNavigate("reportDetail/${report.id}") },
                         onMap = { onBack() },
+                        showModerationActions = canModerate,
                         onReject = { onNavigate("adminRejectReason/${report.id}") },
                         onApprove = { onUpdateStatus(report.id, "VERIFICADO") }
                     )
@@ -257,6 +259,7 @@ private fun ModerationReportCard(
     report: Report,
     onViewInfo: () -> Unit,
     onMap: () -> Unit,
+    showModerationActions: Boolean,
     onReject: () -> Unit,
     onApprove: () -> Unit
 ) {
@@ -415,23 +418,25 @@ private fun ModerationReportCard(
                 ) {
                     Text("Ver Info", fontSize = 11.sp, color = VozNavy)
                 }
-                OutlinedButton(
-                    onClick = onReject,
-                    modifier = Modifier.weight(1f).height(38.dp),
-                    shape = RoundedCornerShape(8.dp),
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFDC2626))
-                ) {
-                    Text("Rechazar", fontSize = 11.sp)
-                }
-                Button(
-                    onClick = onApprove,
-                    modifier = Modifier.weight(1.2f).height(38.dp),
-                    shape = RoundedCornerShape(8.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF16A34A))
-                ) {
-                    Icon(Icons.Default.Check, null, modifier = Modifier.size(14.dp))
-                    Spacer(Modifier.width(4.dp))
-                    Text("Aprobar", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                if (showModerationActions) {
+                    OutlinedButton(
+                        onClick = onReject,
+                        modifier = Modifier.weight(1f).height(38.dp),
+                        shape = RoundedCornerShape(8.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFDC2626))
+                    ) {
+                        Text("Rechazar", fontSize = 11.sp)
+                    }
+                    Button(
+                        onClick = onApprove,
+                        modifier = Modifier.weight(1.2f).height(38.dp),
+                        shape = RoundedCornerShape(8.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF16A34A))
+                    ) {
+                        Icon(Icons.Default.Check, null, modifier = Modifier.size(14.dp))
+                        Spacer(Modifier.width(4.dp))
+                        Text("Aprobar", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    }
                 }
             }
         }
