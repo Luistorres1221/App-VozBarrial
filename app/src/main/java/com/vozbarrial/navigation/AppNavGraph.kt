@@ -86,6 +86,7 @@ fun AppNavGraph() {
     var claimedAchievements by remember { mutableStateOf(emptyList<String>()) }
 
     fun signOutAndReset() {
+        reportsViewModel.stopObserving()
         FirebaseAuth.getInstance().signOut()
         try {
             val prefs = context.getSharedPreferences("voz_barrial_biometric_global", android.content.Context.MODE_PRIVATE)
