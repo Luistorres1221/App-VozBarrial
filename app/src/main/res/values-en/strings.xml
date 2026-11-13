@@ -266,6 +266,8 @@
     <string name="admin_moderation_panel_message">As Administrator / Moderator, you oversee the safety and truthfulness of reports in VozBarrial.</string>
     <string name="admin_tab_pending">Pending</string>
     <string name="admin_tab_rejections">Rejections</string>
+    <string name="admin_tab_in_progress">In Progress</string>
+    <string name="admin_tab_history">History</string>
     <string name="admin_tab_with_count">%1$s %2$d</string>
     <string name="admin_community_location">Community location</string>
     <string name="admin_evidence">Evidence</string>

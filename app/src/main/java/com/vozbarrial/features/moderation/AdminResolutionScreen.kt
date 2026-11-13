@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -89,7 +90,7 @@ fun AdminResolutionScreen(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 IconButton(onClick = onBack, modifier = Modifier.size(36.dp)) {
-                    Icon(Icons.Default.ArrowBack, contentDescription = "Volver", tint = VozNavy, modifier = Modifier.size(20.dp))
+                    Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.back), tint = VozNavy, modifier = Modifier.size(20.dp))
                 }
                 Box(
                     modifier = Modifier.size(28.dp).clip(CircleShape).background(VozNavy),
@@ -98,8 +99,8 @@ fun AdminResolutionScreen(
                     Icon(Icons.Default.LocationOn, null, tint = Color.White, modifier = Modifier.size(16.dp))
                 }
                 Column(modifier = Modifier.weight(1f)) {
-                    Text("Resolucion de Reportes", color = VozNavy, fontWeight = FontWeight.Bold, fontSize = 13.sp)
-                    Text("VozBarrial", color = VozMuted, fontSize = 10.sp)
+                    Text(stringResource(R.string.reports_resolution_title), color = VozNavy, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                    Text(stringResource(R.string.app_name), color = VozMuted, fontSize = 10.sp)
                 }
                 UserAvatarWithFrame(
                     profilePhoto = profilePhoto,
@@ -124,21 +125,21 @@ fun AdminResolutionScreen(
             val historyCount = reports.count { ReportStatus.fromString(it.status) == ReportStatus.RESUELTO || ReportStatus.fromString(it.status) == ReportStatus.RECHAZADO }
 
             ResolutionTabButton(
-                title = "Pendientes",
+                title = stringResource(R.string.admin_tab_pending),
                 count = pendingCount,
                 selected = selectedTab == "Pendientes",
                 onClick = { selectedTab = "Pendientes" },
                 modifier = Modifier.weight(1f)
             )
             ResolutionTabButton(
-                title = "En Proceso",
+                title = stringResource(R.string.admin_tab_in_progress),
                 count = inProgressCount,
                 selected = selectedTab == "En Proceso",
                 onClick = { selectedTab = "En Proceso" },
                 modifier = Modifier.weight(1f)
             )
             ResolutionTabButton(
-                title = "Historial",
+                title = stringResource(R.string.admin_tab_history),
                 count = historyCount,
                 selected = selectedTab == "Historial",
                 onClick = { selectedTab = "Historial" },
@@ -157,14 +158,14 @@ fun AdminResolutionScreen(
             horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             MapFilter(
-                text = "Todos",
+                text = stringResource(R.string.filter_all),
                 count = reports.size,
                 selected = selectedCategory == "TODOS",
                 iconVector = Icons.Default.Map,
                 onClick = { selectedCategory = "TODOS" }
             )
             MapFilter(
-                text = "Seguridad",
+                text = stringResource(R.string.filter_security),
                 count = reports.count { it.category.contains("seguridad", true) },
                 selected = selectedCategory == "Seguridad",
                 iconRes = R.drawable.ic_pin_security,
@@ -173,7 +174,7 @@ fun AdminResolutionScreen(
                 }
             )
             MapFilter(
-                text = "Infraestructura",
+                text = stringResource(R.string.filter_infrastructure),
                 count = reports.count {
                     it.category.contains(
                         "infraestructura",
@@ -199,7 +200,7 @@ fun AdminResolutionScreen(
                     .padding(40.dp),
                 contentAlignment = Alignment.Center
             ) {
-                Text("No hay reportes en esta sección.", color = VozMuted, fontSize = 12.sp)
+                Text(stringResource(R.string.no_reports_section), color = VozMuted, fontSize = 12.sp)
             }
         } else {
             Column(
@@ -249,7 +250,7 @@ private fun ResolutionTabButton(
             horizontalArrangement = Arrangement.Center
         ) {
             Text(
-                text = "$title $count",
+                text = stringResource(R.string.admin_tab_with_count, title, count),
                 color = if (selected) Color.White else VozNavy,
                 fontSize = 11.sp,
                 fontWeight = FontWeight.Bold,
@@ -327,7 +328,7 @@ Spacer(Modifier.height(8.dp))
                 Icon(Icons.Default.LocationOn, null, tint = Color(0xFFE34652), modifier = Modifier.size(12.dp))
                 Spacer(Modifier.width(2.dp))
                 Text(
-                    text = report.place.ifBlank { "Ubicación comunitaria" },
+                    text = report.place.ifBlank { stringResource(R.string.admin_community_location) },
                     color = VozMuted,
                     fontSize = 11.sp,
                     maxLines = 1,
@@ -352,7 +353,7 @@ Spacer(Modifier.height(8.dp))
                     if (!firstImg.isNullOrBlank()) {
                         AsyncImage(
                             model = firstImg,
-                            contentDescription = "Evidencia",
+                            contentDescription = stringResource(R.string.admin_evidence),
                             modifier = Modifier.size(56.dp).clip(RoundedCornerShape(8.dp)),
                             contentScale = ContentScale.Crop
                         )
@@ -385,8 +386,8 @@ Spacer(Modifier.height(8.dp))
                         Text(report.authorName.take(1).uppercase(), fontWeight = FontWeight.Bold, fontSize = 11.sp, color = VozNavy)
                     }
                     Column {
-                        Text(report.authorName.ifBlank { "Ciudadano" }, fontWeight = FontWeight.Bold, fontSize = 11.sp, color = VozNavy, maxLines = 1)
-                        Text("Colaborador Activo", fontSize = 9.sp, color = VozMuted)
+                        Text(report.authorName.ifBlank { stringResource(R.string.admin_default_citizen) }, fontWeight = FontWeight.Bold, fontSize = 11.sp, color = VozNavy, maxLines = 1)
+                        Text(stringResource(R.string.active_collaborator), fontSize = 9.sp, color = VozMuted)
                     }
                 }
 
@@ -398,7 +399,7 @@ Spacer(Modifier.height(8.dp))
                 ) {
                     Icon(Icons.Default.Map, null, tint = VozNavy, modifier = Modifier.size(14.dp))
                     Spacer(Modifier.width(4.dp))
-                    Text("Mapa", fontSize = 10.sp, color = VozNavy)
+                    Text(stringResource(R.string.map_label), fontSize = 10.sp, color = VozNavy)
                 }
             }
 
@@ -416,7 +417,7 @@ Spacer(Modifier.height(8.dp))
                     modifier = Modifier.weight(1f).height(38.dp),
                     shape = RoundedCornerShape(8.dp)
                 ) {
-                    Text("Ver Info", fontSize = 11.sp, color = VozNavy)
+                    Text(stringResource(R.string.view_info), fontSize = 11.sp, color = VozNavy)
                 }
                 if (showResolve) {
                     Button(
@@ -428,7 +429,7 @@ Spacer(Modifier.height(8.dp))
                     ) {
                         Icon(Icons.Default.CheckCircle, null, modifier = Modifier.size(14.dp))
                         Spacer(Modifier.width(4.dp))
-                        Text("Resuelto", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.resolved), fontSize = 11.sp, fontWeight = FontWeight.Bold)
                     }
                 }
             }
