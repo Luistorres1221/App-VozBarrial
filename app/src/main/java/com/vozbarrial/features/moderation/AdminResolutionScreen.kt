@@ -49,8 +49,9 @@ fun AdminResolutionScreen(
     var selectedCategory by rememberSaveable { mutableStateOf("TODOS") }
     val resolvingReportIds = remember { mutableStateSetOf<String>() }
 
-    val filteredReports = remember(reports, selectedTab, selectedCategory) {
-        reports.filter { r ->
+    val reportSnapshot = reports.toList()
+    val filteredReports = remember(reportSnapshot, selectedTab, selectedCategory) {
+        reportSnapshot.filter { r ->
             val statusEnum = ReportStatus.fromString(r.status)
             val matchesTab = when (selectedTab) {
                 "Pendientes" -> statusEnum == ReportStatus.VERIFICADO || statusEnum == ReportStatus.POR_VERIFICAR
