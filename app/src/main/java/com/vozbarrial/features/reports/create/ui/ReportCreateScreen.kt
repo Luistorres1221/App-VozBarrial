@@ -43,7 +43,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.window.Dialog
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -52,12 +51,12 @@ import coil.compose.AsyncImage
 import com.vozbarrial.R
 import com.vozbarrial.features.reports.create.presentation.ReportCreateUiState
 import com.vozbarrial.features.reports.create.presentation.ReportCreateViewModel
+import com.vozbarrial.domain.model.GeoCoordinate
+import com.vozbarrial.ui.components.MapBox
 import com.vozbarrial.ui.theme.*
-import org.osmdroid.tileprovider.tilesource.TileSourceFactory
-import org.osmdroid.util.GeoPoint
-import org.osmdroid.views.MapView
-import org.osmdroid.views.overlay.Marker
 import java.util.Locale
+
+private val MapPickerPinSize = 40.dp
 
 private data class ReportCategory(val id: String, val name: String, val description: String, val icon: String)
 
@@ -148,6 +147,18 @@ fun ReportCreateContent(
     val context = LocalContext.current
     var menu by remember { mutableStateOf(false) }
     var showMapPicker by rememberSaveable { mutableStateOf(false) }
+    var pickerTarget by remember { mutableStateOf<GeoCoordinate?>(null) }
+    var pickerCenter by remember { mutableStateOf<GeoCoordinate?>(null) }
+    var userMovedMap by remember { mutableStateOf(false) }
+    val openMapPicker = {
+        pickerTarget = GeoCoordinate(uiState.latitude, uiState.longitude)
+        pickerCenter = pickerTarget
+        userMovedMap = false
+        requestReportLocation(context) { loc ->
+            if (!userMovedMap) pickerTarget = GeoCoordinate(loc.latitude, loc.longitude)
+        }
+        showMapPicker = true
+    }
     val reportCategories = getReportCategories()
 
     val gpsActiveText = stringResource(R.string.gps_active)
@@ -348,12 +359,7 @@ fun ReportCreateContent(
             ) {
                 Column(verticalArrangement = Arrangement.spacedBy(7.dp)) {
                     Box(
-                        Modifier.fillMaxWidth().height(116.dp).clip(RoundedCornerShape(10.dp)).background(Color(0xFFE2EEDD)).clickable {
-                            requestReportLocation(context) { loc ->
-                                onConfirmMapLocation(loc.latitude, loc.longitude)
-                            }
-                            showMapPicker = true
-                        },
+                        Modifier.fillMaxWidth().height(116.dp).clip(RoundedCornerShape(10.dp)).background(Color(0xFFE2EEDD)).clickable { openMapPicker() },
                         contentAlignment = Alignment.Center
                     ) {
                         Text("⌁    ⌁      ⌁\n   ⌁     ⌁    ⌁", color = Color(0xFF91AFC0), fontSize = 26.sp, textAlign = TextAlign.Center)
@@ -363,12 +369,7 @@ fun ReportCreateContent(
                     }
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(7.dp)) {
                         OutlinedButton(
-                            onClick = {
-                                requestReportLocation(context) { loc ->
-                                    onConfirmMapLocation(loc.latitude, loc.longitude)
-                                }
-                                showMapPicker = true
-                            },
+                            onClick = { openMapPicker() },
                             modifier = Modifier.weight(1f).height(40.dp),
                             contentPadding = PaddingValues(4.dp),
                             shape = RoundedCornerShape(8.dp)
@@ -463,37 +464,39 @@ fun ReportCreateContent(
     }
 
     if (showMapPicker) {
+        val pickerStart = pickerTarget ?: GeoCoordinate(uiState.latitude, uiState.longitude)
         Dialog(onDismissRequest = { showMapPicker = false }) {
             Surface(modifier = Modifier.fillMaxWidth().height(400.dp), shape = RoundedCornerShape(16.dp)) {
                 Box(Modifier.fillMaxSize()) {
-                    AndroidView(
-                        factory = { ctx ->
-                            org.osmdroid.config.Configuration.getInstance().load(ctx, ctx.getSharedPreferences("osmdroid", Context.MODE_PRIVATE))
-                            MapView(ctx).apply {
-                                setTileSource(TileSourceFactory.MAPNIK)
-                                setMultiTouchControls(true)
-                                controller.setZoom(16.0)
-                                controller.setCenter(GeoPoint(uiState.latitude, uiState.longitude))
-                                val marker = Marker(this).apply {
-                                    position = GeoPoint(uiState.latitude, uiState.longitude)
-                                    isDraggable = true
-                                    setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
-                                }
-                                overlays.add(marker)
-                                setOnTouchListener { v, _ ->
-                                    v.parent?.requestDisallowInterceptTouchEvent(true)
-                                    false
-                                }
-                            }
-                        },
-                        modifier = Modifier.fillMaxSize()
+                    MapBox(
+                        center = pickerStart,
+                        zoom = 16.0,
+                        modifier = Modifier.fillMaxSize(),
+                        recenterTo = pickerTarget,
+                        textureView = true,
+                        onCameraCenterChanged = { pickerCenter = it },
+                        onUserGesture = { userMovedMap = true }
+                    )
+                    // Pin fijo: su punta (y = 22 de 24 en el ícono) queda en el centro exacto del mapa.
+                    Icon(
+                        Icons.Default.LocationOn,
+                        contentDescription = null,
+                        tint = Color(0xFFFF7629),
+                        modifier = Modifier
+                            .align(Alignment.Center)
+                            .offset(y = -MapPickerPinSize * 5f / 12f)
+                            .size(MapPickerPinSize)
                     )
                     Button(
-                        onClick = { showMapPicker = false },
+                        onClick = {
+                            val center = pickerCenter ?: pickerStart
+                            onConfirmMapLocation(center.latitude, center.longitude)
+                            showMapPicker = false
+                        },
                         modifier = Modifier.align(Alignment.BottomCenter).padding(16.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = VozNavy)
                     ) {
-                        Text(stringResource(R.string.dialog_understood))
+                        Text(stringResource(R.string.confirm_location))
                     }
                 }
             }

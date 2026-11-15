@@ -7,6 +7,8 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import coil.compose.AsyncImage
 import com.vozbarrial.ui.components.UserAvatarWithFrame
+import com.vozbarrial.ui.components.reportPinBitmap
+import com.vozbarrial.ui.components.userLocationDotBitmap
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -244,16 +246,7 @@ fun ReportsMap(name: String, profilePhoto: String? = null, equippedFrame: String
                     val locationOverlay = MyLocationNewOverlay(GpsMyLocationProvider(ctx), this).apply {
                         enableMyLocation()
                         enableFollowLocation()
-                        val dotBitmap = android.graphics.Bitmap.createBitmap(48, 48, android.graphics.Bitmap.Config.ARGB_8888).apply {
-                            val canvas = android.graphics.Canvas(this)
-                            val paint = android.graphics.Paint().apply {
-                                color = android.graphics.Color.parseColor("#3188E8")
-                                isAntiAlias = true
-                            }
-                            canvas.drawCircle(24f, 24f, 22f, paint)
-                            paint.color = android.graphics.Color.WHITE
-                            canvas.drawCircle(24f, 24f, 10f, paint)
-                        }
+                        val dotBitmap = userLocationDotBitmap()
                         setPersonIcon(dotBitmap)
                         setDirectionIcon(dotBitmap)
                     }
@@ -277,48 +270,11 @@ fun ReportsMap(name: String, profilePhoto: String? = null, equippedFrame: String
                         else -> report.category.equals(currentCategory, ignoreCase = true)
                     }
                 }.forEach { report ->
-                    val (iconRes, badgeColor) = when {
-                        report.category.contains("alumbrado", true) || report.category.contains("servicios", true) -> com.vozbarrial.R.drawable.ic_pin_alumbrado to android.graphics.Color.parseColor("#ca8a04")
-                        report.category.contains("emergencia", true) -> com.vozbarrial.R.drawable.ic_pin_emergencias to android.graphics.Color.parseColor("#dc2626")
-                        report.category.contains("infraestructura", true) || report.category.contains("vías", true) -> com.vozbarrial.R.drawable.ic_pin_infraestructura to android.graphics.Color.parseColor("#ea580c")
-                        report.category.contains("mascota", true) -> com.vozbarrial.R.drawable.ic_pin_mascotas to android.graphics.Color.parseColor("#9333ea")
-                        report.category.contains("seguridad", true) -> com.vozbarrial.R.drawable.ic_pin_security to android.graphics.Color.parseColor("#2563eb")
-                        else -> com.vozbarrial.R.drawable.ic_pin_comunidad to android.graphics.Color.parseColor("#16a34a")
-                    }
-
                     val marker = Marker(mapView).apply {
                         position = GeoPoint(report.latitude, report.longitude)
                         setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
 
-                        val size = 64
-                        val bitmap = android.graphics.Bitmap.createBitmap(size, size, android.graphics.Bitmap.Config.ARGB_8888)
-                        val canvas = android.graphics.Canvas(bitmap)
-
-                        val paint = android.graphics.Paint().apply {
-                            color = badgeColor
-                            isAntiAlias = true
-                        }
-                        canvas.drawCircle(size / 2f, size / 2f, size / 2f - 4f, paint)
-
-                        val borderPaint = android.graphics.Paint().apply {
-                            color = android.graphics.Color.WHITE
-                            style = android.graphics.Paint.Style.STROKE
-                            strokeWidth = 3f
-                            isAntiAlias = true
-                        }
-                        canvas.drawCircle(size / 2f, size / 2f, size / 2f - 4f, borderPaint)
-
-                        val drawable = androidx.core.content.ContextCompat.getDrawable(mapView.context, iconRes)
-                        if (drawable != null) {
-                            val iconSize = 34
-                            val left = (size - iconSize) / 2
-                            val top = (size - iconSize) / 2
-                            drawable.setBounds(left, top, left + iconSize, top + iconSize)
-                            drawable.colorFilter = android.graphics.PorterDuffColorFilter(android.graphics.Color.WHITE, android.graphics.PorterDuff.Mode.SRC_IN)
-                            drawable.draw(canvas)
-                        }
-
-                        icon = android.graphics.drawable.BitmapDrawable(mapView.resources, bitmap)
+                        icon = android.graphics.drawable.BitmapDrawable(mapView.resources, reportPinBitmap(mapView.context, report.category))
 
                         setOnMarkerClickListener { _, _ ->
                             selectedReportId = report.id

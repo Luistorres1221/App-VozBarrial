@@ -298,6 +298,7 @@
     <string name="report_description_label">Descripción de lo sucedido</string>
     <string name="report_description_placeholder">Describe detalles relevantes: hora aproximada, puntos de referencia clave o situación actual.</string>
     <string name="choose_location">Elige la ubicación</string>
+    <string name="confirm_location">Confirmar ubicación</string>
     <string name="drag_pin_instructions">Arrastra el pin hasta el lugar exacto del incidente.</string>
     <string name="edit_and_correct_report">Editar y Corregir Reporte</string>
     <string name="adjust_details_review">Ajusta los detalles para la revisión</string>

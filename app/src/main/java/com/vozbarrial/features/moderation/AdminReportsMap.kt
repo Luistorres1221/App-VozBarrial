@@ -3,16 +3,12 @@ package com.vozbarrial.features.moderation
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
-import android.graphics.Bitmap
-import android.graphics.Canvas
-import android.graphics.Paint
-import android.graphics.PorterDuff
-import android.graphics.PorterDuffColorFilter
 import android.graphics.drawable.BitmapDrawable
 import androidx.core.content.ContextCompat
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import com.vozbarrial.ui.components.UserAvatarWithFrame
+import com.vozbarrial.ui.components.reportPinBitmap
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -250,49 +246,11 @@ fun AdminReportsMap(
                         else -> report.category.equals(currentCategory, ignoreCase = true)
                     }
                 }.forEach { report ->
-                    val (iconRes, badgeColor) = when {
-                        report.category.contains("alumbrado", true) || report.category.contains("servicios", true) -> R.drawable.ic_pin_alumbrado to android.graphics.Color.parseColor("#ca8a04")
-                        report.category.contains("emergencia", true) -> R.drawable.ic_pin_emergencias to android.graphics.Color.parseColor("#dc2626")
-                        report.category.contains("infraestructura", true) || report.category.contains("vías", true) -> R.drawable.ic_pin_infraestructura to android.graphics.Color.parseColor("#ea580c")
-                        report.category.contains("mascota", true) -> R.drawable.ic_pin_mascotas to android.graphics.Color.parseColor("#9333ea")
-                        report.category.contains("seguridad", true) -> R.drawable.ic_pin_security to android.graphics.Color.parseColor("#2563eb")
-                        else -> R.drawable.ic_pin_comunidad to android.graphics.Color.parseColor("#16a34a")
-                    }
-
                     val marker = Marker(mapView).apply {
                         position = GeoPoint(report.latitude, report.longitude)
                         setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
 
-                        val size = 64
-                        val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
-                        val canvas = Canvas(bitmap)
-
-                        val paint = Paint().apply {
-                            color = badgeColor
-                            isAntiAlias = true
-                        }
-                        canvas.drawCircle(size / 2f, size / 2f, size / 2f - 4f, paint)
-
-                        val borderPaint = Paint().apply {
-                            color = android.graphics.Color.WHITE
-                            style = Paint.Style.STROKE
-                            strokeWidth = 3f
-                            isAntiAlias = true
-                        }
-                        canvas.drawCircle(size / 2f, size / 2f, size / 2f - 4f, borderPaint)
-
-                        val drawable = ContextCompat.getDrawable(mapView.context, iconRes)
-                        if (drawable != null) {
-                            val iconSize = 34
-                            val left = (size - iconSize) / 2
-                            val top = (size - iconSize) / 2
-                            drawable.setBounds(left, top, left + iconSize, top + iconSize)
-                            drawable.colorFilter =
-                                PorterDuffColorFilter(android.graphics.Color.WHITE, PorterDuff.Mode.SRC_IN)
-                            drawable.draw(canvas)
-                        }
-
-                        icon = BitmapDrawable(mapView.resources, bitmap)
+                        icon = BitmapDrawable(mapView.resources, reportPinBitmap(mapView.context, report.category))
 
                         setOnMarkerClickListener { _, _ ->
                             selectedReportId = report.id
