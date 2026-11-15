@@ -41,6 +41,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -113,6 +114,7 @@ fun ReportCreateRoute(
         onSelectCategory = viewModel::selectCategory,
         onUpdateTitle = viewModel::updateTitle,
         onUpdateDescription = viewModel::updateDescription,
+        onApplySuggestion = viewModel::applySuggestion,
         onPickPhoto = { picker.launch("image/*") },
         onRemovePhoto = viewModel::removePhoto,
         onConfirmMapLocation = viewModel::confirmMapLocation,
@@ -138,6 +140,7 @@ fun ReportCreateContent(
     onSelectCategory: (String) -> Unit,
     onUpdateTitle: (String) -> Unit,
     onUpdateDescription: (String) -> Unit,
+    onApplySuggestion: () -> Unit,
     onPickPhoto: () -> Unit,
     onRemovePhoto: (Int) -> Unit,
     onConfirmMapLocation: (Double, Double) -> Unit,
@@ -438,6 +441,45 @@ fun ReportCreateContent(
                             unfocusedBorderColor = Color.Transparent
                         )
                     )
+
+                    val suggestion = uiState.suggestedCategory
+                    when {
+                        uiState.suggesting -> Row(verticalAlignment = Alignment.CenterVertically) {
+                            CircularProgressIndicator(modifier = Modifier.size(14.dp), color = VozNavy, strokeWidth = 2.dp)
+                            Spacer(Modifier.width(7.dp))
+                            Text(stringResource(R.string.ai_analyzing), color = VozMuted, fontSize = 10.sp)
+                        }
+                        suggestion != null && suggestion != uiState.category -> {
+                            val suggested = reportCategories.firstOrNull { it.id == suggestion }
+                            if (suggested != null) {
+                                Column(
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .background(VozBlueSurface, RoundedCornerShape(10.dp))
+                                        .padding(start = 10.dp, top = 8.dp, end = 4.dp, bottom = 2.dp)
+                                ) {
+                                    Text(stringResource(R.string.ai_suggestion_title), color = VozMuted, fontSize = 10.sp)
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Text(suggested.icon, fontSize = 12.sp)
+                                        Spacer(Modifier.width(5.dp))
+                                        Text(
+                                            suggested.name,
+                                            color = VozNavy,
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis,
+                                            modifier = Modifier.weight(1f)
+                                        )
+                                        TextButton(onClick = onApplySuggestion) {
+                                            Text(stringResource(R.string.ai_use), color = VozNavy, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        suggestion != null -> Text(stringResource(R.string.ai_suggestion_matches), color = VozGreen, fontSize = 10.sp)
+                    }
                 }
             }
 

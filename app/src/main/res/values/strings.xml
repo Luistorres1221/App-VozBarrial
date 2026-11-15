@@ -489,4 +489,8 @@
     <string name="terms_section_3_content">Las alertas y reportes deben reflejar incidentes legítimos que afecten la seguridad, infraestructura o bienestar barrial.</string>
     <string name="terms_section_4_title">4. Privacidad y Seguridad</string>
     <string name="terms_section_4_content">Tus datos personales y credenciales se manejan bajo estrictos estándares de seguridad y cifrado.</string>
+    <string name="ai_analyzing">Analizando tu reporte…</string>
+    <string name="ai_suggestion_title">✨ Te sugerimos la categoría:</string>
+    <string name="ai_use">Usar</string>
+    <string name="ai_suggestion_matches">✓ La categoría elegida coincide con la sugerencia</string>
 </resources>

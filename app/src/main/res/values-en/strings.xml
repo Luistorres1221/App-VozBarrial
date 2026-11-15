@@ -495,4 +495,8 @@
     <string name="terms_section_3_content">Alerts and reports must reflect legitimate incidents affecting security, infrastructure, or neighborhood well-being.</string>
     <string name="terms_section_4_title">4. Privacy and Security</string>
     <string name="terms_section_4_content">Your personal data and credentials are handled under strict security and encryption standards.</string>
+    <string name="ai_analyzing">Analyzing your report…</string>
+    <string name="ai_suggestion_title">✨ We suggest the category:</string>
+    <string name="ai_use">Use</string>
+    <string name="ai_suggestion_matches">✓ The selected category matches the suggestion</string>
 </resources>
