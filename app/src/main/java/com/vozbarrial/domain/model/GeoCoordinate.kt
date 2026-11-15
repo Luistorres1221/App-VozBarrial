@@ -5,6 +5,9 @@ import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.sqrt
 
+/** Centro por defecto de los mapas cuando no hay una ubicación real del usuario (Bogotá). */
+val DEFAULT_MAP_CENTER = GeoCoordinate(4.60971, -74.08175)
+
 data class GeoCoordinate(val latitude: Double, val longitude: Double) {
 
     /** Distancia en metros a [other] usando la fórmula de Haversine. */

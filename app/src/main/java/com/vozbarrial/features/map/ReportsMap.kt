@@ -44,6 +44,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.osmdroid.config.Configuration
+import com.vozbarrial.domain.model.DEFAULT_MAP_CENTER
 import com.vozbarrial.domain.model.GeoCoordinate
 import com.vozbarrial.ui.components.MapBox
 import com.vozbarrial.ui.components.MapMarker
@@ -132,9 +133,10 @@ fun ReportsMap(name: String, profilePhoto: String? = null, equippedFrame: String
             null
         }
         if (lastKnown != null) GeoCoordinate(lastKnown.latitude, lastKnown.longitude) to 15.0
-        else GeoCoordinate(38.8951, -77.0364) to 14.0
+        else DEFAULT_MAP_CENTER to 14.0
     }
 
+    // Ubicación REAL del usuario; null mientras no se conozca (el centro por defecto no cuenta).
     var currentUserLocation by remember {
         mutableStateOf<GeoCoordinate?>(
             try {
@@ -145,9 +147,9 @@ fun ReportsMap(name: String, profilePhoto: String? = null, equippedFrame: String
                 } catch (_: SecurityException) {
                     null
                 }
-                if (last != null) GeoCoordinate(last.latitude, last.longitude) else GeoCoordinate(38.8951, -77.0364)
+                last?.let { GeoCoordinate(it.latitude, it.longitude) }
             } catch (_: Exception) {
-                GeoCoordinate(38.8951, -77.0364)
+                null
             }
         )
     }
@@ -245,7 +247,7 @@ fun ReportsMap(name: String, profilePhoto: String? = null, equippedFrame: String
             showUserLocation = hasLocationPermission,
             userLocationIcon = userLocationDotBitmap(),
             followUserRequest = followUserRequest,
-            userLocationFallback = currentUserLocation
+            userLocationFallback = currentUserLocation ?: DEFAULT_MAP_CENTER
         )
 
         Column(

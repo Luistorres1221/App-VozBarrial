@@ -12,6 +12,7 @@ import com.vozbarrial.ui.components.MapBox
 import com.vozbarrial.ui.components.MapMarker
 import com.vozbarrial.ui.components.reportPinBitmap
 import com.vozbarrial.ui.components.userLocationDotBitmap
+import com.vozbarrial.domain.model.DEFAULT_MAP_CENTER
 import com.vozbarrial.domain.model.GeoCoordinate
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -149,7 +150,7 @@ fun AdminReportsMap(
             null
         }
         if (lastKnown != null) GeoCoordinate(lastKnown.latitude, lastKnown.longitude) to 15.0
-        else GeoCoordinate(38.8951, -77.0364) to 14.0
+        else DEFAULT_MAP_CENTER to 14.0
     }
 
     // Centrar (zoom 15) una sola vez en la primera ubicación real, si el usuario aún no ha movido el mapa.
@@ -174,9 +175,9 @@ fun AdminReportsMap(
                 } catch (_: SecurityException) {
                     null
                 }
-                if (last != null) GeoCoordinate(last.latitude, last.longitude) else GeoCoordinate(38.8951, -77.0364)
+                last?.let { GeoCoordinate(it.latitude, it.longitude) }
             } catch (_: Exception) {
-                GeoCoordinate(38.8951, -77.0364)
+                null
             }
         )
     }
