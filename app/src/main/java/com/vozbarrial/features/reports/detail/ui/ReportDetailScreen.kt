@@ -33,6 +33,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.vozbarrial.domain.model.getLocalizedLevelName
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.vozbarrial.R
 import coil.compose.AsyncImage
@@ -461,7 +462,7 @@ private fun ReportDetailScreen(
                     Spacer(Modifier.width(12.dp))
                     Column(modifier = Modifier.weight(1f)) {
                         Text(authorName, color = VozNavy, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                        Text(com.vozbarrial.domain.model.Nivel.fromValue(report.authorNivel).displayName, color = VozGreen, fontSize = 11.sp, fontWeight = FontWeight.Medium)
+                        Text(getLocalizedLevelName(report.authorNivel), color = VozGreen, fontSize = 11.sp, fontWeight = FontWeight.Medium)
                         Spacer(Modifier.height(2.dp))
                         Text(stringResource(R.string.published_time, formattedDate), color = VozMuted, fontSize = 10.sp)
                     }

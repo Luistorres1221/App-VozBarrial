@@ -39,6 +39,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import com.vozbarrial.R
+import com.vozbarrial.domain.model.getLocalizedLevelName
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -451,7 +452,7 @@ private fun MapHeader(
             val firstName = name.substringBefore('%').substringBefore(' ')
             val greeting = stringResource(R.string.greeting_format, firstName)
             Text(greeting, color = VozNavy, fontWeight = FontWeight.Bold, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Text(com.vozbarrial.domain.model.Nivel.fromValue(nivel).displayName, color = VozGreen, fontSize = 11.sp, fontWeight = FontWeight.Medium)
+            Text(getLocalizedLevelName(nivel), color = VozGreen, fontSize = 11.sp, fontWeight = FontWeight.Medium)
         }
         Surface(
             modifier = Modifier.clickable(onClick = onPoints),
@@ -756,7 +757,7 @@ internal fun SelectedReportCard(
 }
 
 @Composable
-private fun getLocalizedCategoryName(category: String): String {
+internal fun getLocalizedCategoryName(category: String): String {
     return when {
         category.contains("seguridad", true) -> stringResource(R.string.category_security)
         category.contains("emergencia", true) -> stringResource(R.string.category_emergencies)

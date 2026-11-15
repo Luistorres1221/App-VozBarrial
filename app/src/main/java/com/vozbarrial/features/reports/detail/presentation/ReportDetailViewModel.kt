@@ -29,16 +29,57 @@ class ReportDetailViewModel : ViewModel() {
 
     fun setReport(report: Report) {
         _uiState.update { it.copy(report = report, supportCount = report.votes) }
+        fetchAuthorRealLevel(report)
         repository.observeReport(report.id) { currentReport ->
             if (currentReport != null) {
                 _uiState.update { state ->
-                    if (state.report.id == currentReport.id) state.copy(report = currentReport, supportCount = currentReport.votes)
-                    else state
+                    val currentNivel = state.report.authorNivel
+                    val updatedReport = currentReport.copy(authorNivel = if (currentNivel.isNotBlank() && currentNivel != "novato") currentNivel else currentReport.authorNivel)
+                    if (state.report.id == currentReport.id) {
+                        state.copy(report = updatedReport, supportCount = currentReport.votes)
+                    } else state
                 }
+                fetchAuthorRealLevel(currentReport)
             }
         }
         observeContributions(report.id)
         checkUserSupport(report.id)
+    }
+
+    private fun fetchAuthorRealLevel(report: Report) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val usersTask = firestore.collection("usuarios").get()
+                val usersSnapshot = com.google.android.gms.tasks.Tasks.await(usersTask)
+
+                var realNivel: String? = null
+                val targetUid = report.authorUid.trim()
+                val targetEmail = report.authorEmail.trim().lowercase()
+                val targetName = report.authorName.trim().lowercase()
+
+                for (doc in usersSnapshot.documents) {
+                    val docUid = doc.id.trim()
+                    val docEmail = doc.getString("email").orEmpty().trim().lowercase()
+                    val docName = doc.getString("name").orEmpty().trim().lowercase()
+                    val nivel = doc.getString("nivel") ?: "novato"
+
+                    if ((targetUid.isNotBlank() && docUid.equals(targetUid, true)) ||
+                        (targetEmail.isNotBlank() && docEmail.equals(targetEmail, true)) ||
+                        (targetName.isNotBlank() && docName.equals(targetName, true))) {
+                        realNivel = nivel
+                        break
+                    }
+                }
+
+                if (!realNivel.isNullOrBlank()) {
+                    withContext(Dispatchers.Main) {
+                        _uiState.update { state ->
+                            state.copy(report = state.report.copy(authorNivel = realNivel))
+                        }
+                    }
+                }
+            } catch (_: Exception) {}
+        }
     }
 
     fun stopObservingReport() = repository.stopObservingReport()

@@ -215,9 +215,10 @@ fun AdminReportsMap(
 
     val distanceFilteredReports = remember(reports, distance) {
         reports.filter { report ->
+            val status = report.status.trim().uppercase()
             val statusEnum = ReportStatus.fromString(report.status)
-            if (statusEnum == ReportStatus.RECHAZADO || statusEnum == ReportStatus.ELIMINADO) return@filter false
-            true
+            status == "POR_VERIFICAR" || status == "VERIFICADO" ||
+                statusEnum == ReportStatus.POR_VERIFICAR || statusEnum == ReportStatus.VERIFICADO
         }
     }
 

@@ -33,6 +33,7 @@ import com.vozbarrial.domain.model.Report
 import com.vozbarrial.domain.model.ReportStatus
 import com.vozbarrial.features.map.MapFilter
 import com.vozbarrial.features.map.formatTimeAgo
+import com.vozbarrial.features.map.getLocalizedCategoryName
 import com.vozbarrial.ui.components.UserAvatarWithFrame
 import com.vozbarrial.ui.theme.*
 
@@ -46,25 +47,26 @@ fun AdminModerationScreen(
     onNavigate: (String) -> Unit = {},
     onUpdateStatus: (String, String) -> Unit = { _, _ -> }
 ) {
-    var selectedTab by rememberSaveable { mutableStateOf("Pendientes") }
     var selectedCategory by rememberSaveable { mutableStateOf("TODOS") }
 
     val reportSnapshot = reports.toList()
-    val filteredReports = remember(reportSnapshot, selectedTab, selectedCategory) {
+    val baseReports = remember(reportSnapshot) {
         reportSnapshot.filter { r ->
-            val statusEnum = ReportStatus.fromString(r.status)
-            val matchesTab = when (selectedTab) {
-                "Pendientes" -> statusEnum == ReportStatus.POR_VERIFICAR
-                "Aprobados" -> statusEnum == ReportStatus.VERIFICADO || statusEnum == ReportStatus.RESUELTO
-                "Rechazados" -> statusEnum == ReportStatus.RECHAZADO
-                else -> true
-            }
-            val matchesCat = selectedCategory == "TODOS" || when (selectedCategory) {
+            val status = r.status.trim().uppercase()
+            status == "POR_VERIFICAR" || status.isBlank() || ReportStatus.fromString(r.status) == ReportStatus.POR_VERIFICAR
+        }
+    }
+    val filteredReports = remember(baseReports, selectedCategory) {
+        baseReports.filter { r ->
+            selectedCategory == "TODOS" || when (selectedCategory) {
                 "Seguridad" -> r.category.contains("seguridad", true)
-                "Infraestructura" -> r.category.contains("infraestructura", true) || r.category.contains("vías", true)
+                "Emergencias Médicas" -> r.category.contains("emergencia", true)
+                "Infraestructura y Vías", "Infraestructura" -> r.category.contains("infraestructura", true) || r.category.contains("vías", true)
+                "Mascotas y Animales" -> r.category.contains("mascota", true) || r.category.contains("animal", true)
+                "Comunidad y Entorno" -> r.category.contains("comunidad", true) || r.category.contains("entorno", true)
+                "Alumbrado y Servicios" -> r.category.contains("alumbrado", true) || r.category.contains("servicio", true)
                 else -> r.category.equals(selectedCategory, true)
             }
-            matchesTab && matchesCat
         }
     }
 
@@ -112,42 +114,6 @@ fun AdminModerationScreen(
 
         Spacer(Modifier.height(10.dp))
 
-        // Tabs Row (Pendientes, Aprobados, Rechazados)
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 12.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            val pendingCount = reports.count { ReportStatus.fromString(it.status) == ReportStatus.POR_VERIFICAR }
-            val approvedCount = reports.count { ReportStatus.fromString(it.status) == ReportStatus.VERIFICADO || ReportStatus.fromString(it.status) == ReportStatus.RESUELTO }
-            val rejectedCount = reports.count { ReportStatus.fromString(it.status) == ReportStatus.RECHAZADO }
-
-            ModerationTabButton(
-                title = stringResource(R.string.admin_tab_pending),
-                count = pendingCount,
-                selected = selectedTab == "Pendientes",
-                onClick = { selectedTab = "Pendientes" },
-                modifier = Modifier.weight(1f)
-            )
-            ModerationTabButton(
-                title = stringResource(R.string.approved_stat),
-                count = approvedCount,
-                selected = selectedTab == "Aprobados",
-                onClick = { selectedTab = "Aprobados" },
-                modifier = Modifier.weight(1f)
-            )
-            ModerationTabButton(
-                title = stringResource(R.string.admin_tab_rejections),
-                count = rejectedCount,
-                selected = selectedTab == "Rechazados",
-                onClick = { selectedTab = "Rechazados" },
-                modifier = Modifier.weight(1f)
-            )
-        }
-
-        Spacer(Modifier.height(10.dp))
-
         // Category Filter Chips
         Row(
             modifier = Modifier
@@ -158,14 +124,14 @@ fun AdminModerationScreen(
         ) {
             MapFilter(
                 text = stringResource(R.string.filter_all),
-                count = reports.size,
+                count = baseReports.size,
                 selected = selectedCategory == "TODOS",
                 iconVector = Icons.Default.Map,
                 onClick = { selectedCategory = "TODOS" }
             )
             MapFilter(
                 text = stringResource(R.string.filter_security),
-                count = reports.count { it.category.contains("seguridad", true) },
+                count = baseReports.count { it.category.contains("seguridad", true) },
                 selected = selectedCategory == "Seguridad",
                 iconRes = R.drawable.ic_pin_security,
                 onClick = {
@@ -173,18 +139,63 @@ fun AdminModerationScreen(
                 }
             )
             MapFilter(
+                text = stringResource(R.string.filter_emergencies),
+                count = baseReports.count { it.category.contains("emergencia", true) },
+                selected = selectedCategory == "Emergencias Médicas",
+                iconRes = R.drawable.ic_pin_emergencias,
+                onClick = {
+                    selectedCategory = if (selectedCategory == "Emergencias Médicas") "TODOS" else "Emergencias Médicas"
+                }
+            )
+            MapFilter(
                 text = stringResource(R.string.filter_infrastructure),
-                count = reports.count {
+                count = baseReports.count {
                     it.category.contains(
                         "infraestructura",
                         true
                     ) || it.category.contains("vías", true)
                 },
-                selected = selectedCategory == "Infraestructura",
+                selected = selectedCategory == "Infraestructura y Vías" || selectedCategory == "Infraestructura",
                 iconRes = R.drawable.ic_pin_infraestructura,
                 onClick = {
                     selectedCategory =
-                        if (selectedCategory == "Infraestructura") "TODOS" else "Infraestructura"
+                        if (selectedCategory == "Infraestructura y Vías") "TODOS" else "Infraestructura y Vías"
+                }
+            )
+            MapFilter(
+                text = stringResource(R.string.filter_pets),
+                count = baseReports.count {
+                    it.category.contains("mascota", true) || it.category.contains("animal", true)
+                },
+                selected = selectedCategory == "Mascotas y Animales",
+                iconRes = R.drawable.ic_pin_mascotas,
+                onClick = {
+                    selectedCategory =
+                        if (selectedCategory == "Mascotas y Animales") "TODOS" else "Mascotas y Animales"
+                }
+            )
+            MapFilter(
+                text = stringResource(R.string.filter_community),
+                count = baseReports.count {
+                    it.category.contains("comunidad", true) || it.category.contains("entorno", true)
+                },
+                selected = selectedCategory == "Comunidad y Entorno",
+                iconRes = R.drawable.ic_pin_comunidad,
+                onClick = {
+                    selectedCategory =
+                        if (selectedCategory == "Comunidad y Entorno") "TODOS" else "Comunidad y Entorno"
+                }
+            )
+            MapFilter(
+                text = stringResource(R.string.filter_lighting),
+                count = baseReports.count {
+                    it.category.contains("alumbrado", true) || it.category.contains("servicio", true)
+                },
+                selected = selectedCategory == "Alumbrado y Servicios",
+                iconRes = R.drawable.ic_pin_alumbrado,
+                onClick = {
+                    selectedCategory =
+                        if (selectedCategory == "Alumbrado y Servicios") "TODOS" else "Alumbrado y Servicios"
                 }
             )
         }
@@ -224,36 +235,6 @@ fun AdminModerationScreen(
     }
 }
 
-@Composable
-private fun ModerationTabButton(
-    title: String,
-    count: Int,
-    selected: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Surface(
-        modifier = modifier.height(36.dp).clickable(onClick = onClick),
-        shape = RoundedCornerShape(50),
-        color = if (selected) Color(0xFF071C2D) else Color.White,
-        shadowElevation = if (selected) 2.dp else 1.dp
-    ) {
-        Row(
-            modifier = Modifier.fillMaxSize().padding(horizontal = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center
-        ) {
-            Text(
-                text = stringResource(R.string.admin_tab_with_count, title, count),
-                color = if (selected) Color.White else VozNavy,
-                fontSize = 11.sp,
-                fontWeight = FontWeight.Bold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-        }
-    }
-}
 
 @Composable
 private fun ModerationReportCard(
@@ -285,7 +266,7 @@ private fun ModerationReportCard(
                         color = Color(0xFFE0F2FE)
                     ) {
                         Text(
-                            text = report.category,
+                            text = getLocalizedCategoryName(report.category),
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
                             color = Color(0xFF0369A1),
                             fontSize = 10.sp,

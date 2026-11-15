@@ -35,7 +35,7 @@ class ReportsRepository(
                 android.util.Log.e("ReportsRepository", "Error observing reports: ${error.message}", error)
                 return@addSnapshotListener
             }
-            val documents = snapshot?.documents ?: return@addSnapshotListener
+            val documents = snapshot?.documents ?: emptyList()
             onChange(documents.mapNotNull { it.toObject(Report::class.java)?.copy(id = it.id) })
         }
     }

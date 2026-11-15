@@ -26,23 +26,28 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.vozbarrial.R
 import com.vozbarrial.domain.model.Report
 import com.vozbarrial.ui.theme.*
 
-private data class EditReportCategory(val name: String, val description: String, val icon: String)
+private data class EditReportCategory(val id: String, val name: String, val description: String, val icon: String)
 
-private val editReportCategories = listOf(
-    EditReportCategory("Seguridad", "Robos, vandalismo, actividades sospechosas", "🛡"),
-    EditReportCategory("Emergencias Médicas", "Accidentes viales, primeros auxilios", "✚"),
-    EditReportCategory("Infraestructura y Vías", "Baches, daños en calles, pavimentos rotos", "🚧"),
-    EditReportCategory("Mascotas y Animales", "Animales perdidos, encontrados o en peligro", "🐾"),
-    EditReportCategory("Comunidad y Entorno", "Basuras, polución o ruido excesivo", "♧"),
-    EditReportCategory("Alumbrado y Servicios", "Postes sin luz, fugas de agua o gas", "💡"),
-)
+@Composable
+private fun getEditReportCategories(): List<EditReportCategory> {
+    return listOf(
+        EditReportCategory("Seguridad", stringResource(R.string.category_security), stringResource(R.string.category_security_desc), "🛡"),
+        EditReportCategory("Emergencias Médicas", stringResource(R.string.category_emergencies), stringResource(R.string.category_emergencies_desc), "✚"),
+        EditReportCategory("Infraestructura y Vías", stringResource(R.string.category_infrastructure), stringResource(R.string.category_infrastructure_desc), "🚧"),
+        EditReportCategory("Mascotas y Animales", stringResource(R.string.category_pets), stringResource(R.string.category_pets_desc), "🐾"),
+        EditReportCategory("Comunidad y Entorno", stringResource(R.string.category_community), stringResource(R.string.category_community_desc), "♧"),
+        EditReportCategory("Alumbrado y Servicios", stringResource(R.string.category_lighting), stringResource(R.string.category_lighting_desc), "💡"),
+    )
+}
 
 @Composable
 fun ReportEditRoute(
@@ -59,6 +64,8 @@ fun ReportEditRoute(
     var isUploading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var categoryMenu by remember { mutableStateOf(false) }
+
+    val editReportCategories = getEditReportCategories()
 
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         if (uri != null && photos.size < 2) {
@@ -80,7 +87,7 @@ fun ReportEditRoute(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             IconButton(onClick = onBack, modifier = Modifier.size(36.dp)) {
-                Icon(Icons.Default.ArrowBack, contentDescription = "Volver", tint = VozNavy, modifier = Modifier.size(19.dp))
+                Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.back), tint = VozNavy, modifier = Modifier.size(19.dp))
             }
             Box(
                 modifier = Modifier.size(29.dp).clip(CircleShape).background(VozNavy),
@@ -90,8 +97,8 @@ fun ReportEditRoute(
             }
             Spacer(Modifier.width(8.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text("Editar y Corregir Reporte", color = VozNavy, fontSize = 13.sp, fontWeight = FontWeight.Bold)
-                Text("Ajusta los detalles para la revisión", color = VozMuted, fontSize = 10.sp)
+                Text(stringResource(R.string.edit_and_correct_report), color = VozNavy, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.adjust_details_review), color = VozMuted, fontSize = 10.sp)
             }
         }
 
@@ -111,7 +118,7 @@ fun ReportEditRoute(
                         Icon(Icons.Default.Warning, null, tint = Color(0xFFDC2626), modifier = Modifier.size(18.dp))
                         Spacer(Modifier.width(6.dp))
                         Text(
-                            text = "Motivo de Rechazo por Moderación",
+                            text = stringResource(R.string.rejection_reason),
                             color = Color(0xFF991B1B),
                             fontWeight = FontWeight.Bold,
                             fontSize = 13.sp
@@ -119,7 +126,7 @@ fun ReportEditRoute(
                     }
                     if (!report.rejectionReason.isNullOrBlank()) {
                         Text(
-                            text = "Razón: ${report.rejectionReason}",
+                            text = "${stringResource(R.string.rejection_reason_label)} ${report.rejectionReason}",
                             color = Color(0xFF7F1D1D),
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 11.sp
@@ -127,7 +134,7 @@ fun ReportEditRoute(
                     }
                     if (!report.rejectionExplanation.isNullOrBlank()) {
                         Text(
-                            text = "Detalle: ${report.rejectionExplanation}",
+                            text = "${stringResource(R.string.rejection_detail)}${report.rejectionExplanation}",
                             color = Color(0xFF7F1D1D),
                             fontSize = 11.sp,
                             lineHeight = 15.sp
@@ -140,9 +147,9 @@ fun ReportEditRoute(
         // Section 1: Category
         Section(
             number = "1",
-            title = "Selecciona la Categoría",
-            subtitle = "Elige la más adecuada",
-            badgeText = "Requerido",
+            title = stringResource(R.string.select_category),
+            subtitle = stringResource(R.string.choose_most_suitable),
+            badgeText = stringResource(R.string.required),
             badgeColor = Color(0xFFFFEDD5),
             badgeTextColor = Color(0xFFC2410C)
         ) {
@@ -154,7 +161,7 @@ fun ReportEditRoute(
                     colors = ButtonDefaults.outlinedButtonColors(containerColor = Color.White),
                     border = BorderStroke(1.dp, Color(0xFFCBD5E1))
                 ) {
-                    val current = editReportCategories.firstOrNull { it.name == category } ?: editReportCategories[0]
+                    val current = editReportCategories.firstOrNull { it.id == category } ?: editReportCategories[0]
                     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                         Text(current.icon, fontSize = 17.sp)
                         Spacer(Modifier.width(9.dp))
@@ -178,7 +185,7 @@ fun ReportEditRoute(
                                     }
                                 }
                             },
-                            onClick = { category = option.name; categoryMenu = false }
+                            onClick = { category = option.id; categoryMenu = false }
                         )
                     }
                 }
@@ -188,9 +195,9 @@ fun ReportEditRoute(
         // Section 2: Photos
         Section(
             number = "2",
-            title = "Evidencia Fotográfica",
-            subtitle = "Máx. 2 fotos",
-            badgeText = "Opcional",
+            title = stringResource(R.string.photographic_evidence),
+            subtitle = stringResource(R.string.max_2_photos),
+            badgeText = stringResource(R.string.optional),
             badgeColor = Color(0xFFD1FAE5),
             badgeTextColor = Color(0xFF047857)
         ) {
@@ -218,7 +225,7 @@ fun ReportEditRoute(
                         verticalArrangement = Arrangement.Center
                     ) {
                         Icon(Icons.Default.CameraAlt, null, tint = VozMuted, modifier = Modifier.size(20.dp))
-                        Text("Subir", color = VozMuted, fontSize = 9.sp)
+                        Text(stringResource(R.string.upload), color = VozMuted, fontSize = 9.sp)
                     }
                 }
             }
@@ -227,9 +234,9 @@ fun ReportEditRoute(
         // Section 3: Title & Description
         Section(
             number = "3",
-            title = "Detalles del Incidente",
-            subtitle = "Título y descripción corregidos",
-            badgeText = "Requerido",
+            title = stringResource(R.string.incident_description),
+            subtitle = stringResource(R.string.corrected_title_desc),
+            badgeText = stringResource(R.string.required),
             badgeColor = Color(0xFFFFEDD5),
             badgeTextColor = Color(0xFFC2410C)
         ) {
@@ -240,14 +247,14 @@ fun ReportEditRoute(
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                     shape = RoundedCornerShape(10.dp),
-                    label = { Text("Título del reporte") }
+                    label = { Text(stringResource(R.string.report_title_label)) }
                 )
                 OutlinedTextField(
                     value = description,
                     onValueChange = { description = it },
                     modifier = Modifier.fillMaxWidth().height(110.dp),
                     shape = RoundedCornerShape(10.dp),
-                    label = { Text("Descripción detallada...") }
+                    label = { Text(stringResource(R.string.report_description_label)) }
                 )
             }
         }
@@ -256,10 +263,13 @@ fun ReportEditRoute(
             Text(errorMessage!!, color = Color(0xFFDC2626), fontSize = 12.sp)
         }
 
+        val errorCompleteMsg = stringResource(R.string.error_complete_title_desc)
+        val errorUpdateMsg = stringResource(R.string.report_updated_error)
+
         Button(
             onClick = {
                 if (title.isBlank() || description.isBlank()) {
-                    errorMessage = "Por favor completa el título y la descripción."
+                    errorMessage = errorCompleteMsg
                     return@Button
                 }
                 isUploading = true
@@ -269,7 +279,7 @@ fun ReportEditRoute(
                     if (success) {
                         onBack()
                     } else {
-                        errorMessage = err ?: "Error al actualizar el reporte."
+                        errorMessage = err ?: errorUpdateMsg
                     }
                 }
             },
@@ -283,7 +293,7 @@ fun ReportEditRoute(
             } else {
                 Icon(Icons.Default.Send, null, modifier = Modifier.size(16.dp))
                 Spacer(Modifier.width(8.dp))
-                Text("Actualizar y Reenviar Reporte", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                Text(stringResource(R.string.update_and_resend_report), fontWeight = FontWeight.Bold, fontSize = 13.sp)
             }
         }
     }

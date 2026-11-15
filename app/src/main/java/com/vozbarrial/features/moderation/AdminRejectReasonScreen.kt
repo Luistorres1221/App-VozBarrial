@@ -34,6 +34,7 @@ import coil.compose.AsyncImage
 import com.vozbarrial.R
 import com.vozbarrial.domain.model.Report
 import com.vozbarrial.features.map.formatTimeAgo
+import com.vozbarrial.features.map.getLocalizedCategoryName
 import com.vozbarrial.ui.components.UserAvatarWithFrame
 import com.vozbarrial.ui.theme.*
 
@@ -167,7 +168,7 @@ fun AdminRejectReasonScreen(
                     Column(modifier = Modifier.weight(1f)) {
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                             Surface(shape = RoundedCornerShape(50), color = Color(0xFFE0F2FE)) {
-                                Text(report.category, modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp), color = Color(0xFF0369A1), fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                                Text(getLocalizedCategoryName(report.category), modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp), color = Color(0xFF0369A1), fontSize = 9.sp, fontWeight = FontWeight.Bold)
                             }
                             Text("• ${report.authorName}", fontSize = 10.sp, color = VozMuted, maxLines = 1)
                         }

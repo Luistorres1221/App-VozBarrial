@@ -316,6 +316,11 @@
     <string name="contribution_placeholder">Aporta datos, testigos o fotos adicionales…</string>
     <string name="sending">Enviando…</string>
     <string name="send">Enviar</string>
+    <string name="optional">Opcional</string>
+    <string name="corrected_title_desc">Título y descripción corregidos</string>
+    <string name="rejection_detail">Detalle: </string>
+    <string name="error_complete_title_desc">Por favor completa el título y la descripción.</string>
+    <string name="max_2_photos">Máx. 2 fotos</string>
 
     <!-- Community Notifications -->
     <string name="notification_achievement_title">Logro: %1$s</string>

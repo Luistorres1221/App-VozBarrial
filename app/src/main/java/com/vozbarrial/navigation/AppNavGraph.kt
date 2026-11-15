@@ -27,12 +27,17 @@ import com.vozbarrial.core.result.AuthError
 import com.vozbarrial.domain.model.Usurious
 import com.vozbarrial.domain.model.UserRole
 import com.vozbarrial.domain.model.Nivel
+import com.vozbarrial.domain.model.ReportStatus
 import com.vozbarrial.R
 
 @Composable
 fun AppNavGraph() {
     val context = LocalContext.current
     var reportStatusUpdatesInFlight by remember { mutableStateOf(emptySet<String>()) }
+
+    val reportsViewModel: ReportsViewModel = viewModel()
+    val navigationViewModel: NavigationViewModel = viewModel()
+    val storeViewModel: com.vozbarrial.features.store.StoreViewModel = viewModel()
 
     fun updateReportStatus(
         reportId: String,
@@ -48,6 +53,13 @@ fun AppNavGraph() {
             .update(updates)
             .addOnSuccessListener {
                 reportStatusUpdatesInFlight = reportStatusUpdatesInFlight - reportId
+                val newStatus = updates["status"] as? String
+                if (newStatus != null) {
+                    val index = reportsViewModel.reports.indexOfFirst { it.id == reportId }
+                    if (index != -1) {
+                        reportsViewModel.reports[index] = reportsViewModel.reports[index].copy(status = newStatus)
+                    }
+                }
                 Toast.makeText(context, context.getString(R.string.report_updated_success), Toast.LENGTH_SHORT).show()
                 onSuccess()
             }
@@ -56,10 +68,6 @@ fun AppNavGraph() {
                 Toast.makeText(context, context.getString(R.string.report_updated_error), Toast.LENGTH_LONG).show()
             }
     }
-
-    val reportsViewModel: ReportsViewModel = viewModel()
-    val navigationViewModel: NavigationViewModel = viewModel()
-    val storeViewModel: com.vozbarrial.features.store.StoreViewModel = viewModel()
 
     val screen by navigationViewModel.screen.collectAsStateWithLifecycle()
     val dashboardPage by navigationViewModel.dashboardPage.collectAsStateWithLifecycle()
@@ -315,6 +323,12 @@ fun AppNavGraph() {
             },
             onResolveReport = { reportId, onResult ->
                 reportsViewModel.resolveReport(reportId) { result ->
+                    if (result.isSuccess) {
+                        val index = reportsViewModel.reports.indexOfFirst { it.id == reportId }
+                        if (index != -1) {
+                            reportsViewModel.reports[index] = reportsViewModel.reports[index].copy(status = ReportStatus.RESUELTO.value)
+                        }
+                    }
                     val message = if (result.isSuccess) R.string.report_updated_success else R.string.report_updated_error
                     val duration = if (result.isSuccess) Toast.LENGTH_SHORT else Toast.LENGTH_LONG
                     Toast.makeText(context, context.getString(message), duration).show()
