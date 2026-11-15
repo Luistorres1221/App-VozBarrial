@@ -14,4 +14,6 @@ data class ReportCreateUiState(
     val locationMessage: String = "",
     val publishing: Boolean = false,
     val error: String? = null,
+    val suggestedCategory: String? = null,
+    val suggesting: Boolean = false,
 )
