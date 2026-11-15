@@ -1,7 +1,15 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.plugin.compose")
     id("com.google.gms.google-services")
+}
+
+val localProperties = Properties()
+val localPropertiesFile = rootProject.file("local.properties")
+if (localPropertiesFile.exists()) {
+    localPropertiesFile.inputStream().use { localProperties.load(it) }
 }
 
 android {
@@ -14,10 +22,17 @@ android {
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"
+
+        resValue("string", "mapbox_access_token", localProperties.getProperty("MAPBOX_ACCESS_TOKEN", ""))
+
+        ndk {
+            abiFilters += listOf("arm64-v8a", "x86_64")
+        }
     }
 
     buildFeatures {
         compose = true
+        resValues = true
     }
 
 }
@@ -40,6 +55,8 @@ dependencies {
     implementation(platform("androidx.compose:compose-bom:2024.12.01"))
     implementation(platform("com.google.firebase:firebase-bom:33.16.0"))
     implementation("org.osmdroid:osmdroid-android:6.1.18")
+    implementation("com.mapbox.maps:android-ndk27:11.22.0")
+    implementation("com.mapbox.extension:maps-compose-ndk27:11.22.0")
     implementation("androidx.biometric:biometric:1.1.0")
     debugImplementation("androidx.compose.ui:ui-tooling")
 }
