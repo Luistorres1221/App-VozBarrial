@@ -43,14 +43,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.viewinterop.AndroidView
 import org.osmdroid.config.Configuration
-import org.osmdroid.tileprovider.tilesource.TileSourceFactory
-import org.osmdroid.util.GeoPoint
-import org.osmdroid.views.MapView
-import org.osmdroid.views.overlay.Marker
-import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
-import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider
+import com.vozbarrial.domain.model.GeoCoordinate
+import com.vozbarrial.ui.components.MapBox
+import com.vozbarrial.ui.components.MapMarker
 import com.vozbarrial.ui.theme.*
 import com.vozbarrial.domain.model.Report
 import com.vozbarrial.domain.model.ReportStatus
@@ -122,22 +118,25 @@ fun ReportsMap(name: String, profilePhoto: String? = null, equippedFrame: String
         }
     }
 
-    var mapViewInstance by remember { mutableStateOf<MapView?>(null) }
+    var followUserRequest by remember { mutableIntStateOf(0) }
 
-    LaunchedEffect(hasLocationPermission, mapViewInstance) {
-        if (hasLocationPermission && mapViewInstance != null) {
-            val overlay = mapViewInstance?.overlays?.firstOrNull { overlay -> overlay is MyLocationNewOverlay } as? MyLocationNewOverlay
-            overlay?.enableMyLocation()
-            overlay?.enableFollowLocation()
-            mapViewInstance?.invalidate()
+    // Cámara inicial: zoom 15 en la última ubicación conocida; si no hay, zoom 14 en el centro por defecto.
+    val initialCamera = remember {
+        val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as? android.location.LocationManager
+        val lastKnown = try {
+            locationManager?.getLastKnownLocation(android.location.LocationManager.GPS_PROVIDER)
+                ?: locationManager?.getLastKnownLocation(android.location.LocationManager.NETWORK_PROVIDER)
+        } catch (_: SecurityException) {
+            null
+        } catch (_: Exception) {
+            null
         }
+        if (lastKnown != null) GeoCoordinate(lastKnown.latitude, lastKnown.longitude) to 15.0
+        else GeoCoordinate(38.8951, -77.0364) to 14.0
     }
 
-    LaunchedEffect(reports) {
-        mapViewInstance?.invalidate()
-    }
     var currentUserLocation by remember {
-        mutableStateOf<GeoPoint?>(
+        mutableStateOf<GeoCoordinate?>(
             try {
                 val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as? android.location.LocationManager
                 val last = try {
@@ -146,9 +145,9 @@ fun ReportsMap(name: String, profilePhoto: String? = null, equippedFrame: String
                 } catch (_: SecurityException) {
                     null
                 }
-                if (last != null) GeoPoint(last.latitude, last.longitude) else GeoPoint(38.8951, -77.0364)
+                if (last != null) GeoCoordinate(last.latitude, last.longitude) else GeoCoordinate(38.8951, -77.0364)
             } catch (_: Exception) {
-                GeoPoint(38.8951, -77.0364)
+                GeoCoordinate(38.8951, -77.0364)
             }
         )
     }
@@ -156,7 +155,7 @@ fun ReportsMap(name: String, profilePhoto: String? = null, equippedFrame: String
     DisposableEffect(hasLocationPermission) {
         val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as? android.location.LocationManager
         val listener = android.location.LocationListener { location ->
-            currentUserLocation = GeoPoint(location.latitude, location.longitude)
+            currentUserLocation = GeoCoordinate(location.latitude, location.longitude)
         }
         try {
             locationManager?.requestLocationUpdates(
@@ -174,8 +173,7 @@ fun ReportsMap(name: String, profilePhoto: String? = null, equippedFrame: String
             val last = locationManager?.getLastKnownLocation(android.location.LocationManager.GPS_PROVIDER)
                 ?: locationManager?.getLastKnownLocation(android.location.LocationManager.NETWORK_PROVIDER)
             if (last != null) {
-                currentUserLocation = GeoPoint(last.latitude, last.longitude)
-                mapViewInstance?.controller?.setCenter(GeoPoint(last.latitude, last.longitude))
+                currentUserLocation = GeoCoordinate(last.latitude, last.longitude)
             }
         } catch (_: SecurityException) {}
 
@@ -186,7 +184,7 @@ fun ReportsMap(name: String, profilePhoto: String? = null, equippedFrame: String
         }
     }
 
-    val myLoc = currentUserLocation ?: (mapViewInstance?.overlays?.firstOrNull { it is MyLocationNewOverlay } as? MyLocationNewOverlay)?.myLocation
+    val myLoc = currentUserLocation
     val maxMeters = when (distance) {
         "500 m" -> 500.0
         "1.5 km" -> 1500.0
@@ -207,8 +205,8 @@ fun ReportsMap(name: String, profilePhoto: String? = null, equippedFrame: String
             }
 
             if (hasLocationPermission && myLoc != null && maxMeters < Double.MAX_VALUE) {
-                val reportPoint = GeoPoint(report.latitude, report.longitude)
-                val distanceMeters = myLoc.distanceToAsDouble(reportPoint)
+                val reportPoint = GeoCoordinate(report.latitude, report.longitude)
+                val distanceMeters = myLoc.distanceMetersTo(reportPoint)
                 distanceMeters <= maxMeters
             } else {
                 true
@@ -216,75 +214,38 @@ fun ReportsMap(name: String, profilePhoto: String? = null, equippedFrame: String
         }
     }
 
-    Box(modifier = Modifier.fillMaxSize().background(VozBackground)) {
-        AndroidView(
-            modifier = Modifier.fillMaxSize(),
-            factory = { ctx ->
-                MapView(ctx).apply {
-                    setTileSource(TileSourceFactory.MAPNIK)
-                    setMultiTouchControls(true)
-                    setBuiltInZoomControls(false)
-
-                    val locationManager = ctx.getSystemService(Context.LOCATION_SERVICE) as? android.location.LocationManager
-                    val lastKnown = try {
-                        locationManager?.getLastKnownLocation(android.location.LocationManager.GPS_PROVIDER)
-                            ?: locationManager?.getLastKnownLocation(android.location.LocationManager.NETWORK_PROVIDER)
-                    } catch (_: SecurityException) {
-                        null
-                    } catch (_: Exception) {
-                        null
-                    }
-
-                    if (lastKnown != null) {
-                        controller.setZoom(15.0)
-                        controller.setCenter(GeoPoint(lastKnown.latitude, lastKnown.longitude))
-                    } else {
-                        controller.setZoom(14.0)
-                        controller.setCenter(GeoPoint(38.8951, -77.0364))
-                    }
-
-                    val locationOverlay = MyLocationNewOverlay(GpsMyLocationProvider(ctx), this).apply {
-                        enableMyLocation()
-                        enableFollowLocation()
-                        val dotBitmap = userLocationDotBitmap()
-                        setPersonIcon(dotBitmap)
-                        setDirectionIcon(dotBitmap)
-                    }
-                    overlays.add(locationOverlay)
-
-                    mapViewInstance = this
-                }
-            },
-            update = { mapView ->
-                val currentCategory = selectedCategory
-                mapView.overlays.removeAll { it is Marker }
-
-                distanceFilteredReports.filter { report ->
-                    currentCategory == "TODOS" || when (currentCategory) {
-                        "Seguridad" -> report.category.contains("seguridad", true)
-                        "Emergencias Médicas" -> report.category.contains("emergencia", true)
-                        "Infraestructura y Vías" -> report.category.contains("infraestructura", true) || report.category.contains("vías", true)
-                        "Mascotas y Animales" -> report.category.contains("mascota", true) || report.category.contains("animal", true)
-                        "Comunidad y Entorno" -> report.category.contains("comunidad", true) || report.category.contains("entorno", true)
-                        "Alumbrado y Servicios" -> report.category.contains("alumbrado", true) || report.category.contains("servicio", true)
-                        else -> report.category.equals(currentCategory, ignoreCase = true)
-                    }
-                }.forEach { report ->
-                    val marker = Marker(mapView).apply {
-                        position = GeoPoint(report.latitude, report.longitude)
-                        setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
-
-                        icon = android.graphics.drawable.BitmapDrawable(mapView.resources, reportPinBitmap(mapView.context, report.category))
-
-                        setOnMarkerClickListener { _, _ ->
-                            selectedReportId = report.id
-                            true
-                        }
-                    }
-                    mapView.overlays.add(marker)
-                }
-                mapView.invalidate()
+    val mapMarkers = remember(distanceFilteredReports, selectedCategory) {
+        val currentCategory = selectedCategory
+        distanceFilteredReports.filter { report ->
+            currentCategory == "TODOS" || when (currentCategory) {
+                "Seguridad" -> report.category.contains("seguridad", true)
+                "Emergencias Médicas" -> report.category.contains("emergencia", true)
+                "Infraestructura y Vías" -> report.category.contains("infraestructura", true) || report.category.contains("vías", true)
+                "Mascotas y Animales" -> report.category.contains("mascota", true) || report.category.contains("animal", true)
+                "Comunidad y Entorno" -> report.category.contains("comunidad", true) || report.category.contains("entorno", true)
+                "Alumbrado y Servicios" -> report.category.contains("alumbrado", true) || report.category.contains("servicio", true)
+                else -> report.category.equals(currentCategory, ignoreCase = true)
             }
+        }.map { report ->
+            MapMarker(
+                id = report.id,
+                position = GeoCoordinate(report.latitude, report.longitude),
+                icon = reportPinBitmap(context, report.category)
+            )
+        }
+    }
+
+    Box(modifier = Modifier.fillMaxSize().background(VozBackground)) {
+        MapBox(
+            center = initialCamera.first,
+            zoom = initialCamera.second,
+            modifier = Modifier.fillMaxSize(),
+            markers = mapMarkers,
+            onMarkerClick = { id -> selectedReportId = id },
+            showUserLocation = hasLocationPermission,
+            userLocationIcon = userLocationDotBitmap(),
+            followUserRequest = followUserRequest,
+            userLocationFallback = currentUserLocation
         )
 
         Column(
@@ -428,34 +389,7 @@ fun ReportsMap(name: String, profilePhoto: String? = null, equippedFrame: String
                 .zIndex(2f),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            MapControl(Icons.Default.MyLocation, "Mi ubicación", onClick = {
-                val myLoc = (mapViewInstance?.overlays?.firstOrNull { it is MyLocationNewOverlay } as? MyLocationNewOverlay)?.myLocation
-                if (myLoc != null) {
-                    mapViewInstance?.controller?.setCenter(myLoc)
-                    mapViewInstance?.controller?.setZoom(16.0)
-                } else if (currentUserLocation != null) {
-                    mapViewInstance?.controller?.setCenter(currentUserLocation)
-                    mapViewInstance?.controller?.setZoom(16.0)
-                } else {
-                    try {
-                        val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as? android.location.LocationManager
-                        val last = locationManager?.getLastKnownLocation(android.location.LocationManager.GPS_PROVIDER)
-                            ?: locationManager?.getLastKnownLocation(android.location.LocationManager.NETWORK_PROVIDER)
-                        if (last != null) {
-                            val p = GeoPoint(last.latitude, last.longitude)
-                            currentUserLocation = p
-                            mapViewInstance?.controller?.setCenter(p)
-                            mapViewInstance?.controller?.setZoom(16.0)
-                        } else {
-                            mapViewInstance?.controller?.setCenter(GeoPoint(4.60971, -74.08175))
-                            mapViewInstance?.controller?.setZoom(14.0)
-                        }
-                    } catch (_: Exception) {
-                        mapViewInstance?.controller?.setCenter(GeoPoint(4.60971, -74.08175))
-                        mapViewInstance?.controller?.setZoom(14.0)
-                    }
-                }
-            })
+            MapControl(Icons.Default.MyLocation, "Mi ubicación", onClick = { followUserRequest++ })
         }
 
         selectedReportId?.let { id -> reports.firstOrNull { it.id == id }?.let { report ->
@@ -617,7 +551,7 @@ private fun MapControl(icon: ImageVector, label: String, onClick: () -> Unit) {
 @Composable
 internal fun SelectedReportCard(
     report: CommunityReport,
-    myLoc: GeoPoint?,
+    myLoc: GeoCoordinate?,
     modifier: Modifier,
     onClose: () -> Unit,
     onViewReport: () -> Unit,
@@ -683,8 +617,8 @@ internal fun SelectedReportCard(
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     if (myLoc != null) {
-                        val reportPoint = GeoPoint(report.latitude, report.longitude)
-                        val distMeters = myLoc.distanceToAsDouble(reportPoint)
+                        val reportPoint = GeoCoordinate(report.latitude, report.longitude)
+                        val distMeters = myLoc.distanceMetersTo(reportPoint)
                         val distText = if (distMeters < 1000) "${distMeters.toInt()} m" else String.format(Locale.US, "%.1f km", distMeters / 1000.0)
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(Icons.Default.LocationOn, null, tint = Color(0xFFE34652), modifier = Modifier.size(13.dp))
