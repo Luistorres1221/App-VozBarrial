@@ -6,6 +6,7 @@ import android.content.pm.PackageManager
 import androidx.core.content.ContextCompat
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import com.vozbarrial.ui.components.UserAvatarWithFrame
 import com.vozbarrial.ui.components.MapBox
 import com.vozbarrial.ui.components.MapMarker
@@ -88,17 +89,25 @@ fun AdminReportsMap(
         }
     }
 
-    var hasLocationPermission by remember {
-        mutableStateOf(
-            ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
+    val isLocationPermissionGranted = {
+        ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
             ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
-        )
     }
+
+    var hasLocationPermission by remember { mutableStateOf(isLocationPermissionGranted()) }
 
     val locationPermissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
-        hasLocationPermission = permissions.values.any { it }
+        hasLocationPermission = permissions.values.any { it } || isLocationPermissionGranted()
+    }
+
+    // Al iniciar sesión se pasa primero por el mapa del ciudadano, que ya pidió el permiso: la petición de
+    // esta pantalla puede volver denegada aunque el usuario acepte el diálogo. Por eso se vuelve a revisar
+    // el permiso cada vez que la pantalla se reanuda (por ejemplo, al cerrarse el diálogo de permisos).
+    LifecycleResumeEffect(Unit) {
+        hasLocationPermission = isLocationPermissionGranted()
+        onPauseOrDispose {}
     }
 
     var selectedCategory by rememberSaveable { mutableStateOf("TODOS") }
@@ -143,6 +152,18 @@ fun AdminReportsMap(
         else GeoCoordinate(38.8951, -77.0364) to 14.0
     }
 
+    // Centrar (zoom 15) una sola vez en la primera ubicación real, si el usuario aún no ha movido el mapa.
+    // El valor por defecto de currentUserLocation no cuenta como ubicación real.
+    var userMovedMap by remember { mutableStateOf(false) }
+    var hasCenteredOnUser by remember { mutableStateOf(false) }
+    var recenterTarget by remember { mutableStateOf<GeoCoordinate?>(null) }
+    val onRealLocation: (GeoCoordinate) -> Unit = { location ->
+        if (!hasCenteredOnUser && !userMovedMap) {
+            recenterTarget = location
+            hasCenteredOnUser = true
+        }
+    }
+
     var currentUserLocation by remember {
         mutableStateOf<GeoCoordinate?>(
             try {
@@ -164,6 +185,7 @@ fun AdminReportsMap(
         val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as? android.location.LocationManager
         val listener = android.location.LocationListener { location ->
             currentUserLocation = GeoCoordinate(location.latitude, location.longitude)
+            onRealLocation(GeoCoordinate(location.latitude, location.longitude))
         }
         try {
             locationManager?.requestLocationUpdates(
@@ -182,6 +204,7 @@ fun AdminReportsMap(
                 ?: locationManager?.getLastKnownLocation(android.location.LocationManager.NETWORK_PROVIDER)
             if (last != null) {
                 currentUserLocation = GeoCoordinate(last.latitude, last.longitude)
+                onRealLocation(GeoCoordinate(last.latitude, last.longitude))
             }
         } catch (_: SecurityException) {}
 
@@ -233,7 +256,10 @@ fun AdminReportsMap(
             markers = mapMarkers,
             onMarkerClick = { id -> selectedReportId = id },
             showUserLocation = hasLocationPermission,
-            userLocationIcon = userLocationDotBitmap()
+            userLocationIcon = userLocationDotBitmap(),
+            recenterTo = recenterTarget,
+            recenterZoom = 15.0,
+            onUserGesture = { userMovedMap = true }
         )
 
         // Top Header and Filters

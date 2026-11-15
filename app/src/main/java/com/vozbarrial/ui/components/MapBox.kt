@@ -55,7 +55,8 @@ private fun GeoCoordinate.toPoint(): Point = Point.fromLngLat(longitude, latitud
  * @param userLocationIcon ícono del punto de ubicación; si es null se usa el puck por defecto de Mapbox.
  * @param followUserRequest contador: cada incremento centra la cámara en el usuario con zoom 16.
  * @param userLocationFallback si no se muestra la ubicación, [followUserRequest] centra aquí con zoom 16.
- * @param recenterTo cada vez que cambia, la cámara se centra en ese punto (sin cambiar el zoom).
+ * @param recenterTo cada vez que cambia, la cámara se centra en ese punto y deja de seguir al usuario.
+ * @param recenterZoom zoom a aplicar junto con [recenterTo]; si es null se conserva el zoom actual.
  * @param interactive si es false, el mapa no responde a gestos.
  * @param textureView dibuja el mapa en un TextureView para que respete el recorte de su contenedor
  *   (por ejemplo, las esquinas redondeadas de un diálogo).
@@ -74,6 +75,7 @@ fun MapBox(
     followUserRequest: Int = 0,
     userLocationFallback: GeoCoordinate? = null,
     recenterTo: GeoCoordinate? = null,
+    recenterZoom: Double? = null,
     interactive: Boolean = true,
     textureView: Boolean = false,
     onCameraCenterChanged: ((GeoCoordinate) -> Unit)? = null,
@@ -102,10 +104,15 @@ fun MapBox(
         }
     }
 
-    // Recentrar cuando cambia recenterTo.
+    // Recentrar cuando cambia recenterTo. idle() cancela un seguimiento del puck en curso para que no
+    // anule este centrado (el seguimiento puede haberse iniciado antes de que hubiera posición).
     LaunchedEffect(recenterTo) {
         recenterTo?.let { target ->
-            mapViewportState.setCameraOptions { center(target.toPoint()) }
+            mapViewportState.idle()
+            mapViewportState.setCameraOptions {
+                center(target.toPoint())
+                recenterZoom?.let { zoom(it) }
+            }
         }
     }
 
