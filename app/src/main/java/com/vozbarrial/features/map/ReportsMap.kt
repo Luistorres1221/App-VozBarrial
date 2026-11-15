@@ -43,7 +43,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import org.osmdroid.config.Configuration
 import com.vozbarrial.domain.model.DEFAULT_MAP_CENTER
 import com.vozbarrial.domain.model.GeoCoordinate
 import com.vozbarrial.ui.components.MapBox
@@ -72,10 +71,6 @@ data class CommunityReport(
 @Composable
 fun ReportsMap(name: String, profilePhoto: String? = null, equippedFrame: String = "", onSignOut: () -> Unit, onNavigate: (String) -> Unit = {}, monedas: Int = 0, nivel: String = "novato", communityReports: List<Report> = emptyList(), onEarnRewards: (Int) -> Unit = {}) {
     val context = LocalContext.current
-    remember {
-        Configuration.getInstance().load(context, context.getSharedPreferences("osm_prefs", Context.MODE_PRIVATE))
-        true
-    }
 
     val reports = remember(communityReports, communityReports.size, communityReports.map { it.id to it.imageUrl }.hashCode()) {
         communityReports.map { report ->

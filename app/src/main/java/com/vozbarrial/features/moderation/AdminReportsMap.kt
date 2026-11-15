@@ -43,7 +43,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.vozbarrial.R
-import org.osmdroid.config.Configuration
 import com.vozbarrial.ui.theme.*
 import com.vozbarrial.domain.model.Report
 import com.vozbarrial.domain.model.ReportStatus
@@ -64,10 +63,6 @@ fun AdminReportsMap(
     onEarnRewards: (Int) -> Unit = {}
 ) {
     val context = LocalContext.current
-    remember {
-        Configuration.getInstance().load(context, context.getSharedPreferences("osm_prefs", Context.MODE_PRIVATE))
-        true
-    }
 
     val communityReportsSnapshot = communityReports.toList()
     val reports = remember(communityReportsSnapshot) {
