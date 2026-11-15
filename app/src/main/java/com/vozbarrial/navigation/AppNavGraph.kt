@@ -89,6 +89,7 @@ fun AppNavGraph() {
     var signedInPoints by remember { mutableIntStateOf(1450) }
     var signedInMonedas by remember { mutableIntStateOf(0) }
     var signedInNivel by remember { mutableStateOf("novato") }
+    var signedInRole by remember { mutableStateOf(UserRole.USUARIO) }
     var ownedFramesText by remember { mutableStateOf("Clásico Cívico") }
     val ownedFrames = ownedFramesText.split("|").filter { it.isNotBlank() }.toSet()
     var claimedAchievements by remember { mutableStateOf(emptyList<String>()) }
@@ -160,6 +161,7 @@ fun AppNavGraph() {
                         signedInMonedas = usuario.monedas
                         signedInNivel = usuario.nivel
                         signedInUid = currentUser.uid
+                        signedInRole = usuario.role
                         ownedFramesText = usuario.ownedFrames.joinToString("|")
                         claimedAchievements = usuario.claimedAchievements
                     }
@@ -211,6 +213,7 @@ fun AppNavGraph() {
                         signedInMonedas = usuario.monedas
                         signedInNivel = usuario.nivel
                         signedInUid = currentUser.uid
+                        signedInRole = usuario.role
                         ownedFramesText = usuario.ownedFrames.joinToString("|")
                         claimedAchievements = usuario.claimedAchievements
 
@@ -340,6 +343,7 @@ fun AppNavGraph() {
             page = dashboardPage,
             name = signedInName,
             equippedFrame = equippedFrame,
+            isAdmin = (signedInRole == UserRole.ADMIN),
             onBack = {
                 if (dashboardPage != "profile") {
                     navigationViewModel.showDashboardPage("profile")

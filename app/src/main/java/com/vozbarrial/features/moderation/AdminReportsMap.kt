@@ -267,13 +267,6 @@ fun AdminReportsMap(
                 name = name,
                 profilePhoto = profilePhoto,
                 equippedFrame = equippedFrame,
-                monedas = monedas,
-                hasUnreadNotifications = hasUnreadNotifications,
-                onPoints = { showPoints = true },
-                onNotifications = {
-                    lastViewedCount = totalCount
-                    showNotifications = true
-                },
                 onSignOut = onSignOut,
                 onProfile = { onNavigate("profile") }
             )
@@ -583,10 +576,6 @@ private fun AdminMapHeader(
     name: String,
     profilePhoto: String? = null,
     equippedFrame: String = "",
-    monedas: Int,
-    hasUnreadNotifications: Boolean,
-    onPoints: () -> Unit,
-    onNotifications: () -> Unit,
     onSignOut: () -> Unit,
     onProfile: () -> Unit,
 ) {
@@ -617,21 +606,6 @@ private fun AdminMapHeader(
                         Spacer(Modifier.width(3.dp))
                         Text(stringResource(R.string.moderator), color = Color(0xFF087A55), fontSize = 9.sp, fontWeight = FontWeight.Bold)
                     }
-                }
-            }
-        }
-        Surface(
-            modifier = Modifier.clickable(onClick = onPoints),
-            shape = RoundedCornerShape(50),
-            color = Color(0xFFFFF2E7),
-        ) {
-            Text("🟠 $monedas", modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp), color = Color(0xFF8A5723), fontSize = 10.sp, fontWeight = FontWeight.Bold)
-        }
-        IconButton(onClick = onNotifications, modifier = Modifier.size(34.dp)) {
-            Box(contentAlignment = Alignment.TopEnd) {
-                Icon(Icons.Default.Notifications, contentDescription = stringResource(R.string.notifications_title), tint = VozNavy, modifier = Modifier.size(21.dp))
-                if (hasUnreadNotifications) {
-                    Box(Modifier.size(7.dp).clip(CircleShape).background(Color(0xFFE35454)))
                 }
             }
         }

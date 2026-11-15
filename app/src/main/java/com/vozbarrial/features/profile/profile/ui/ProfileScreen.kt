@@ -191,6 +191,7 @@ fun CommunityRoute(
     page: String,
     name: String,
     equippedFrame: String = "",
+    isAdmin: Boolean = false,
     onBack: () -> Unit,
     onNavigate: (String) -> Unit,
     onSignOut: () -> Unit,
@@ -231,6 +232,7 @@ fun CommunityRoute(
     CommunityContent(
         uiState = uiState,
         equippedFrame = equippedFrame,
+        isAdmin = isAdmin,
         onBack = onBack,
         onNavigate = onNavigate,
         hasUnreadNotifications = hasUnreadNotifications,
@@ -268,6 +270,7 @@ fun CommunityRoute(
 fun CommunityContent(
     uiState: ProfileUiState,
     equippedFrame: String = "",
+    isAdmin: Boolean = false,
     onBack: () -> Unit,
     onNavigate: (String) -> Unit,
     onSignOut: () -> Unit,
@@ -378,11 +381,13 @@ fun CommunityContent(
                 },
                 Modifier.weight(1f), color = VozNavy, fontWeight = FontWeight.Bold, fontSize = 16.sp,
             )
-            IconButton(onClick = onNotificationClick) {
-                Box(contentAlignment = Alignment.TopEnd) {
-                    Icon(Icons.Default.Notifications, contentDescription = stringResource(R.string.activity_title), tint = VozNavy)
-                    if (hasUnreadNotifications) {
-                        Box(Modifier.size(7.dp).clip(CircleShape).background(Color(0xFFE35454)))
+            if (!isAdmin) {
+                IconButton(onClick = onNotificationClick) {
+                    Box(contentAlignment = Alignment.TopEnd) {
+                        Icon(Icons.Default.Notifications, contentDescription = stringResource(R.string.activity_title), tint = VozNavy)
+                        if (hasUnreadNotifications) {
+                            Box(Modifier.size(7.dp).clip(CircleShape).background(Color(0xFFE35454)))
+                        }
                     }
                 }
             }
@@ -426,18 +431,20 @@ fun CommunityContent(
                                             fontWeight = FontWeight.Bold,
                                             fontSize = 18.sp
                                         )
-                                        Spacer(Modifier.height(3.dp))
-                                        Surface(
-                                            shape = RoundedCornerShape(50),
-                                            color = Color(0xFFEAF9F5)
-                                        ) {
-                                            Row(
-                                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
-                                                verticalAlignment = Alignment.CenterVertically
+                                        if (!isAdmin) {
+                                            Spacer(Modifier.height(3.dp))
+                                            Surface(
+                                                shape = RoundedCornerShape(50),
+                                                color = Color(0xFFEAF9F5)
                                             ) {
-                                                Icon(Icons.Default.Shield, null, tint = VozGreen, modifier = Modifier.size(12.dp))
-                                                Spacer(Modifier.width(4.dp))
-                                                Text(currentLevelName, color = VozGreen, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                                Row(
+                                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                                                    verticalAlignment = Alignment.CenterVertically
+                                                ) {
+                                                    Icon(Icons.Default.Shield, null, tint = VozGreen, modifier = Modifier.size(12.dp))
+                                                    Spacer(Modifier.width(4.dp))
+                                                    Text(currentLevelName, color = VozGreen, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                                }
                                             }
                                         }
                                     }
@@ -455,61 +462,64 @@ fun CommunityContent(
                                         Spacer(Modifier.width(2.dp))
                                         Text(stringResource(R.string.edit), color = VozNavy, fontSize = 11.sp, fontWeight = FontWeight.Bold, maxLines = 1)
                                     }
-                                    Button(
-                                        onClick = { onNavigate("frames") },
-                                        modifier = Modifier.weight(1f).height(40.dp),
-                                        shape = RoundedCornerShape(12.dp),
-                                        contentPadding = PaddingValues(horizontal = 2.dp),
-                                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEAF1F8))
-                                    ) {
-                                        Icon(Icons.Default.Collections, null, tint = VozNavy, modifier = Modifier.size(14.dp))
-                                        Spacer(Modifier.width(2.dp))
-                                        Text(stringResource(R.string.frames), color = VozNavy, fontSize = 11.sp, fontWeight = FontWeight.Bold, maxLines = 1)
-                                    }
-                                    Button(
-                                        onClick = { onNavigate("store") },
-                                        modifier = Modifier.weight(1f).height(40.dp),
-                                        shape = RoundedCornerShape(12.dp),
-                                        contentPadding = PaddingValues(horizontal = 2.dp),
-                                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD3F9E8))
-                                    ) {
-                                        Icon(Icons.Default.Store, null, tint = Color(0xFF0D9488), modifier = Modifier.size(14.dp))
-                                        Spacer(Modifier.width(2.dp))
-                                        Text(stringResource(R.string.store), color = Color(0xFF0D9488), fontSize = 11.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+                                    if (!isAdmin) {
+                                        Button(
+                                            onClick = { onNavigate("frames") },
+                                            modifier = Modifier.weight(1f).height(40.dp),
+                                            shape = RoundedCornerShape(12.dp),
+                                            contentPadding = PaddingValues(horizontal = 2.dp),
+                                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEAF1F8))
+                                        ) {
+                                            Icon(Icons.Default.Collections, null, tint = VozNavy, modifier = Modifier.size(14.dp))
+                                            Spacer(Modifier.width(2.dp))
+                                            Text(stringResource(R.string.frames), color = VozNavy, fontSize = 11.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+                                        }
+                                        Button(
+                                            onClick = { onNavigate("store") },
+                                            modifier = Modifier.weight(1f).height(40.dp),
+                                            shape = RoundedCornerShape(12.dp),
+                                            contentPadding = PaddingValues(horizontal = 2.dp),
+                                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD3F9E8))
+                                        ) {
+                                            Icon(Icons.Default.Store, null, tint = Color(0xFF0D9488), modifier = Modifier.size(14.dp))
+                                            Spacer(Modifier.width(2.dp))
+                                            Text(stringResource(R.string.store), color = Color(0xFF0D9488), fontSize = 11.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+                                        }
                                     }
                                 }
                             }
                         }
                     }
 
-                    // 2. Level & Progress Card
-                    item {
-                        val levelNum = when (Nivel.fromValue(uiState.nivel)) {
-                            Nivel.NOVATO -> 1
-                            Nivel.COLABORADOR -> 2
-                            Nivel.GUARDIAN -> 3
-                            Nivel.HEROE -> 4
-                        }
-                        val currentLevelName = when (Nivel.fromValue(uiState.nivel)) {
-                            Nivel.NOVATO -> stringResource(R.string.level_novato)
-                            Nivel.COLABORADOR -> stringResource(R.string.level_colaborador)
-                            Nivel.GUARDIAN -> stringResource(R.string.level_guardian)
-                            Nivel.HEROE -> stringResource(R.string.level_heroe)
-                        }
-                        Card(colors = CardDefaults.cardColors(containerColor = Color.White), shape = RoundedCornerShape(16.dp)) {
-                            Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Surface(shape = CircleShape, color = Color(0xFFEAF9F5), modifier = Modifier.size(32.dp)) {
-                                            Box(contentAlignment = Alignment.Center) {
-                                                Icon(Icons.Default.MilitaryTech, null, tint = VozGreen, modifier = Modifier.size(18.dp))
+                    if (!isAdmin) {
+                        // 2. Level & Progress Card
+                        item {
+                            val levelNum = when (Nivel.fromValue(uiState.nivel)) {
+                                Nivel.NOVATO -> 1
+                                Nivel.COLABORADOR -> 2
+                                Nivel.GUARDIAN -> 3
+                                Nivel.HEROE -> 4
+                            }
+                            val currentLevelName = when (Nivel.fromValue(uiState.nivel)) {
+                                Nivel.NOVATO -> stringResource(R.string.level_novato)
+                                Nivel.COLABORADOR -> stringResource(R.string.level_colaborador)
+                                Nivel.GUARDIAN -> stringResource(R.string.level_guardian)
+                                Nivel.HEROE -> stringResource(R.string.level_heroe)
+                            }
+                            Card(colors = CardDefaults.cardColors(containerColor = Color.White), shape = RoundedCornerShape(16.dp)) {
+                                Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Surface(shape = CircleShape, color = Color(0xFFEAF9F5), modifier = Modifier.size(32.dp)) {
+                                                Box(contentAlignment = Alignment.Center) {
+                                                    Icon(Icons.Default.MilitaryTech, null, tint = VozGreen, modifier = Modifier.size(18.dp))
+                                                }
                                             }
-                                        }
-                                        Spacer(Modifier.width(8.dp))
+                                            Spacer(Modifier.width(8.dp))
                                         Text(currentLevelName, color = VozNavy, fontWeight = FontWeight.Bold, fontSize = 15.sp)
                                     }
                                     Surface(shape = RoundedCornerShape(50), color = Color(0xFFEAF1F8)) {
@@ -756,6 +766,7 @@ fun CommunityContent(
                                 }
                             }
                         }
+                    }
                     }
 
                     // 6. Account Actions (Cerrar sesión & Eliminar cuenta)
